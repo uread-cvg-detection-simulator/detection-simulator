@@ -21,14 +21,9 @@
 
 				dev-package-list = with pkgs; [ godot_4 ];
 
-				nonnix-shell-script = pkgs.writeShellScriptBin "godot" ''
-					#!/bin/bash
-					nixGL ${pkgs.godot_4}/bin/godot4 "$@"
-				'';
-
 				nix-shell-script = pkgs.writeShellScriptBin "godot" ''
 					#!/bin/bash
-					${pkgs.godot_4}/bin/godot4 "$@"
+					$GODOT_CMD --path $PROJECT_NAME -e
 				'';
 
 			in
@@ -36,10 +31,18 @@
 				devShells = {
 					default = pkgs.mkShell {
 						packages = dev-package-list ++ [ nix-shell-script ];
+						shellHook = ''
+							export GODOT_CMD=${pkgs.godot_4}/bin/godot4
+							set -a; source .env; set +a;
+						'';
 					};
 
 					nonnix = pkgs.mkShell {
-						packages = dev-package-list ++ [ pkgs.nixgl.auto.nixGLDefault nonnix-shell-script ];
+						packages = dev-package-list ++ [ pkgs.nixgl.auto.nixGLDefault nix-shell-script ];
+						shellHook = ''
+							export GODOT_CMD=nixGL ${pkgs.godot_4}/bin/godot4
+							set -a; source .env; set +a;
+						'';
 					};
 				};
 			}
