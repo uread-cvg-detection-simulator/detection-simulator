@@ -1,0 +1,8 @@
+[gd_scene load_steps=2 format=3 uid="uid://p0wyr5cxelew"]
+
+[ext_resource type="Texture2D" uid="uid://etufimgj43mn" path="res://agents/basic-target.png" id="1_25plv"]
+
+[node name="agent" type="Node2D"]
+
+[node name="sprite" type="Sprite2D" parent="."]
+texture = ExtResource("1_25plv")
