@@ -1,8 +1,16 @@
-[gd_scene load_steps=2 format=3 uid="uid://p0wyr5cxelew"]
+[gd_scene load_steps=5 format=3 uid="uid://p0wyr5cxelew"]
 
 [ext_resource type="Texture2D" uid="uid://etufimgj43mn" path="res://agents/basic-target.png" id="1_25plv"]
+[ext_resource type="Script" path="res://agents/agent.gd" id="1_noa6a"]
+[ext_resource type="Shader" path="res://agents/agent-colour.gdshader" id="2_iqp8c"]
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_rqk8j"]
+shader = ExtResource("2_iqp8c")
+shader_parameter/new_colour = Vector4(1, 1, 1, 1)
 
 [node name="agent" type="Node2D"]
+script = ExtResource("1_noa6a")
 
 [node name="sprite" type="Sprite2D" parent="."]
+material = SubResource("ShaderMaterial_rqk8j")
 texture = ExtResource("1_25plv")
