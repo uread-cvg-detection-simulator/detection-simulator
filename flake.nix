@@ -32,7 +32,7 @@
 					default = pkgs.mkShell {
 						packages = dev-package-list ++ [ nix-shell-script ];
 						shellHook = ''
-							export GODOT_CMD=${pkgs.godot_4}/bin/godot4
+							export GODOT_CMD="${pkgs.godot_4}/bin/godot4"
 							set -a; source .env; set +a;
 						'';
 					};
@@ -40,7 +40,7 @@
 					nonnix = pkgs.mkShell {
 						packages = dev-package-list ++ [ pkgs.nixgl.auto.nixGLDefault nix-shell-script ];
 						shellHook = ''
-							export GODOT_CMD=nixGL ${pkgs.godot_4}/bin/godot4
+							export GODOT_CMD="nixGL ${pkgs.godot_4}/bin/godot4"
 							set -a; source .env; set +a;
 						'';
 					};
