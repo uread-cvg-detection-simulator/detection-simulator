@@ -1,3 +1,4 @@
+class_name Agent
 extends Node2D
 
 @export var colour: Color = Color.WHITE : set = _set_sprite_colour
