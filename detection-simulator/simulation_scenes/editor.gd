@@ -22,7 +22,7 @@ func _process(delta):
 var _scrolling = false
 
 func _input(event):
-	if event is InputEventMouse and event.is_pressed() and event.button_index == MOUSE_BUTTON_RIGHT:
+	if event is InputEventMouseButton and event.is_pressed() and event.button_index == MOUSE_BUTTON_RIGHT:
 		_right_click(event)
 
 	if event is InputEventMouseButton:
@@ -44,9 +44,10 @@ var _right_click_position = null
 
 func _right_click(event: InputEventMouseButton):
 	var mouse_pos = get_global_mouse_position()
+	var mouse_rel_pos = mouse_pos - $Camera2D.global_position
 	var window_size = get_window().size / 2
 
-	_rightclick_empty.popup(Rect2i(mouse_pos.x + window_size.x, mouse_pos.y + window_size.y, _rightclick_empty.size.x, _rightclick_empty.size.y))
+	_rightclick_empty.popup(Rect2i(mouse_rel_pos.x + window_size.x, mouse_rel_pos.y + window_size.y, _rightclick_empty.size.x, _rightclick_empty.size.y))
 	_right_click_position = mouse_pos
 
 func _on_empty_menu_press(id: int):
