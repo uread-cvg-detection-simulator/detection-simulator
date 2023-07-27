@@ -1,10 +1,8 @@
-[gd_scene load_steps=6 format=3 uid="uid://bok4788dfl1al"]
+[gd_scene load_steps=4 format=3 uid="uid://bok4788dfl1al"]
 
 [ext_resource type="Script" path="res://simulation_scenes/editor.gd" id="1_o3h7t"]
-[ext_resource type="Script" path="res://simulation_scenes/grid.gd" id="2_ajg8y"]
 [ext_resource type="Script" path="res://simulation_scenes/camera.gd" id="2_j0bt8"]
-[ext_resource type="Script" path="res://simulation_scenes/grid-lines.gd" id="3_ywet5"]
-[ext_resource type="Script" path="res://simulation_scenes/grid-labels.gd" id="5_7fup0"]
+[ext_resource type="PackedScene" uid="uid://djdqjby78q501" path="res://simulation_scenes/grid.tscn" id="3_2o4sa"]
 
 [node name="editor" type="Node2D"]
 script = ExtResource("1_o3h7t")
@@ -19,22 +17,5 @@ size = Vector2i(28, 8)
 
 [node name="agents" type="Node2D" parent="."]
 
-[node name="grid" type="Node2D" parent="." node_paths=PackedStringArray("camera")]
-script = ExtResource("2_ajg8y")
+[node name="grid" parent="." node_paths=PackedStringArray("camera") instance=ExtResource("3_2o4sa")]
 camera = NodePath("../Camera2D")
-
-[node name="grid_labels" type="Node2D" parent="grid"]
-script = ExtResource("5_7fup0")
-
-[node name="template_label" type="Label" parent="grid/grid_labels"]
-visible = false
-offset_right = 200.0
-offset_bottom = 26.0
-text = "(0,0)"
-horizontal_alignment = 1
-vertical_alignment = 1
-
-[node name="grid_lines" type="Node2D" parent="grid"]
-z_index = -1
-script = ExtResource("3_ywet5")
-grid_colour = Color(0.427451, 0.427451, 0.427451, 1)

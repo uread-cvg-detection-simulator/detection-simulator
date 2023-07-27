@@ -1,3 +1,4 @@
+class_name Grid
 extends Node2D
 
 @export var camera: Camera2D = null : set = _camera_set
