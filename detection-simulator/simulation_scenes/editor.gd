@@ -6,6 +6,9 @@ extends Node2D
 
 var _agent_list: Array[Agent]
 
+var _scrolling = false ## Set when drag-scrolling
+var _right_click_position = null ## Set to ensure popup menus act on correct mouse position
+
 enum empty_menu_enum {
 	SPAWN_AGENT
 }
@@ -19,14 +22,10 @@ func _ready():
 func _process(delta):
 	pass
 
-var _scrolling = false
-
 func _input(event):
-	if event is InputEventMouseButton and event.is_pressed() and event.button_index == MOUSE_BUTTON_RIGHT:
-		_right_click(event)
-
 	if event is InputEventMouseButton:
 		if event.button_index == MOUSE_BUTTON_LEFT:
+			# Handle Scrolling
 			var tmp_event: InputEventMouse = event
 
 			if not _scrolling and tmp_event.is_pressed():
@@ -35,12 +34,16 @@ func _input(event):
 			if _scrolling and tmp_event.is_released():
 				_scrolling = false
 
+		if event.button_index == MOUSE_BUTTON_RIGHT and event.is_pressed():
+			# Handle Menu
+			_right_click(event)
+		
+
 	if event is InputEventMouseMotion and _scrolling:
 		var tmp_event: InputEventMouseMotion = event
 
 		$Camera2D.position -= tmp_event.relative
 
-var _right_click_position = null
 
 func _right_click(event: InputEventMouseButton):
 	var mouse_pos = get_global_mouse_position()
