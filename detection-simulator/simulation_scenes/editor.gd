@@ -19,9 +19,26 @@ func _ready():
 func _process(delta):
 	pass
 
+var _scrolling = false
+
 func _input(event):
 	if event is InputEventMouse and event.is_pressed() and event.button_index == MOUSE_BUTTON_RIGHT:
 		_right_click(event)
+
+	if event is InputEventMouseButton:
+		if event.button_index == MOUSE_BUTTON_LEFT:
+			var tmp_event: InputEventMouse = event
+
+			if not _scrolling and tmp_event.is_pressed():
+				_scrolling = true
+
+			if _scrolling and tmp_event.is_released():
+				_scrolling = false
+
+	if event is InputEventMouseMotion and _scrolling:
+		var tmp_event: InputEventMouseMotion = event
+
+		$Camera2D.position -= tmp_event.relative
 
 var _right_click_position = null
 

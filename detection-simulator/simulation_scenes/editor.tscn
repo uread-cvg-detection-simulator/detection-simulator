@@ -1,14 +1,21 @@
-[gd_scene load_steps=2 format=3 uid="uid://bok4788dfl1al"]
+[gd_scene load_steps=4 format=3 uid="uid://bok4788dfl1al"]
 
 [ext_resource type="Script" path="res://simulation_scenes/editor.gd" id="1_o3h7t"]
+[ext_resource type="Script" path="res://simulation_scenes/grid.gd" id="2_ajg8y"]
+[ext_resource type="Script" path="res://simulation_scenes/camera.gd" id="2_j0bt8"]
 
 [node name="editor" type="Node2D"]
 script = ExtResource("1_o3h7t")
 
 [node name="Camera2D" type="Camera2D" parent="."]
+script = ExtResource("2_j0bt8")
 
 [node name="CanvasLayer" type="CanvasLayer" parent="."]
 
 [node name="empty_right_click_menu" type="PopupMenu" parent="."]
 
 [node name="agents" type="Node2D" parent="."]
+
+[node name="grid" type="Node2D" parent="." node_paths=PackedStringArray("camera")]
+script = ExtResource("2_ajg8y")
+camera = NodePath("../Camera2D")
