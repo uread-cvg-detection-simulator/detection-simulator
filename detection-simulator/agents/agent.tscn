@@ -1,21 +1,26 @@
-[gd_scene load_steps=10 format=3 uid="uid://p0wyr5cxelew"]
+[gd_scene load_steps=11 format=3 uid="uid://p0wyr5cxelew"]
 
 [ext_resource type="Texture2D" uid="uid://etufimgj43mn" path="res://agents/basic-target.png" id="1_25plv"]
 [ext_resource type="Script" path="res://agents/agent.gd" id="1_noa6a"]
 [ext_resource type="Shader" path="res://agents/agent-colour.gdshader" id="2_iqp8c"]
 [ext_resource type="Script" path="res://agents/sprite_target.gd" id="4_wpf02"]
 [ext_resource type="Texture2D" uid="uid://d2l7f37r31n52" path="res://agents/circle-target.png" id="5_gg7lh"]
+[ext_resource type="PackedScene" uid="uid://c5r11cmhlqudb" path="res://agents/SelectionArea2D.tscn" id="5_lpd86"]
 
-[sub_resource type="ShaderMaterial" id="ShaderMaterial_rqk8j"]
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_y5pv7"]
+resource_local_to_scene = true
 shader = ExtResource("2_iqp8c")
 shader_parameter/new_colour = Vector4(1, 1, 1, 1)
+shader_parameter/selected = false
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_3p6ps"]
 size = Vector2(64, 64)
 
-[sub_resource type="ShaderMaterial" id="ShaderMaterial_erga0"]
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_bv30b"]
+resource_local_to_scene = true
 shader = ExtResource("2_iqp8c")
 shader_parameter/new_colour = Vector4(1, 1, 1, 1)
+shader_parameter/selected = false
 
 [sub_resource type="CircleShape2D" id="CircleShape2D_n5v4q"]
 radius = 16.0
@@ -25,7 +30,7 @@ script = ExtResource("1_noa6a")
 
 [node name="square_target" type="Sprite2D" parent="."]
 visible = false
-material = SubResource("ShaderMaterial_rqk8j")
+material = SubResource("ShaderMaterial_y5pv7")
 texture = ExtResource("1_25plv")
 script = ExtResource("4_wpf02")
 
@@ -35,14 +40,26 @@ script = ExtResource("4_wpf02")
 shape = SubResource("RectangleShape2D_3p6ps")
 disabled = true
 
+[node name="SelectionArea2D" parent="square_target" instance=ExtResource("5_lpd86")]
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="square_target/SelectionArea2D"]
+shape = SubResource("RectangleShape2D_3p6ps")
+disabled = true
+
 [node name="circle_target" type="Sprite2D" parent="."]
 visible = false
-material = SubResource("ShaderMaterial_erga0")
+material = SubResource("ShaderMaterial_bv30b")
 texture = ExtResource("5_gg7lh")
 script = ExtResource("4_wpf02")
 
 [node name="RigidBody2D" type="RigidBody2D" parent="circle_target"]
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="circle_target/RigidBody2D"]
+shape = SubResource("CircleShape2D_n5v4q")
+disabled = true
+
+[node name="SelectionArea2D" parent="circle_target" instance=ExtResource("5_lpd86")]
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="circle_target/SelectionArea2D"]
 shape = SubResource("CircleShape2D_n5v4q")
 disabled = true

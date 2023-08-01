@@ -6,6 +6,8 @@ extends Node2D
 
 var _agent_list: Array[Agent]
 
+var _last_id = 0
+
 var _scrolling = false ## Set when drag-scrolling
 var _right_click_position = null ## Set to ensure popup menus act on correct mouse position
 
@@ -55,7 +57,7 @@ func _right_click(event: InputEventMouseButton):
 
 	_rightclick_empty.popup(Rect2i(mouse_rel_pos.x + window_size.x, mouse_rel_pos.y + window_size.y, _rightclick_empty.size.x, _rightclick_empty.size.y))
 	_right_click_position = mouse_pos
-	
+
 	print_debug("Right click at (%.2f, %.2f)" % [float(mouse_pos.x) / 64, - float(mouse_pos.y) / 64])
 
 func _on_empty_menu_press(id: int):
@@ -66,8 +68,10 @@ func _on_empty_menu_press(id: int):
 			$Camera2D.set_global_position(Vector2(0, 0))
 
 func spawn_agent(position: Vector2):
-	var new_agent: Agent = _agent_base.instantiate()
+	var new_agent = _agent_base.instantiate().duplicate()
 	new_agent.global_position = position
+	new_agent.agent_id = _last_id + 1
+	_last_id += 1
 
 	_agent_root.add_child(new_agent)
 

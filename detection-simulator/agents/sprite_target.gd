@@ -3,6 +3,8 @@ extends Sprite2D
 
 var disabled: bool = true : set = _set_disabled
 @onready var _collision_shape = $RigidBody2D/CollisionShape2D
+@onready var _selection_shape = $SelectionArea2D/CollisionShape2D
+@onready var _selection_area = $SelectionArea2D
 
 var initialised = false
 
@@ -22,10 +24,12 @@ func _set_disabled(new_disabled):
 
 		if initialised:
 			_collision_shape.disabled = true
+			_selection_shape.disabled = true
 	else:
 		visible = true
 
 		if initialised:
 			_collision_shape.disabled = false
+			_selection_shape.disabled = false
 	
 	disabled = new_disabled
