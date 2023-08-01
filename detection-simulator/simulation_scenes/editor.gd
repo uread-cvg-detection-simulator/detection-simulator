@@ -27,23 +27,25 @@ func _ready():
 func _process(delta):
 	pass
 
-func _input(event):
-	if event is InputEventMouseButton:
-		if event.button_index == MOUSE_BUTTON_LEFT:
-			# Handle Scrolling
-			var tmp_event: InputEventMouse = event
-
-			if not _scrolling and tmp_event.is_pressed():
+func _unhandled_input(event):
+	# Handle scrolling and empty context menu if no object is hovered
+	# over by the mouse
+	if get_tree().get_nodes_in_group("mouse_hovered").is_empty():
+		# Start up the scrolling
+		if event.is_action_pressed("mouse_selected"):
+			if not _scrolling:
 				_scrolling = true
 
-			if _scrolling and tmp_event.is_released():
-				_scrolling = false
-
-		if event.button_index == MOUSE_BUTTON_RIGHT and event.is_pressed():
+		# Launch the empty menu
+		if event.is_action_pressed("mouse_menu"):
 			# Handle Menu
 			_right_click(event)
 
+	# Stop scrolling if mouse is released
+	if _scrolling and event.is_action_released("mouse_selected"):
+		_scrolling = false
 
+	# Move the position of the mouse relative to the mouse
 	if event is InputEventMouseMotion and _scrolling:
 		var tmp_event: InputEventMouseMotion = event
 
@@ -51,10 +53,13 @@ func _input(event):
 
 
 func _right_click(event: InputEventMouseButton):
+	# Calculate the mouse relative position to place the
+	# right click menu at the correct location
 	var mouse_pos = get_global_mouse_position()
 	var mouse_rel_pos = mouse_pos - $Camera2D.global_position
 	var window_size = get_window().size / 2
 
+	# Popup the window
 	_rightclick_empty.popup(Rect2i(mouse_rel_pos.x + window_size.x, mouse_rel_pos.y + window_size.y, _rightclick_empty.size.x, _rightclick_empty.size.y))
 	_right_click_position = mouse_pos
 
@@ -68,10 +73,14 @@ func _on_empty_menu_press(id: int):
 			$Camera2D.set_global_position(Vector2(0, 0))
 
 func spawn_agent(position: Vector2):
+	# Create the new agent at the provided location
 	var new_agent = _agent_base.instantiate().duplicate()
 	new_agent.global_position = position
+
+	# Set a new ID (TODO: keep id list to agents, so can repurpose)
 	new_agent.agent_id = _last_id + 1
 	_last_id += 1
 
+	# Add the new agent to the scene tree
 	_agent_root.add_child(new_agent)
 

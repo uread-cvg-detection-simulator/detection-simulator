@@ -42,6 +42,20 @@ func _on_selected(selected: bool):
 		print_debug("Agent %d selected" % [agent_id])
 		_current_agent.material.set_shader_parameter("selected", selected)
 
+var _moving = false
+
+func _on_hold():
+	_moving = true
+
+func _on_hold_stop():
+	_moving = false
+
+func _unhandled_input(event):
+	if event is InputEventMouseMotion and _moving:
+		var tmp_event: InputEventMouseMotion = event
+
+		self.global_position = get_global_mouse_position()
+
 ## Sets the agent id, and calls the relevant signal
 func _set_agent_id(new_agent_id):
 	emit_signal("agent_id_set", agent_id, new_agent_id)
@@ -53,12 +67,16 @@ func _set_agent_type(new_agent_type: AgentType):
 		if _current_agent != null:
 			_current_agent.disabled = true
 			_current_agent._selection_area.disconnect("selection_toggled", self._on_selected)
+			_current_agent._selection_area.disconnect("mouse_hold_start", self._on_hold)
+			_current_agent._selection_area.disconnect("mouse_hold_end", self._on_hold_stop)
 
 		# Enable new
 		if new_agent_type != AgentType.Invisible:
 			_current_agent = _type_map[new_agent_type]
 			_current_agent.disabled = false
 			_current_agent._selection_area.connect("selection_toggled", self._on_selected)
+			_current_agent._selection_area.connect("mouse_hold_start", self._on_hold)
+			_current_agent._selection_area.connect("mouse_hold_end", self._on_hold_stop)
 
 			_set_sprite_colour(type_default_colours[new_agent_type])
 		else:
