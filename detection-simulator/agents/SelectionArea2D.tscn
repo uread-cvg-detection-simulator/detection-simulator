@@ -4,5 +4,3 @@
 
 [node name="SelectionArea2D" type="Area2D"]
 script = ExtResource("1_drs7f")
-
-[connection signal="input_event" from="." to="." method="_on_input_event"]
