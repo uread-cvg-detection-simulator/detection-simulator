@@ -41,15 +41,14 @@ func _input_event(viewport: Viewport, event, shape_idx):
 
 		viewport.set_input_as_handled()
 	elif event.is_action_pressed(selection_action):
-		if !passthrough_mode:
-			selected = not selected
+		# Select is swapped in self._mouse_held_timeout
 
 		# Emit the event as a signal
 		emit_signal("mouse_click", MOUSE_BUTTON_LEFT, event)
 		viewport.set_input_as_handled()
 
 		# Create mouse hold timer
-		var temp_timer = get_tree().create_timer(0.25)
+		var temp_timer = get_tree().create_timer(0.125)
 		temp_timer.connect("timeout", self._mouse_held_timeout)
 
 	elif event.is_action_pressed("mouse_menu"):
@@ -71,6 +70,9 @@ func _mouse_held_timeout():
 		_mouse_held = true
 		emit_signal("mouse_hold_start")
 		print_debug("Mouse Held: %d" % get_instance_id())
+	else:
+		if !passthrough_mode:
+			selected = not selected
 
 func _mouse_enter():
 	_mouse_hovered = true
