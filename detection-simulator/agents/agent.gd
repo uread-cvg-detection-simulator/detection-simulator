@@ -1,6 +1,7 @@
 class_name Agent
 extends Node2D
 
+@onready var camera: Camera2D = null
 @export var colour: Color = Color.WHITE : set = _set_sprite_colour ## The colour of the target
 
 var agent_id: int = 0 : set = _set_agent_id ## The agent target id
@@ -17,6 +18,13 @@ enum AgentType {
 @onready var _current_agent: AgentTarget = null
 var agent_type: AgentType = AgentType.Circle : set = _set_agent_type
 
+@onready var context_menu: PopupMenu = $ContextMenu
+
+enum ContextMenuIDs {
+	DELETE
+}
+
+signal deleted(id) ## Signals when the agent has been manually deletec
 
 var initialised: bool = false ## Specifies whether the module is initialised
 
@@ -25,6 +33,10 @@ func _ready():
 	initialised = true
 
 	_set_agent_type(agent_type)
+	
+	# Create menu items and connect
+	context_menu.add_item("Delete Agent", ContextMenuIDs.DELETE)
+	context_menu.connect("id_pressed", self._context_menu)
 
 # Called every frame. 'delta' is the elapsed time since the previous frame.
 func _process(delta):
@@ -37,24 +49,40 @@ func _set_sprite_colour(new_colour: Color):
 	if initialised and _current_agent != null:
 		_current_agent.material.set_shader_parameter("new_colour", Vector4(new_colour.r, new_colour.g, new_colour.b, new_colour.a))
 
+## Handles when agent is selected
 func _on_selected(selected: bool):
 	if initialised and _current_agent != null:
 		print_debug("Agent %d selected" % [agent_id])
 		_current_agent.material.set_shader_parameter("selected", selected)
 
-var _moving = false
+var _moving = false ## defines whether the agent is being dragged
 
+## Handles when mouse is being held
 func _on_hold():
 	_moving = true
 
+## Handles when mouse has stopped being held
 func _on_hold_stop():
 	_moving = false
+
+func _on_mouse(mouse, event):
+	if event.is_action_pressed("mouse_menu") and camera != null:
+		var mouse_pos = get_global_mouse_position()
+		var mouse_rel_pos = mouse_pos - camera.global_position
+		var window_size = get_window().size / 2
+
+		# Popup the window
+		context_menu.popup(Rect2i(mouse_rel_pos.x + window_size.x, mouse_rel_pos.y + window_size.y, context_menu.size.x, context_menu.size.y))
+
+		print_debug("Right click at (%.2f, %.2f)" % [float(mouse_pos.x) / 64, - float(mouse_pos.y) / 64])
 
 func _unhandled_input(event):
 	if event is InputEventMouseMotion and _moving:
 		var tmp_event: InputEventMouseMotion = event
 
 		self.global_position = get_global_mouse_position()
+		
+		# TODO: handle moving other selected nodes in non-exclusive mode
 
 ## Sets the agent id, and calls the relevant signal
 func _set_agent_id(new_agent_id):
@@ -69,6 +97,7 @@ func _set_agent_type(new_agent_type: AgentType):
 			_current_agent._selection_area.disconnect("selection_toggled", self._on_selected)
 			_current_agent._selection_area.disconnect("mouse_hold_start", self._on_hold)
 			_current_agent._selection_area.disconnect("mouse_hold_end", self._on_hold_stop)
+			_current_agent._selection_area.disconnect("mouse_click", self._on_mouse)
 
 		# Enable new
 		if new_agent_type != AgentType.Invisible:
@@ -77,6 +106,7 @@ func _set_agent_type(new_agent_type: AgentType):
 			_current_agent._selection_area.connect("selection_toggled", self._on_selected)
 			_current_agent._selection_area.connect("mouse_hold_start", self._on_hold)
 			_current_agent._selection_area.connect("mouse_hold_end", self._on_hold_stop)
+			_current_agent._selection_area.connect("mouse_click", self._on_mouse)
 
 			_set_sprite_colour(type_default_colours[new_agent_type])
 		else:
@@ -84,4 +114,10 @@ func _set_agent_type(new_agent_type: AgentType):
 
 	agent_type = new_agent_type
 
+func _context_menu(id: ContextMenuIDs):
+	match id:
+		ContextMenuIDs.DELETE:
+			print_debug("Deleted Agent %d" % [agent_id])
+			emit_signal("deleted", agent_id)
+			queue_free()
 

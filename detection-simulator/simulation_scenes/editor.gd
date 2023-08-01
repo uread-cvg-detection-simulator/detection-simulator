@@ -84,3 +84,5 @@ func spawn_agent(position: Vector2):
 	# Add the new agent to the scene tree
 	_agent_root.add_child(new_agent)
 
+	new_agent.camera = $Camera2D
+
