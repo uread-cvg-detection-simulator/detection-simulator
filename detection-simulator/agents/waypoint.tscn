@@ -1,0 +1,16 @@
+[gd_scene load_steps=4 format=3 uid="uid://b50ox3rfhikx8"]
+
+[ext_resource type="Script" path="res://agents/waypoint.gd" id="1_30dly"]
+[ext_resource type="Texture2D" uid="uid://fylxeh8wul6h" path="res://agents/waypoints.png" id="1_xxqei"]
+[ext_resource type="PackedScene" uid="uid://c5r11cmhlqudb" path="res://agents/SelectionArea2D.tscn" id="2_0g68e"]
+
+[node name="waypoint" type="Node2D"]
+script = ExtResource("1_30dly")
+
+[node name="Sprite2D" type="Sprite2D" parent="."]
+texture = ExtResource("1_xxqei")
+
+[node name="SelectionArea2D" parent="." instance=ExtResource("2_0g68e")]
+
+[node name="CollisionPolygon2D" type="CollisionPolygon2D" parent="SelectionArea2D"]
+polygon = PackedVector2Array(0, -5, 10, -15, 15, -15, 15, -10, 5, 0, 15, 10, 15, 15, 10, 15, 0, 5, -10, 15, -15, 15, -15, 10, -5, 0, -15, -10, -15, -15, -10, -15)

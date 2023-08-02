@@ -3,6 +3,7 @@ extends Node2D
 
 @onready var camera: Camera2D = null
 @export var colour: Color = Color.WHITE : set = _set_sprite_colour ## The colour of the target
+@export var clickable: bool = true
 
 var agent_id: int = 0 : set = _set_agent_id ## The agent target id
 signal agent_id_set(old_id, new_id) ## Signals whenever the agent id is set
@@ -66,7 +67,7 @@ func _on_hold_stop():
 	_moving = false
 
 func _on_mouse(mouse, event):
-	if event.is_action_pressed("mouse_menu") and camera != null:
+	if event.is_action_pressed("mouse_menu") and camera != null and clickable:
 		var mouse_pos = get_global_mouse_position()
 		var mouse_rel_pos = mouse_pos - camera.global_position
 		var window_size = get_window().size / 2
@@ -77,7 +78,7 @@ func _on_mouse(mouse, event):
 		print_debug("Right click at (%.2f, %.2f)" % [float(mouse_pos.x) / 64, - float(mouse_pos.y) / 64])
 
 func _unhandled_input(event):
-	if event is InputEventMouseMotion and _moving:
+	if event is InputEventMouseMotion and _moving and clickable:
 		var tmp_event: InputEventMouseMotion = event
 
 		self.global_position = get_global_mouse_position()

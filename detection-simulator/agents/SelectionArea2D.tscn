@@ -3,4 +3,6 @@
 [ext_resource type="Script" path="res://agents/SelectionArea2D.gd" id="1_drs7f"]
 
 [node name="SelectionArea2D" type="Area2D"]
+collision_layer = 8388608
+collision_mask = 8388608
 script = ExtResource("1_drs7f")
