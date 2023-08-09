@@ -11,6 +11,8 @@ enum ActionType {
 	METHOD_ARGS_REF,
 	PROPERTY_REF,
 	REMOVE_REF,
+	OBJECT_CALL,
+	OBJECT_CALL_REF,
 	UNSET,
 }
 
@@ -78,6 +80,14 @@ func set_remove_ref(ref: String):
 	_action_type = ActionType.REMOVE_REF
 	_action_properties = [ref]
 
+func set_object_call(object: Object, method: String, args: Array = []):
+	_action_type = ActionType.OBJECT_CALL
+	_action_properties = [object, method, args]
+
+func set_object_call_ref(ref: String, method: String, args: Array = []):
+	_action_type = ActionType.OBJECT_CALL_REF
+	_action_properties = [ref, method, args]
+
 ## Run the action
 func run():
 	match _action_type:
@@ -119,3 +129,15 @@ func run():
 		ActionType.REMOVE_REF:
 			if _item_store:
 				_item_store.remove_from_store(_action_properties[0])
+		ActionType.OBJECT_CALL:
+			if _action_properties[2].is_empty():
+				_action_properties[0].call(_action_properties[1])
+			else:
+				_action_properties[0].callv(_action_properties[1], _action_properties[2])
+		ActionType.OBJECT_CALL_REF:
+			if _item_store:
+				var item = _item_store.get_from_store(_action_properties[0])
+				if _action_properties[2].is_empty():
+					item.call(_action_properties[1])
+				else:
+					item.callv(_action_properties[1], _action_properties[2])

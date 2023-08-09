@@ -26,9 +26,10 @@ enum ContextMenuIDs {
 	DELETE
 }
 
-signal deleted(id) ## Signals when the agent has been manually deletec
+#signal deleted(id) ## Signals when the agent has been manually deletec
 
 var initialised: bool = false ## Specifies whether the module is initialised
+var disabled: bool = false : set = _set_disabled ## Disables everything internally
 
 # Called when the node enters the scene tree for the first time.
 func _ready():
@@ -71,11 +72,12 @@ func _on_hold_stop():
 
 	if _moving_start_pos:
 		var undo_action = UndoRedoAction.new()
+		undo_action._action_name = "Move Agent %d" % agent_id
 
 
-		var ref = undo_action.create_create_args_ref(UndoRedoAction.DoType.Do, TreeFuncs.get_agent_with_id, [agent_id])
-		undo_action.create_property_ref(UndoRedoAction.DoType.Do, ref, "global_position", global_position)
-		undo_action.create_property_ref(UndoRedoAction.DoType.Undo, ref, "global_position", _moving_start_pos)
+		var ref = undo_action.action_create_args_ref(UndoRedoAction.DoType.Do, TreeFuncs.get_agent_with_id, [agent_id])
+		undo_action.action_property_ref(UndoRedoAction.DoType.Do, ref, "global_position", global_position)
+		undo_action.action_property_ref(UndoRedoAction.DoType.Undo, ref, "global_position", _moving_start_pos)
 
 		UndoSystem.add_action(undo_action, false)
 
@@ -132,10 +134,34 @@ func _set_agent_type(new_agent_type: AgentType):
 
 	agent_type = new_agent_type
 
+func _set_disabled(new_value: bool):
+	if _current_agent != null:
+		_current_agent.disabled = new_value
+	
+	disabled = new_value
+	visible = not new_value
+
+func _free_if_not_in_group():
+	if not is_in_group("agent"):
+		queue_free()
+
 func _context_menu(id: ContextMenuIDs):
 	match id:
 		ContextMenuIDs.DELETE:
 			print_debug("Deleted Agent %d" % [agent_id])
-			emit_signal("deleted", agent_id)
-			queue_free()
+			var undo_action = UndoRedoAction.new()
+			undo_action._action_name = "Deleted Agent %d" % [agent_id]
+			
+			var ref = undo_action.action_create_args_ref(UndoRedoAction.DoType.Do, TreeFuncs.get_agent_with_id, [agent_id])
+			undo_action._item_store.add_to_store(ref, self)
+			
+			undo_action.action_object_call_ref(UndoRedoAction.DoType.Do, ref, "remove_from_group", ["agent"])
+			undo_action.action_property_ref(UndoRedoAction.DoType.Do, ref, "disabled", true)
+			
+			undo_action.action_property_ref(UndoRedoAction.DoType.Undo, ref, "disabled", false)
+			undo_action.action_object_call_ref(UndoRedoAction.DoType.Undo, ref, "add_to_group", ["agent"])
+			
+			undo_action.action_object_call_ref(UndoRedoAction.DoType.OnRemoval, ref, "_free_if_not_in_group")
+			
+			UndoSystem.add_action(undo_action)
 
