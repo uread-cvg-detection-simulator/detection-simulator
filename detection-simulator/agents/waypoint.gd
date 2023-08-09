@@ -1,8 +1,8 @@
 class_name Waypoint
 extends Node2D
 
-@onready var pt_next: Waypoint = null
-@onready var pt_previous: Waypoint = null
+@onready var pt_next: Node2D = null
+@onready var pt_previous: Node2D = null
 
 @onready var sprite = $Sprite2D
 @onready var collision_shape = $SelectionArea2D/CollisionPolygon2D

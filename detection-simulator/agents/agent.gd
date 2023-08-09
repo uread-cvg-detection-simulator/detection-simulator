@@ -20,6 +20,7 @@ enum AgentType {
 var agent_type: AgentType = AgentType.Circle : set = _set_agent_type
 
 @onready var context_menu: PopupMenu = $ContextMenu
+@onready var waypoints = $waypoints
 
 enum ContextMenuIDs {
 	DELETE
