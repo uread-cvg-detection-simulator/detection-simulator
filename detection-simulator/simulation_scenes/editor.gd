@@ -45,6 +45,15 @@ func _unhandled_input(event):
 	if _scrolling and event.is_action_released("mouse_selected"):
 		_scrolling = false
 
+	# Handle Undo System
+	if event.is_action_pressed("ui_undo"):
+		if UndoSystem.has_undo():
+			UndoSystem.undo()
+
+	if event.is_action_pressed("ui_redo"):
+		if UndoSystem.has_redo():
+			UndoSystem.redo()
+
 	# Move the position of the mouse relative to the mouse
 	if event is InputEventMouseMotion and _scrolling:
 		var tmp_event: InputEventMouseMotion = event
@@ -73,16 +82,52 @@ func _on_empty_menu_press(id: int):
 			$Camera2D.set_global_position(Vector2(0, 0))
 
 func spawn_agent(position: Vector2):
+	var undo_action = UndoRedoAction.new()
+	undo_action._action_name = "Spawn Agent"
+
+	############
+	# DO ACTIONS
+	############
+
+	var duplicate_lambda = func(x):
+		return x.duplicate()
+
 	# Create the new agent at the provided location
-	var new_agent = _agent_base.instantiate().duplicate()
-	new_agent.global_position = position
+	var newinstance_ref = undo_action.create_create_ref(UndoRedoAction.DoType.Do, _agent_base.instantiate)
+	var duplicate_ref = undo_action.create_create_method_ref(UndoRedoAction.DoType.Do, newinstance_ref, duplicate_lambda)
+	undo_action.create_remove_ref(UndoRedoAction.DoType.Do, newinstance_ref)
 
-	# Set a new ID (TODO: keep id list to agents, so can repurpose)
-	new_agent.agent_id = _last_id + 1
-	_last_id += 1
+	# Set position and agent id
+	undo_action.create_property_ref(UndoRedoAction.DoType.Do, duplicate_ref, "global_position", position)
+	undo_action.create_property_ref(UndoRedoAction.DoType.Do, duplicate_ref, "agent_id", _last_id + 1)
+	undo_action.create_property(UndoRedoAction.DoType.Do, self, "_last_id", _last_id + 1)
 
-	# Add the new agent to the scene tree
-	_agent_root.add_child(new_agent)
+	# Add to scene tree
+	undo_action.create_method_ref(UndoRedoAction.DoType.Do, duplicate_ref, _agent_root.add_child)
+	undo_action.create_method_ref(UndoRedoAction.DoType.Do, duplicate_ref, func(x): x.add_to_group("agent"))
 
-	new_agent.camera = $Camera2D
+	# Set camera
+	undo_action.create_property_ref(UndoRedoAction.DoType.Do, duplicate_ref, "camera", $Camera2D)
+
+	##############
+	# UNDO ACTIONS
+	##############
+
+	# Remove from scene tree
+	undo_action.create_method_ref(UndoRedoAction.DoType.Undo, duplicate_ref, self.remove_child)
+
+	# Reset last id
+	undo_action.create_property(UndoRedoAction.DoType.Undo, self, "_last_id", _last_id)
+
+	# Queue Deletion
+	undo_action.create_method_ref(UndoRedoAction.DoType.Undo, duplicate_ref, func(x): x.queue_free())
+
+	# Remove Reference
+	undo_action.create_remove_ref(UndoRedoAction.DoType.Undo, duplicate_ref)
+
+	########
+	# COMMIT
+	########
+
+	UndoSystem.add_action(undo_action)
 

@@ -35,7 +35,7 @@ func _ready():
 	initialised = true
 
 	_set_agent_type(agent_type)
-	
+
 	# Create menu items and connect
 	context_menu.add_item("Delete Agent", ContextMenuIDs.DELETE)
 	context_menu.connect("id_pressed", self._context_menu)
@@ -58,14 +58,30 @@ func _on_selected(selected: bool):
 		_current_agent.material.set_shader_parameter("selected", selected)
 
 var _moving = false ## defines whether the agent is being dragged
+var _moving_start_pos = null
 
 ## Handles when mouse is being held
 func _on_hold():
 	_moving = true
+	_moving_start_pos = global_position
 
 ## Handles when mouse has stopped being held
 func _on_hold_stop():
 	_moving = false
+
+	if _moving_start_pos:
+		var undo_action = UndoRedoAction.new()
+
+
+		var ref = undo_action.create_create_args_ref(UndoRedoAction.DoType.Do, TreeFuncs.get_agent_with_id, [agent_id])
+		undo_action.create_property_ref(UndoRedoAction.DoType.Do, ref, "global_position", global_position)
+		undo_action.create_property_ref(UndoRedoAction.DoType.Undo, ref, "global_position", _moving_start_pos)
+
+		UndoSystem.add_action(undo_action, false)
+
+		undo_action._item_store.add_to_store(ref, self)
+
+		_moving_start_pos = null
 
 func _on_mouse(mouse, event):
 	if event.is_action_pressed("mouse_menu") and camera != null and clickable:
@@ -83,7 +99,7 @@ func _unhandled_input(event):
 		var tmp_event: InputEventMouseMotion = event
 
 		self.global_position = get_global_mouse_position()
-		
+
 		# TODO: handle moving other selected nodes in non-exclusive mode
 
 ## Sets the agent id, and calls the relevant signal
