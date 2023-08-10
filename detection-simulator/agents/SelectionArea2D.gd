@@ -11,6 +11,7 @@ signal mouse_hold_end()
 @export var selection_exclusive = true
 @export var selection_action = "mouse_selected"
 @export var multi_selection_action = "mouse_multi_select"
+@export var parent_object: Node = null
 
 @export var passthrough_mode = false ## Passes through left click rather than select
 
