@@ -48,7 +48,7 @@ func _input_event(viewport: Viewport, event, shape_idx):
 		viewport.set_input_as_handled()
 
 		# Create mouse hold timer
-		var temp_timer = get_tree().create_timer(0.125)
+		var temp_timer = get_tree().create_timer(0.25)
 		temp_timer.connect("timeout", self._mouse_held_timeout)
 
 	elif event.is_action_pressed("mouse_menu"):
