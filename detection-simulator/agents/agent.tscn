@@ -1,4 +1,4 @@
-[gd_scene load_steps=11 format=3 uid="uid://p0wyr5cxelew"]
+[gd_scene load_steps=14 format=3 uid="uid://p0wyr5cxelew"]
 
 [ext_resource type="Texture2D" uid="uid://etufimgj43mn" path="res://agents/basic-target.png" id="1_25plv"]
 [ext_resource type="Script" path="res://agents/agent.gd" id="1_noa6a"]
@@ -6,6 +6,9 @@
 [ext_resource type="Script" path="res://agents/sprite_target.gd" id="4_wpf02"]
 [ext_resource type="Texture2D" uid="uid://d2l7f37r31n52" path="res://agents/circle-target.png" id="5_gg7lh"]
 [ext_resource type="PackedScene" uid="uid://c5r11cmhlqudb" path="res://agents/SelectionArea2D.tscn" id="5_lpd86"]
+[ext_resource type="Script" path="res://agents/agent_waypoint_handler.gd" id="7_26my1"]
+[ext_resource type="PackedScene" uid="uid://b50ox3rfhikx8" path="res://agents/waypoint.tscn" id="8_ado8l"]
+[ext_resource type="Script" path="res://agents/waypoint_lines.gd" id="9_mdr2h"]
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_y5pv7"]
 resource_local_to_scene = true
@@ -66,3 +69,14 @@ disabled = true
 
 [node name="ContextMenu" type="PopupMenu" parent="."]
 size = Vector2i(28, 8)
+
+[node name="waypoints" type="Node" parent="." node_paths=PackedStringArray("parent_object")]
+script = ExtResource("7_26my1")
+parent_object = NodePath("..")
+
+[node name="fake_start" parent="waypoints" instance=ExtResource("8_ado8l")]
+disabled = true
+
+[node name="zzz_waypoint_lines" type="Node2D" parent="waypoints"]
+z_index = -1
+script = ExtResource("9_mdr2h")

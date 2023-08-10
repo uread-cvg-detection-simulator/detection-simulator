@@ -85,6 +85,16 @@ func _on_hold_stop():
 			undo_action.action_property_ref(UndoRedoAction.DoType.Do, ref, "global_position", global_position)
 			undo_action.action_property_ref(UndoRedoAction.DoType.Undo, ref, "global_position", _moving_start_pos)
 
+			# Queue redraw of waypoint lines
+			undo_action.action_method(UndoRedoAction.DoType.Do, func(agent):
+				agent.waypoints.waypoint_lines.queue_redraw()
+				, [ref], ref)
+
+			# Queue redraw of waypoint lines
+			undo_action.action_method(UndoRedoAction.DoType.Undo, func(agent):
+				agent.waypoints.waypoint_lines.queue_redraw()
+				, [ref], ref)
+
 			undo_action.manual_add_item_to_store(self, ref)
 
 			UndoSystem.add_action(undo_action, false)
@@ -92,7 +102,7 @@ func _on_hold_stop():
 
 		_moving_start_pos = null
 
-func _on_mouse(mouse, event):
+func _on_mouse(_mouse, event):
 	if event.is_action_pressed("mouse_menu") and camera != null and clickable:
 		var mouse_pos = get_global_mouse_position()
 		var mouse_rel_pos = mouse_pos - camera.global_position
@@ -105,11 +115,10 @@ func _on_mouse(mouse, event):
 
 func _unhandled_input(event):
 	if event is InputEventMouseMotion and _moving and clickable:
-		var tmp_event: InputEventMouseMotion = event
-
 		self.global_position = get_global_mouse_position()
 
-		# TODO: handle moving other selected nodes in non-exclusive mode
+		waypoints.starting_node.global_position = self.global_position
+		waypoints.waypoint_lines.queue_redraw()
 
 ## Sets the agent id, and calls the relevant signal
 func _set_agent_id(new_agent_id):
@@ -125,6 +134,7 @@ func _set_agent_type(new_agent_type: AgentType):
 			_current_agent._selection_area.disconnect("mouse_hold_start", self._on_hold)
 			_current_agent._selection_area.disconnect("mouse_hold_end", self._on_hold_stop)
 			_current_agent._selection_area.disconnect("mouse_click", self._on_mouse)
+			_current_agent._selection_area.parent_object = null
 
 		# Enable new
 		if new_agent_type != AgentType.Invisible:
@@ -134,6 +144,7 @@ func _set_agent_type(new_agent_type: AgentType):
 			_current_agent._selection_area.connect("mouse_hold_start", self._on_hold)
 			_current_agent._selection_area.connect("mouse_hold_end", self._on_hold_stop)
 			_current_agent._selection_area.connect("mouse_click", self._on_mouse)
+			_current_agent._selection_area.parent_object = self
 
 			_set_sprite_colour(type_default_colours[new_agent_type])
 		else:

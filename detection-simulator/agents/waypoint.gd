@@ -1,17 +1,110 @@
 class_name Waypoint
 extends Node2D
 
-@onready var pt_next: Node2D = null
-@onready var pt_previous: Node2D = null
+@onready var pt_next: Waypoint = null
+@onready var pt_previous: Waypoint = null
 
-@onready var sprite = $Sprite2D
-@onready var collision_shape = $SelectionArea2D/CollisionPolygon2D
+@onready var _sprite = $Sprite2D
+@onready var _selection_area = $SelectionArea2D
+@onready var _collision_shape = $SelectionArea2D/CollisionPolygon2D
+
+@export var disabled: bool = false : set = _disable
+@export var clickable: bool = true
+
+var parent_object: Agent = null
+
+var initialised = false
 
 # Called when the node enters the scene tree for the first time.
 func _ready():
-	pass # Replace with function body.
+	initialised = true
+
+	if disabled:
+		_disable(disabled)
+
+	# Connect to the selection area's mouse events
+	_selection_area.connect("selection_toggled", self._on_selected)
+	_selection_area.connect("mouse_hold_start", self._on_hold)
+	_selection_area.connect("mouse_hold_end", self._on_hold_stop)
+	#_selection_area.connect("mouse_click", self._on_mouse)
+
+func _on_selected(selected: bool):
+	if initialised:
+		var shader: ShaderMaterial = _sprite.material
+		shader.set_shader_parameter("selected", selected)
+
+var _moving = false ## defines whether the agent is being dragged
+var _moving_start_pos = null
+
+## Handles when mouse is being held
+func _on_hold():
+	_moving = true
+	_moving_start_pos = global_position
+
+## Handles when mouse has stopped being held
+func _on_hold_stop():
+	_moving = false
+
+	if _moving_start_pos:
+		if _moving_start_pos != global_position:
+			var undo_action = UndoRedoAction.new()
+			var agent_id = parent_object.agent_id
+			var waypoint_index = parent_object.waypoints.get_waypoint_index(self)
+
+			undo_action.action_name = "Move Waypoint"
+
+			#######
+			# DO
+			#######
+
+			# Get the agent and waypoint references
+			var agent_ref = undo_action.action_store_method(UndoRedoAction.DoType.Do, TreeFuncs.get_agent_with_id, [agent_id])
+			var waypoint_ref = undo_action.action_store_method(UndoRedoAction.DoType.Do, func(agent, index):
+				return agent.waypoints.waypoints[index]
+				, [agent_ref, waypoint_index], agent_ref)
+
+			# Set the waypoint's global position
+			undo_action.action_property_ref(UndoRedoAction.DoType.Do, waypoint_ref, "global_position", global_position)
+
+			# Queue redraw of waypoint lines
+			undo_action.action_method(UndoRedoAction.DoType.Do, func(agent):
+				agent.waypoints.waypoint_lines.queue_redraw()
+				, [agent_ref], agent_ref)
+
+			#######
+			# UNDO
+			#######
+
+			# Undo the waypoint's global position
+			undo_action.action_property_ref(UndoRedoAction.DoType.Undo, waypoint_ref, "global_position", _moving_start_pos)
 
 
-# Called every frame. 'delta' is the elapsed time since the previous frame.
-func _process(delta):
-	pass
+			# Queue redraw of waypoint lines
+			undo_action.action_method(UndoRedoAction.DoType.Undo, func(agent):
+				agent.waypoints.waypoint_lines.queue_redraw()
+				, [agent_ref], agent_ref)
+
+			# Manually add the agent and waypoint to the store
+			undo_action.manual_add_item_to_store(parent_object, agent_ref)
+			undo_action.manual_add_item_to_store(self, waypoint_ref)
+
+			UndoSystem.add_action(undo_action, false)
+
+
+		_moving_start_pos = null
+
+
+func _unhandled_input(event):
+	if event is InputEventMouseMotion and _moving and clickable:
+		self.global_position = get_global_mouse_position()
+
+		if parent_object:
+			parent_object.waypoints.waypoint_lines.queue_redraw()
+
+
+func _disable(new_disable: bool):
+	if initialised:
+		_collision_shape.disabled = new_disable
+		_sprite.visible = not new_disable
+
+	disabled = new_disable

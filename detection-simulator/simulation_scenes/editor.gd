@@ -2,6 +2,7 @@ extends Node2D
 
 @onready var _rightclick_empty: PopupMenu = $empty_right_click_menu
 @onready var _agent_base: PackedScene = load("res://agents/agent.tscn")
+@onready var _waypoint_base: PackedScene = load("res://agents/waypoint.tscn")
 @onready var _agent_root = $agents
 
 var _agent_list: Array[Agent]
@@ -14,7 +15,8 @@ var _right_click_position = null ## Set to ensure popup menus act on correct mou
 enum empty_menu_enum {
 	SPAWN_AGENT,
 	RETURN_TO_CENTRE,
-	CLEAR_UNDO_HISTORY
+	CLEAR_UNDO_HISTORY,
+	CREATE_WAYPOINT,
 }
 
 # Called when the node enters the scene tree for the first time.
@@ -23,12 +25,19 @@ func _ready():
 
 func _prepare_menu():
 	_rightclick_empty.clear()
-	
+
+	var selected_nodes = get_tree().get_nodes_in_group("selected")
+
+	if len(selected_nodes) == 1:
+		if selected_nodes[0].parent_object is Agent or selected_nodes[0].parent_object is Waypoint:
+			_rightclick_empty.add_item("Create Waypoint", empty_menu_enum.CREATE_WAYPOINT)
+			_rightclick_empty.add_separator()
+
 	_rightclick_empty.add_item("Spawn New Agent", empty_menu_enum.SPAWN_AGENT)
 	_rightclick_empty.add_separator()
 	_rightclick_empty.add_item("Centre Grid", empty_menu_enum.RETURN_TO_CENTRE)
 	_rightclick_empty.add_item("Clear Undo History", empty_menu_enum.CLEAR_UNDO_HISTORY)
-	
+
 	if not _rightclick_empty.is_connected("id_pressed", self._on_empty_menu_press):
 		_rightclick_empty.connect("id_pressed", self._on_empty_menu_press)
 
@@ -76,7 +85,7 @@ func _right_click(event: InputEventMouseButton):
 	var mouse_pos = get_global_mouse_position()
 	var mouse_rel_pos = mouse_pos - $Camera2D.global_position
 	var window_size = get_window().size / 2
-	
+
 	_prepare_menu()
 
 	# Popup the window
@@ -93,6 +102,18 @@ func _on_empty_menu_press(id: int):
 			$Camera2D.set_global_position(Vector2(0, 0))
 		empty_menu_enum.CLEAR_UNDO_HISTORY:
 			UndoSystem.clear_history()
+		empty_menu_enum.CREATE_WAYPOINT:
+			var selected_nodes = get_tree().get_nodes_in_group("selected")
+
+			if len(selected_nodes) == 1:
+				var selected_node = selected_nodes[0].parent_object
+
+				if selected_node is Agent:
+					selected_node.waypoints.insert_after(selected_node.waypoints.starting_node, _right_click_position)
+				elif selected_node is Waypoint:
+					selected_node.parent_object.waypoints.insert_after(selected_node, _right_click_position)
+			else:
+				print_debug("Inconsistend Edit State")
 
 func spawn_agent(position: Vector2):
 	var undo_action = UndoRedoAction.new()
@@ -104,8 +125,7 @@ func spawn_agent(position: Vector2):
 
 	# Create the new agent at the provided location
 	var newinstance_ref = undo_action.action_store_method(UndoRedoAction.DoType.Do, _agent_base.instantiate)
-	var duplicate_ref = undo_action.action_store_object_call_ref(UndoRedoAction.DoType.Do, newinstance_ref, "duplicate")
-	undo_action.action_remove_item(UndoRedoAction.DoType.Do, newinstance_ref)
+	var duplicate_ref = newinstance_ref
 
 	# Set position and agent id
 	undo_action.action_property_ref(UndoRedoAction.DoType.Do, duplicate_ref, "global_position", position)
