@@ -4,15 +4,18 @@ extends RefCounted
 enum ActionType {
 	METHOD,
 	PROPERTY,
-	CREATE_REF,
-	CREATE_ARGS_REF,
-	CREATE_METHOD_REF,
-	METHOD_REF,
-	METHOD_ARGS_REF,
+
+	STORE_METHOD,
+
 	PROPERTY_REF,
-	REMOVE_REF,
+
 	OBJECT_CALL,
 	OBJECT_CALL_REF,
+
+	STORE_OBJECT_CALL,
+	STORE_OBJECT_CALL_REF,
+
+	REMOVE_REF,
 	UNSET,
 }
 
@@ -20,124 +23,214 @@ var _action_type: ActionType = ActionType.UNSET
 var _action_properties: Array = []
 var _item_store: UndoRedoItemStore = null
 
+func _duplicate(array):
+
+	if array is Array:
+		var new_array = []
+		for item in array:
+			if item is String:
+				var new_string = item
+				new_array.append(new_string)
+			elif item is Array:
+				new_array.append(_duplicate(item))
+			else:
+				new_array.append(item)
+		return new_array
+	else:
+		return array
+
 ## Call a method
-func set_method(method: Callable):
+##
+## arg_refs is a list of references to items in the item store
+##          if found in the list of args, they will be replaced with the item
+func set_method(method: Callable, args: Array = [], arg_refs = []):
 	_action_type = ActionType.METHOD
-	_action_properties = [method]
+	_action_properties = [method, _duplicate(args), _duplicate(arg_refs)]
 
 ## Set a Property
 func set_property(object: Object, property_name: String, value):
 	_action_type = ActionType.PROPERTY
-	_action_properties = [object, property_name, value]
+	_action_properties = [object, property_name, _duplicate(value)]
 
+## Run a method and store the output in the item store
+##
+## arg_refs is a list of references to items in the item store
+##          if found in the list of args, they will be replaced with the item
+func set_store_method(method: Callable, args: Array, arg_refs = []) -> String:
+	_action_type = ActionType.STORE_METHOD
+
+	var new_ref = Uuid.v4()
+	_action_properties = [new_ref, method, _duplicate(args), _duplicate(arg_refs)]
+
+	return new_ref
+
+## Set the property of an item in the item store
 func set_property_ref(ref: String, property_name: String, value):
 	_action_type = ActionType.PROPERTY_REF
-	_action_properties = [ref, property_name, value]
+	_action_properties = [ref, property_name, _duplicate(value)]
 
-## Run a method that returns items into a temporary item store for this action
-func set_create_ref(method: Callable) -> String:
-	_action_type = ActionType.CREATE_REF
+
+## Call a method on an object
+## WARNING: This will crash if the object is deleted
+##
+## arg_refs is a list of references to items in the item store
+##          if found in the list of args, they will be replaced with the item
+func set_object_call(object: Object, method: String, args: Array = [], arg_refs = []):
+	_action_type = ActionType.OBJECT_CALL
+	_action_properties = [object, method, _duplicate(args), _duplicate(arg_refs)]
+
+## Call a method on an object in the item store
+##
+## arg_refs is a list of references to items in the item store
+##          if found in the list of args, they will be replaced with the item
+func set_object_call_ref(ref: String, method: String, args: Array = [], arg_refs = []):
+	_action_type = ActionType.OBJECT_CALL_REF
+	_action_properties = [ref, method, _duplicate(args), _duplicate(arg_refs)]
+
+## Call a method on an object and store the output in the item store
+## WARNING: This will crash if the object is deleted
+##
+## arg_refs is a list of references to items in the item store
+##          if found in the list of args, they will be replaced with the item
+func set_store_object_call(object: Object, method: String, args: Array = [], arg_refs = []) -> String:
+	_action_type = ActionType.STORE_OBJECT_CALL
 
 	var new_ref = Uuid.v4()
-	_action_properties = [new_ref, method]
+	_action_properties = [new_ref, object, method, _duplicate(args), _duplicate(arg_refs)]
 
 	return new_ref
 
-## Run a method on an item store reference, and store it's output as a new reference
-func set_create_args_ref(method: Callable, args: Array) -> String:
-	_action_type = ActionType.CREATE_ARGS_REF
+## Call a method on an object in the item store and store the output in the item store
+##
+## arg_refs is a list of references to items in the item store
+##  		if found in the list of args, they will be replaced with the item
+func set_store_object_call_ref(ref: String, method: String, args: Array = [], arg_refs = []) -> String:
+	_action_type = ActionType.STORE_OBJECT_CALL_REF
 
 	var new_ref = Uuid.v4()
-	_action_properties = [new_ref, method, args]
+	_action_properties = [new_ref, ref, method, _duplicate(args), _duplicate(arg_refs)]
 
 	return new_ref
-
-## Run a method on an item store reference, and store it's output as a new reference
-func set_create_method_ref(ref: String, method: Callable) -> String:
-	_action_type = ActionType.CREATE_METHOD_REF
-
-	var new_ref = Uuid.v4()
-	_action_properties = [new_ref, ref, method]
-
-	return new_ref
-
-## Call a method with one argument with the object in the item store
-## e.g. use a func/lambda to call the correct method
-func set_method_ref(ref: String, method: Callable):
-	_action_type = ActionType.METHOD_REF
-	_action_properties = [ref, method]
-
-## Call a method and replace the 'ref' in args with the object stored
-## in the item store
-## e.g. set_method_with_ref(reference, my_method, [ arg_1, arg_2, reference ])
-##   -> my_method(arg_1, arg_2, referenced_object)
-func set_method_with_ref(ref: String, method: Callable, args: Array):
-	_action_type = ActionType.METHOD_ARGS_REF
-	_action_properties = [ref, method, args]
 
 ## Remove an item from the item store
-func set_remove_ref(ref: String):
+func set_remove_item(ref: String):
 	_action_type = ActionType.REMOVE_REF
 	_action_properties = [ref]
 
-func set_object_call(object: Object, method: String, args: Array = []):
-	_action_type = ActionType.OBJECT_CALL
-	_action_properties = [object, method, args]
+## Finds the items in the item store and replaces the args with the items
+## refs can be a list of strings or a single string
+func _replace_args_with_ref(args: Array, refs):
+	var new_args = args.duplicate()
 
-func set_object_call_ref(ref: String, method: String, args: Array = []):
-	_action_type = ActionType.OBJECT_CALL_REF
-	_action_properties = [ref, method, args]
+	if refs is String:
+		refs = [refs]
+
+	for ref in refs:
+		var index = new_args.find(ref)
+		if index != -1:
+			new_args[index] = _item_store.get_from_store(ref)
+
+	return new_args
+
 
 ## Run the action
 func run():
+	#print_debug("Running action: " + str(_action_type) + " " + str(_action_properties))
 	match _action_type:
 		ActionType.METHOD:
-			_action_properties[0].call()
+			# 0 = method
+			# 1 = args
+			# 2 = arg refs
+			if _action_properties[1].size() == 0:
+				_action_properties[0].call()
+			else:
+				var args = _replace_args_with_ref(_action_properties[1], _action_properties[2])
+				_action_properties[0].callv(args)
 		ActionType.PROPERTY:
+			# 0 = object
+			# 1 = property name
+			# 2 = value
 			_action_properties[0].set(_action_properties[1], _action_properties[2])
+		ActionType.STORE_METHOD:
+			# 0 = output ref
+			# 1 = method
+			# 2 = args
+			# 3 = arg refs
+			if _item_store:
+				# If no args, just call the method
+				# If args, replace the args with the items in the item store
+				var result = null
+				if _action_properties[2].size() == 0:
+					result = _action_properties[1].call()
+				else:
+					var args = _replace_args_with_ref(_action_properties[2], _action_properties[3])
+					result = _action_properties[1].callv(args)
+
+				_item_store.add_to_store(_action_properties[0], result)
 		ActionType.PROPERTY_REF:
+			# 0 = ref
+			# 1 = property name
+			# 2 = value
 			if _item_store:
 				var item = _item_store.get_from_store(_action_properties[0])
 				item.set(_action_properties[1], _action_properties[2])
-		ActionType.CREATE_REF:
-			if _item_store:
-				var item = _action_properties[1].call()
-				_item_store.add_to_store(_action_properties[0], item)
-		ActionType.CREATE_ARGS_REF:
-			if _item_store:
-				var item = _action_properties[1].callv(_action_properties[2])
-				_item_store.add_to_store(_action_properties[0], item)
-		ActionType.CREATE_METHOD_REF:
-			if _item_store:
-				var item = _item_store.get_from_store(_action_properties[1])
-				var new_item = _action_properties[2].call(item)
-				_item_store.add_to_store(_action_properties[0], new_item)
-		ActionType.METHOD_REF:
-			if _item_store:
-				var item = _item_store.get_from_store(_action_properties[0])
-				_action_properties[1].call(item)
-		ActionType.METHOD_ARGS_REF:
-			if _item_store:
-				var item = _item_store.get_from_store(_action_properties[0])
-				var args: Array = _action_properties[1]
-				var args_ref_index = args.find(_action_properties[0])
-
-				if args_ref_index != -1:
-					args[args_ref_index] = item
-
-				_action_properties[2].callv(args)
-		ActionType.REMOVE_REF:
-			if _item_store:
-				_item_store.remove_from_store(_action_properties[0])
 		ActionType.OBJECT_CALL:
-			if _action_properties[2].is_empty():
-				_action_properties[0].call(_action_properties[1])
+			# 0 = object
+			# 1 = method
+			# 2 = args
+			# 3 = arg refs
+			if _item_store:
+				# If no args, just call the method
+				# If args, replace the args with the items in the item store
+				if _action_properties[2].size() == 0:
+					_action_properties[1].call(_action_properties[0])
+				else:
+					var args = _replace_args_with_ref(_action_properties[2], _action_properties[3])
+					_action_properties[1].callv(_action_properties[0], args)
 			else:
-				_action_properties[0].callv(_action_properties[1], _action_properties[2])
+				_action_properties[1].call(_action_properties[0], _action_properties[2])
 		ActionType.OBJECT_CALL_REF:
+			# 0 = ref
+			# 1 = method
+			# 2 = args
+			# 3 = arg refs
 			if _item_store:
 				var item = _item_store.get_from_store(_action_properties[0])
-				if _action_properties[2].is_empty():
+				# If no args, just call the method
+				# If args, replace the args with the items in the item store
+				if _action_properties[2].size() == 0:
 					item.call(_action_properties[1])
 				else:
-					item.callv(_action_properties[1], _action_properties[2])
+					var args = _replace_args_with_ref(_action_properties[2], _action_properties[3])
+					item.callv(_action_properties[1], args)
+		ActionType.STORE_OBJECT_CALL:
+			# 0 = output ref
+			# 1 = object
+			# 2 = method
+			# 3 = args
+			if _item_store:
+				var result = null
+				if _action_properties[3].size() == 0:
+					result = _action_properties[1].call(_action_properties[2])
+				else:
+					var args = _replace_args_with_ref(_action_properties[3], _action_properties[4])
+					result = _action_properties[1].callv(_action_properties[2], args)
+				_item_store.add_to_store(_action_properties[0], result)
+		ActionType.STORE_OBJECT_CALL_REF:
+			# 0 = output ref
+			# 1 = ref
+			# 2 = method
+			# 3 = args
+			if _item_store:
+				var item = _item_store.get_from_store(_action_properties[1])
+				var result = null
+				if _action_properties[3].size() == 0:
+					result = item.call(_action_properties[2])
+				else:
+					var args = _replace_args_with_ref(_action_properties[3], _action_properties[4])
+					result = item.callv(_action_properties[2], args)
+				_item_store.add_to_store(_action_properties[0], result)
+		ActionType.REMOVE_REF:
+			# 0 = ref
+			if _item_store:
+				_item_store.remove_from_store(_action_properties[0])

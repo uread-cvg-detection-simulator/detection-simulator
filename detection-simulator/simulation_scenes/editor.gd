@@ -19,11 +19,18 @@ enum empty_menu_enum {
 
 # Called when the node enters the scene tree for the first time.
 func _ready():
+	_prepare_menu()
+
+func _prepare_menu():
+	_rightclick_empty.clear()
+	
 	_rightclick_empty.add_item("Spawn New Agent", empty_menu_enum.SPAWN_AGENT)
 	_rightclick_empty.add_separator()
 	_rightclick_empty.add_item("Centre Grid", empty_menu_enum.RETURN_TO_CENTRE)
 	_rightclick_empty.add_item("Clear Undo History", empty_menu_enum.CLEAR_UNDO_HISTORY)
-	_rightclick_empty.connect("id_pressed", self._on_empty_menu_press)
+	
+	if not _rightclick_empty.is_connected("id_pressed", self._on_empty_menu_press):
+		_rightclick_empty.connect("id_pressed", self._on_empty_menu_press)
 
 # Called every frame. 'delta' is the elapsed time since the previous frame.
 func _process(delta):
@@ -69,6 +76,8 @@ func _right_click(event: InputEventMouseButton):
 	var mouse_pos = get_global_mouse_position()
 	var mouse_rel_pos = mouse_pos - $Camera2D.global_position
 	var window_size = get_window().size / 2
+	
+	_prepare_menu()
 
 	# Popup the window
 	_rightclick_empty.popup(Rect2i(mouse_rel_pos.x + window_size.x, mouse_rel_pos.y + window_size.y, _rightclick_empty.size.x, _rightclick_empty.size.y))
@@ -87,19 +96,16 @@ func _on_empty_menu_press(id: int):
 
 func spawn_agent(position: Vector2):
 	var undo_action = UndoRedoAction.new()
-	undo_action._action_name = "Spawn Agent %d" % [_last_id + 1]
+	undo_action.action_name = "Spawn Agent %d" % [_last_id + 1]
 
 	############
 	# DO ACTIONS
 	############
 
-	var duplicate_lambda = func(x):
-		return x.duplicate()
-
 	# Create the new agent at the provided location
-	var newinstance_ref = undo_action.action_create_ref(UndoRedoAction.DoType.Do, _agent_base.instantiate)
-	var duplicate_ref = undo_action.action_create_method_ref(UndoRedoAction.DoType.Do, newinstance_ref, duplicate_lambda)
-	undo_action.action_remove_ref(UndoRedoAction.DoType.Do, newinstance_ref)
+	var newinstance_ref = undo_action.action_store_method(UndoRedoAction.DoType.Do, _agent_base.instantiate)
+	var duplicate_ref = undo_action.action_store_object_call_ref(UndoRedoAction.DoType.Do, newinstance_ref, "duplicate")
+	undo_action.action_remove_item(UndoRedoAction.DoType.Do, newinstance_ref)
 
 	# Set position and agent id
 	undo_action.action_property_ref(UndoRedoAction.DoType.Do, duplicate_ref, "global_position", position)
@@ -107,8 +113,8 @@ func spawn_agent(position: Vector2):
 	undo_action.action_property(UndoRedoAction.DoType.Do, self, "_last_id", _last_id + 1)
 
 	# Add to scene tree
-	undo_action.action_method_ref(UndoRedoAction.DoType.Do, duplicate_ref, _agent_root.add_child)
-	undo_action.action_method_ref(UndoRedoAction.DoType.Do, duplicate_ref, func(x): x.add_to_group("agent"))
+	undo_action.action_method(UndoRedoAction.DoType.Do, _agent_root.add_child, [duplicate_ref], duplicate_ref)
+	undo_action.action_object_call_ref(UndoRedoAction.DoType.Do, duplicate_ref, "add_to_group", ["agent"])
 
 	# Set camera
 	undo_action.action_property_ref(UndoRedoAction.DoType.Do, duplicate_ref, "camera", $Camera2D)
@@ -118,16 +124,16 @@ func spawn_agent(position: Vector2):
 	##############
 
 	# Remove from scene tree
-	undo_action.action_method_ref(UndoRedoAction.DoType.Undo, duplicate_ref, self.remove_child)
+	undo_action.action_method(UndoRedoAction.DoType.Undo, _agent_root.remove_child, [duplicate_ref], duplicate_ref)
 
 	# Reset last id
 	undo_action.action_property(UndoRedoAction.DoType.Undo, self, "_last_id", _last_id)
 
 	# Queue Deletion
-	undo_action.action_method_ref(UndoRedoAction.DoType.Undo, duplicate_ref, func(x): x.queue_free())
+	undo_action.action_object_call_ref(UndoRedoAction.DoType.Undo, duplicate_ref, "queue_free")
 
 	# Remove Reference
-	undo_action.action_remove_ref(UndoRedoAction.DoType.Undo, duplicate_ref)
+	undo_action.action_remove_item(UndoRedoAction.DoType.Undo, duplicate_ref)
 
 	########
 	# COMMIT

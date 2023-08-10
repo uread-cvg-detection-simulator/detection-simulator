@@ -18,7 +18,7 @@ func has_redo() -> bool:
 func add_action(new_action: UndoRedoAction, execute: bool = true):
 	if _action_list_pos != len(_action_list) - 1:
 		for action in _action_list.slice(_action_list_pos+1):
-			print_debug("Undo System: Finalising [ %s ]" % action._action_name)
+			print_debug("Undo System: Finalising [ %s ]" % action.action_name)
 			action.final()
 
 		_action_list.resize(_action_list_pos + 1)
@@ -26,13 +26,13 @@ func add_action(new_action: UndoRedoAction, execute: bool = true):
 	if execute:
 		new_action.do()
 
-	print_debug("Undo System: New Action [ %s ]" % new_action._action_name)
+	print_debug("Undo System: New Action [ %s ]" % new_action.action_name)
 	_action_list.append(new_action)
 	_action_list_pos += 1
 
 func undo() -> bool:
 	if _action_list_pos > -1:
-		print_debug("Undo System: Undo [ %s ]" % _action_list[_action_list_pos]._action_name)
+		print_debug("Undo System: Undo [ %s ]" % _action_list[_action_list_pos].action_name)
 		_action_list[_action_list_pos].undo()
 		_action_list_pos -= 1
 
@@ -42,7 +42,7 @@ func undo() -> bool:
 
 func redo() -> bool:
 	if _action_list_pos < len(_action_list) - 1:
-		print_debug("Undo System: Redo [ %s ]" % _action_list[_action_list_pos]._action_name)
+		print_debug("Undo System: Redo [ %s ]" % _action_list[_action_list_pos].action_name)
 		_action_list_pos += 1
 		_action_list[_action_list_pos].do()
 
@@ -52,7 +52,7 @@ func redo() -> bool:
 
 func clear_history():
 	for action in _action_list:
-		print_debug("Undo System: Clearing System - Finalising [ %s ]" % action._action_name)
+		print_debug("Undo System: Clearing System - Finalising [ %s ]" % action.action_name)
 		action.final()
 
 	_action_list = []

@@ -55,7 +55,11 @@ func _set_sprite_colour(new_colour: Color):
 ## Handles when agent is selected
 func _on_selected(selected: bool):
 	if initialised and _current_agent != null:
-		print_debug("Agent %d selected" % [agent_id])
+		if selected:
+			print_debug("Agent %d selected" % [agent_id])
+		else:
+			print_debug("Agent %d deselected" % [agent_id])
+
 		_current_agent.material.set_shader_parameter("selected", selected)
 
 var _moving = false ## defines whether the agent is being dragged
@@ -71,17 +75,20 @@ func _on_hold_stop():
 	_moving = false
 
 	if _moving_start_pos:
-		var undo_action = UndoRedoAction.new()
-		undo_action._action_name = "Move Agent %d" % agent_id
+		if _moving_start_pos != global_position:
+			var undo_action = UndoRedoAction.new()
+
+			undo_action.action_name = "Move Agent %d" % agent_id
 
 
-		var ref = undo_action.action_create_args_ref(UndoRedoAction.DoType.Do, TreeFuncs.get_agent_with_id, [agent_id])
-		undo_action.action_property_ref(UndoRedoAction.DoType.Do, ref, "global_position", global_position)
-		undo_action.action_property_ref(UndoRedoAction.DoType.Undo, ref, "global_position", _moving_start_pos)
+			var ref = undo_action.action_store_method(UndoRedoAction.DoType.Do, TreeFuncs.get_agent_with_id, [agent_id])
+			undo_action.action_property_ref(UndoRedoAction.DoType.Do, ref, "global_position", global_position)
+			undo_action.action_property_ref(UndoRedoAction.DoType.Undo, ref, "global_position", _moving_start_pos)
 
-		UndoSystem.add_action(undo_action, false)
+			undo_action.manual_add_item_to_store(self, ref)
 
-		undo_action._item_store.add_to_store(ref, self)
+			UndoSystem.add_action(undo_action, false)
+
 
 		_moving_start_pos = null
 
@@ -137,7 +144,7 @@ func _set_agent_type(new_agent_type: AgentType):
 func _set_disabled(new_value: bool):
 	if _current_agent != null:
 		_current_agent.disabled = new_value
-	
+
 	disabled = new_value
 	visible = not new_value
 
@@ -150,18 +157,18 @@ func _context_menu(id: ContextMenuIDs):
 		ContextMenuIDs.DELETE:
 			print_debug("Deleted Agent %d" % [agent_id])
 			var undo_action = UndoRedoAction.new()
-			undo_action._action_name = "Deleted Agent %d" % [agent_id]
-			
-			var ref = undo_action.action_create_args_ref(UndoRedoAction.DoType.Do, TreeFuncs.get_agent_with_id, [agent_id])
-			undo_action._item_store.add_to_store(ref, self)
-			
+			undo_action.action_name = "Deleted Agent %d" % [agent_id]
+
+			var ref = undo_action.action_store_method(UndoRedoAction.DoType.Do, TreeFuncs.get_agent_with_id, [agent_id])
+			undo_action.manual_add_item_to_store(self, ref)
+
 			undo_action.action_object_call_ref(UndoRedoAction.DoType.Do, ref, "remove_from_group", ["agent"])
 			undo_action.action_property_ref(UndoRedoAction.DoType.Do, ref, "disabled", true)
-			
+
 			undo_action.action_property_ref(UndoRedoAction.DoType.Undo, ref, "disabled", false)
 			undo_action.action_object_call_ref(UndoRedoAction.DoType.Undo, ref, "add_to_group", ["agent"])
-			
+
 			undo_action.action_object_call_ref(UndoRedoAction.DoType.OnRemoval, ref, "_free_if_not_in_group")
-			
+
 			UndoSystem.add_action(undo_action)
 
