@@ -107,11 +107,14 @@ func _on_empty_menu_press(id: int):
 
 			if len(selected_nodes) == 1:
 				var selected_node = selected_nodes[0].parent_object
+				var new_waypoint = null
 
 				if selected_node is Agent:
-					selected_node.waypoints.insert_after(selected_node.waypoints.starting_node, _right_click_position)
+					new_waypoint = selected_node.waypoints.insert_after(selected_node.waypoints.starting_node, _right_click_position)
 				elif selected_node is Waypoint:
-					selected_node.parent_object.waypoints.insert_after(selected_node, _right_click_position)
+					new_waypoint = selected_node.parent_object.waypoints.insert_after(selected_node, _right_click_position)
+
+				new_waypoint._selection_area.selected = true
 			else:
 				print_debug("Inconsistend Edit State")
 
@@ -160,4 +163,6 @@ func spawn_agent(position: Vector2):
 	########
 
 	UndoSystem.add_action(undo_action)
+
+	TreeFuncs.get_agent_with_id(_last_id)._current_agent._selection_area.selected = true
 

@@ -146,7 +146,7 @@ func get_waypoint_index(waypoint: Waypoint):
 
 	return -1
 
-func add_to_end(new_global_point: Vector2):
+func add_to_end(new_global_point: Vector2) -> Waypoint:
 	# Get the end point of the array to use as a link
 	var previous_point = waypoints[-1] if not waypoints.is_empty() else starting_node
 
@@ -221,6 +221,8 @@ func add_to_end(new_global_point: Vector2):
 	)
 
 	UndoSystem.add_action(undo_action, false)
+	
+	return new_waypoint
 
 
 func _get_insert_pos(current_point: Waypoint) -> Array:
@@ -242,7 +244,7 @@ func _get_insert_pos(current_point: Waypoint) -> Array:
 
 	return [insert_pos, next_point]
 
-func insert_after(current_point: Waypoint, new_global_point: Vector2) -> bool:
+func insert_after(current_point: Waypoint, new_global_point: Vector2) -> Waypoint:
 
 	var rv = _get_insert_pos(current_point)
 
@@ -250,11 +252,10 @@ func insert_after(current_point: Waypoint, new_global_point: Vector2) -> bool:
 	var next_point: Waypoint = rv[1]
 
 	if insert_pos == -1:
-		return false
+		return null
 
 	if next_point == null:
-		add_to_end(new_global_point)
-		return true
+		return add_to_end(new_global_point)
 
 	var new_waypoint = _instantiate_waypoint(new_global_point, current_point, next_point)
 	waypoints.insert(insert_pos, new_waypoint)
@@ -334,7 +335,7 @@ func insert_after(current_point: Waypoint, new_global_point: Vector2) -> bool:
 
 	UndoSystem.add_action(undo_action, false)
 
-	return true
+	return new_waypoint
 
 func _instantiate_waypoint(new_global_point: Vector2, previous_point: Waypoint, next_point: Waypoint):
 	print_debug("Instantiating waypoint at %s [%s -> %s]" % [new_global_point, previous_point, next_point])
