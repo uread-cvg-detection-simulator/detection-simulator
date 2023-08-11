@@ -183,3 +183,5 @@ func _context_menu(id: ContextMenuIDs):
 
 			UndoSystem.add_action(undo_action)
 
+func reset_position():
+	global_position = waypoints.starting_node.global_position
