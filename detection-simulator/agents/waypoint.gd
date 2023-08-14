@@ -11,9 +11,17 @@ extends Node2D
 @export var disabled: bool = false : set = _disable
 @export var clickable: bool = true
 
+@onready var context_menu = $ContextMenu
+
+enum ContextMenuIDs {
+	DELETE
+}
+
 var parent_object: Agent = null
 
 var initialised = false
+@export var camera: Camera2D = null
+
 
 # Called when the node enters the scene tree for the first time.
 func _ready():
@@ -26,7 +34,27 @@ func _ready():
 	_selection_area.connect("selection_toggled", self._on_selected)
 	_selection_area.connect("mouse_hold_start", self._on_hold)
 	_selection_area.connect("mouse_hold_end", self._on_hold_stop)
-	#_selection_area.connect("mouse_click", self._on_mouse)
+	_selection_area.connect("mouse_click", self._on_mouse)
+
+	context_menu.add_item("Delete Waypoint", ContextMenuIDs.DELETE)
+	context_menu.connect("id_pressed", self._context_menu_id_pressed)
+
+func _context_menu_id_pressed(id: ContextMenuIDs):
+	match id:
+		ContextMenuIDs.DELETE:
+			parent_object.waypoints.delete_waypoint(self)
+
+func _on_mouse(_mouse, event):
+	print_debug("Waypoint mouse event: %s" % event)
+	if event.is_action_pressed("mouse_menu") and camera != null and clickable:
+		var mouse_pos = get_global_mouse_position()
+		var mouse_rel_pos = mouse_pos - camera.global_position
+		var window_size = get_window().size / 2
+
+		# Popup the window
+		context_menu.popup(Rect2i(mouse_rel_pos.x + window_size.x, mouse_rel_pos.y + window_size.y, context_menu.size.x, context_menu.size.y))
+
+		print_debug("Right click on waypoint at (%.2f, %.2f)" % [float(mouse_pos.x) / 64, - float(mouse_pos.y) / 64])
 
 func _on_selected(selected: bool):
 	if initialised:

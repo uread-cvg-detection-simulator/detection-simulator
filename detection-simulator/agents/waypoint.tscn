@@ -2,11 +2,10 @@
 
 [ext_resource type="Script" path="res://agents/waypoint.gd" id="1_30dly"]
 [ext_resource type="Texture2D" uid="uid://fylxeh8wul6h" path="res://agents/waypoints.png" id="1_xxqei"]
-[ext_resource type="PackedScene" path="res://agents/SelectionArea2D.tscn" id="2_0g68e"]
+[ext_resource type="PackedScene" uid="uid://c5r11cmhlqudb" path="res://agents/SelectionArea2D.tscn" id="2_0g68e"]
 [ext_resource type="Shader" path="res://agents/agent-colour.gdshader" id="2_jehr5"]
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_klwl4"]
-resource_local_to_scene = true
 shader = ExtResource("2_jehr5")
 shader_parameter/new_colour = Vector4(1, 1, 1, 1)
 shader_parameter/selected = false
@@ -23,3 +22,6 @@ parent_object = NodePath("..")
 
 [node name="CollisionPolygon2D" type="CollisionPolygon2D" parent="SelectionArea2D"]
 polygon = PackedVector2Array(0, -5, 10, -15, 15, -15, 15, -10, 5, 0, 15, 10, 15, 15, 10, 15, 0, 5, -10, 15, -15, 15, -15, 10, -5, 0, -15, -10, -15, -15, -10, -15)
+
+[node name="ContextMenu" type="PopupMenu" parent="."]
+size = Vector2i(28, 8)

@@ -10,7 +10,15 @@ var waypoint_scene = preload("res://agents/waypoint.tscn")
 @export var link_line_size = 5.0
 @export var link_line_colour = Color(0.0, 0.0, 0.0, 1.0)
 
+@export var camera: Camera2D = null : set = _set_camera
+
+var initialised = false
+
 func _ready():
+	initialised = true
+
+	_set_camera(camera)
+
 	# Set the starting node
 	starting_node.global_position = parent_object.global_position
 
@@ -24,10 +32,10 @@ func is_empty():
 func delete_waypoint(del_point: Waypoint):
 
 	var current_point_index = get_waypoint_index(del_point)
-	var previous_point_index = current_point_index - 1 if current_point_index > 0 else null
+	var previous_point_index = current_point_index - 1 if current_point_index > 0 else -1
 	var next_point_index = current_point_index + 1 if current_point_index < len(waypoints) - 1 else null
 
-	if previous_point_index == null or next_point_index == null:
+	if previous_point_index == null and next_point_index == null:
 		print_debug("Error: Could not find previous or next point")
 		return
 
@@ -44,19 +52,19 @@ func delete_waypoint(del_point: Waypoint):
 	undo_action.manual_add_item_to_store(parent_object, undo_agent_ref)
 
 	# Get the waypoints
-	var current_point_ref = undo_action.action_store_method(UndoRedoAction.DoType.Do, func(x):
-		return x.waypoints.waypoints[current_point_index]
-		, [undo_agent_ref], undo_agent_ref
+	var current_point_ref = undo_action.action_store_method(UndoRedoAction.DoType.Do, func(x, curr_point_index):
+		return x.waypoints.waypoints[curr_point_index]
+		, [undo_agent_ref, current_point_index], undo_agent_ref
 	)
 
-	var previous_point_ref = undo_action.action_store_method(UndoRedoAction.DoType.Do, func(x):
-		return x.waypoints.waypoints[previous_point_index] if previous_point_index != null else null
-		, [undo_agent_ref], undo_agent_ref
+	var previous_point_ref = undo_action.action_store_method(UndoRedoAction.DoType.Do, func(x, prev_point_index):
+		return x.waypoints.waypoints[prev_point_index] if prev_point_index != null and prev_point_index != -1 else x.waypoints.starting_node
+		, [undo_agent_ref, previous_point_index], undo_agent_ref
 	)
 
-	var next_point_ref = undo_action.action_store_method(UndoRedoAction.DoType.Do, func(x):
-		return x.waypoints.waypoints[next_point_index] if next_point_index != null else null
-		, [undo_agent_ref], undo_agent_ref
+	var next_point_ref = undo_action.action_store_method(UndoRedoAction.DoType.Do, func(x, nxt_point_index):
+		return x.waypoints.waypoints[nxt_point_index] if nxt_point_index != null else null
+		, [undo_agent_ref, next_point_index], undo_agent_ref
 	)
 
 	# Update the links in the points
@@ -81,7 +89,7 @@ func delete_waypoint(del_point: Waypoint):
 	# Disable point's visibility
 	undo_action.action_method(UndoRedoAction.DoType.Do, func(current_point):
 		current_point.disabled = true
-		, [current_point_ref]
+		, [current_point_ref], current_point_ref
 	)
 
 
@@ -117,7 +125,7 @@ func delete_waypoint(del_point: Waypoint):
 	# Enable point's visibility
 	undo_action.action_method(UndoRedoAction.DoType.Undo, func(current_point):
 		current_point.disabled = false
-		, [current_point_ref]
+		, [current_point_ref], current_point_ref
 	)
 
 	# Queue redraw
@@ -221,7 +229,7 @@ func add_to_end(new_global_point: Vector2) -> Waypoint:
 	)
 
 	UndoSystem.add_action(undo_action, false)
-	
+
 	return new_waypoint
 
 
@@ -258,6 +266,8 @@ func insert_after(current_point: Waypoint, new_global_point: Vector2) -> Waypoin
 		return add_to_end(new_global_point)
 
 	var new_waypoint = _instantiate_waypoint(new_global_point, current_point, next_point)
+	new_waypoint.camera = camera
+
 	waypoints.insert(insert_pos, new_waypoint)
 
 	# Queue line redraw
@@ -341,6 +351,7 @@ func _instantiate_waypoint(new_global_point: Vector2, previous_point: Waypoint, 
 	print_debug("Instantiating waypoint at %s [%s -> %s]" % [new_global_point, previous_point, next_point])
 	var new_waypoint: Node2D = waypoint_scene.instantiate()
 	new_waypoint.global_position = new_global_point
+	new_waypoint.camera = camera
 
 	if parent_object:
 		new_waypoint.parent_object = parent_object
@@ -357,3 +368,9 @@ func _instantiate_waypoint(new_global_point: Vector2, previous_point: Waypoint, 
 
 	return new_waypoint
 
+func _set_camera(new_camera):
+	camera = new_camera
+
+	# Cycle through all waypoints and set the camera
+	for waypoint in waypoints:
+		waypoint.camera = new_camera

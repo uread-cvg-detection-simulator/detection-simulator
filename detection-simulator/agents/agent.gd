@@ -1,7 +1,7 @@
 class_name Agent
 extends Node2D
 
-@onready var camera: Camera2D = null
+@onready var camera: Camera2D = null : set = _set_camera ## The camera to use for the mouse position
 @export var colour: Color = Color.WHITE : set = _set_sprite_colour ## The colour of the target
 @export var clickable: bool = true
 
@@ -36,6 +36,7 @@ func _ready():
 	initialised = true
 
 	_set_agent_type(agent_type)
+	_set_camera(camera)
 
 	# Create menu items and connect
 	context_menu.add_item("Delete Agent", ContextMenuIDs.DELETE)
@@ -44,6 +45,12 @@ func _ready():
 # Called every frame. 'delta' is the elapsed time since the previous frame.
 func _process(delta):
 	pass
+
+func _set_camera(new_camera: Camera2D):
+	camera = new_camera
+
+	if initialised:
+		waypoints.camera = camera
 
 ## Sets the colour of the target sprite (replaces the white with whichever colour is passed in the argument)
 func _set_sprite_colour(new_colour: Color):
