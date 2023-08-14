@@ -31,6 +31,13 @@ enum ContextMenuIDs {
 var initialised: bool = false ## Specifies whether the module is initialised
 var disabled: bool = false : set = _set_disabled ## Disables everything internally
 
+var playing_next_move_time: float = 0.0 ## The time at which the next move will be played
+var playing_waypoint: Waypoint = null ## The waypoint that the agent is currently moving towards
+var playing_target: Vector2 = Vector2.INF ## The target position of the next move
+var playing_speed: float = 1.0 ## The speed at which the agent will move
+var playing_finished: bool = false ## Specifies whether the agent has finished playing
+var playing = false
+
 # Called when the node enters the scene tree for the first time.
 func _ready():
 	initialised = true
@@ -41,6 +48,56 @@ func _ready():
 	# Create menu items and connect
 	context_menu.add_item("Delete Agent", ContextMenuIDs.DELETE)
 	context_menu.connect("id_pressed", self._context_menu)
+
+	PlayTimer.connect("start_playing", self._start_playing)
+	PlayTimer.connect("stop_playing", self._stop_playing)
+
+func _update_target_information(waypoint: Waypoint):
+	var current_time = PlayTimer.current_time
+
+	if waypoint.param_start_time:
+		# If waypoint has a start time parameter, set the playing_next_move_time to that
+		playing_next_move_time = waypoint.param_start_time
+	elif waypoint.param_wait_time:
+		# Calculate the time at which the next move will be played
+		playing_next_move_time = current_time + waypoint.param_wait_time
+
+	playing_target = waypoint.global_position
+	playing_speed = waypoint.param_speed_mps * 64.0 # TODO: get this from grid-lines
+	playing_waypoint = waypoint
+
+
+## Start pathing through the waypoints
+func _start_playing():
+	if not disabled:
+		_update_target_information(waypoints.starting_node)
+		playing = true
+		clickable = false
+
+## Resets agent's playing parameters and position
+func _stop_playing():
+	playing_next_move_time = 0.0
+	playing_target = Vector2.INF
+	playing_speed = 1.0
+	playing = false
+	clickable = true
+
+	global_position = waypoints.starting_node.global_position
+
+func _physics_process(delta):
+	if not disabled:
+		if playing and playing_next_move_time < PlayTimer.current_time:
+			# Update position
+			# TODO: use navigation system
+			global_position = global_position.move_toward(playing_target, playing_speed * delta)
+
+			# If reached target, update target information with next waypoint if there is one
+			if global_position == playing_target:
+				if playing_waypoint.pt_next:
+					_update_target_information(playing_waypoint.pt_next)
+				else:
+					playing_finished = true
+					playing = false
 
 # Called every frame. 'delta' is the elapsed time since the previous frame.
 func _process(delta):

@@ -17,6 +17,10 @@ enum ContextMenuIDs {
 	DELETE
 }
 
+var param_speed_mps = 1.42
+var param_start_time = null
+var param_wait_time = null
+
 var parent_object: Agent = null
 
 var initialised = false
