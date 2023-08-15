@@ -4,6 +4,7 @@ extends Node2D
 @onready var _agent_base: PackedScene = load("res://agents/agent.tscn")
 @onready var _waypoint_base: PackedScene = load("res://agents/waypoint.tscn")
 @onready var _agent_root = $agents
+@onready var _play_button = $CanvasLayer/PanelContainer/HBoxContainer/Button
 
 var _agent_list: Array[Agent]
 
@@ -118,6 +119,8 @@ func _on_empty_menu_press(id: int):
 			else:
 				print_debug("Inconsistend Edit State")
 
+
+## Spawn a new agent at the provided position
 func spawn_agent(position: Vector2):
 	var undo_action = UndoRedoAction.new()
 	undo_action.action_name = "Spawn Agent %d" % [_last_id + 1]
@@ -166,3 +169,11 @@ func spawn_agent(position: Vector2):
 
 	TreeFuncs.get_agent_with_id(_last_id)._current_agent._selection_area.selected = true
 
+## Start playing
+func _on_play_button_pressed():
+	PlayTimer.play = not PlayTimer.play
+
+	if PlayTimer.play:
+		_play_button.text = "Stop"
+	else:
+		_play_button.text = "Play"
