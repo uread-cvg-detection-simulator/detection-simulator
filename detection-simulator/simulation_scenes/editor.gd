@@ -5,6 +5,7 @@ extends Node2D
 @onready var _waypoint_base: PackedScene = load("res://agents/waypoint.tscn")
 @onready var _agent_root = $agents
 @onready var _play_button = $CanvasLayer/PanelContainer/HBoxContainer/Button
+@onready var _status_label = $CanvasLayer/PanelContainer/HBoxContainer/StatusInfo
 
 var _agent_list: Array[Agent]
 
@@ -44,7 +45,18 @@ func _prepare_menu():
 
 # Called every frame. 'delta' is the elapsed time since the previous frame.
 func _process(delta):
-	pass
+	if PlayTimer.play:
+		var agents: Array = get_tree().get_nodes_in_group("agent")
+		var finished_agents = 0
+		
+		for agent in agents:
+			if agent.playing_finished:
+				finished_agents += 1
+		
+		var new_status_label_text = "%d agent(s) moving - %d finished" % [len(agents) - finished_agents, finished_agents]
+		
+		_status_label.text = new_status_label_text
+
 
 func _unhandled_input(event):
 	# Handle scrolling and empty context menu if no object is hovered
@@ -60,18 +72,19 @@ func _unhandled_input(event):
 			# Handle Menu
 			_right_click(event)
 
-	# Stop scrolling if mouse is released
-	if _scrolling and event.is_action_released("mouse_selected"):
-		_scrolling = false
+	if not PlayTimer.play:
+		# Stop scrolling if mouse is released
+		if _scrolling and event.is_action_released("mouse_selected"):
+			_scrolling = false
 
-	# Handle Undo System
-	if event.is_action_pressed("ui_undo"):
-		if UndoSystem.has_undo():
-			UndoSystem.undo()
+		# Handle Undo System
+		if event.is_action_pressed("ui_undo"):
+			if UndoSystem.has_undo():
+				UndoSystem.undo()
 
-	if event.is_action_pressed("ui_redo"):
-		if UndoSystem.has_redo():
-			UndoSystem.redo()
+		if event.is_action_pressed("ui_redo"):
+			if UndoSystem.has_redo():
+				UndoSystem.redo()
 
 	# Move the position of the mouse relative to the mouse
 	if event is InputEventMouseMotion and _scrolling:
@@ -177,3 +190,4 @@ func _on_play_button_pressed():
 		_play_button.text = "Stop"
 	else:
 		_play_button.text = "Play"
+		_status_label.text = "Nothing to report"

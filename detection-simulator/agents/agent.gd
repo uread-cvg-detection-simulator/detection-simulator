@@ -79,6 +79,7 @@ func _stop_playing():
 	playing_next_move_time = 0.0
 	playing_target = Vector2.INF
 	playing_speed = 1.0
+	playing_finished = false
 	playing = false
 	clickable = true
 
