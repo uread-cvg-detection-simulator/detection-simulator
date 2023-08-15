@@ -73,6 +73,7 @@ func _start_playing():
 		_update_target_information(waypoints.starting_node)
 		playing = true
 		clickable = false
+		waypoints.clickable = false
 
 ## Resets agent's playing parameters and position
 func _stop_playing():
@@ -84,6 +85,7 @@ func _stop_playing():
 	clickable = true
 
 	global_position = waypoints.starting_node.global_position
+	waypoints.clickable = true
 
 func _physics_process(delta):
 	if not disabled:
@@ -132,8 +134,9 @@ var _moving_start_pos = null
 
 ## Handles when mouse is being held
 func _on_hold():
-	_moving = true
-	_moving_start_pos = global_position
+	if clickable:
+		_moving = true
+		_moving_start_pos = global_position
 
 ## Handles when mouse has stopped being held
 func _on_hold_stop():

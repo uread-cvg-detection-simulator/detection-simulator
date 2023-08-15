@@ -59,23 +59,20 @@ func _process(delta):
 
 
 func _unhandled_input(event):
-	# Handle scrolling and empty context menu if no object is hovered
-	# over by the mouse
-	if get_tree().get_nodes_in_group("mouse_hovered").is_empty():
-		# Start up the scrolling
-		if event.is_action_pressed("mouse_selected"):
-			if not _scrolling:
-				_scrolling = true
-
-		# Launch the empty menu
-		if event.is_action_pressed("mouse_menu"):
-			# Handle Menu
-			_right_click(event)
 
 	if not PlayTimer.play:
-		# Stop scrolling if mouse is released
-		if _scrolling and event.is_action_released("mouse_selected"):
-			_scrolling = false
+		# Handle scrolling and empty context menu if no object is hovered
+		# over by the mouse
+		if get_tree().get_nodes_in_group("mouse_hovered").is_empty():
+			# Start up the scrolling
+			if event.is_action_pressed("mouse_selected"):
+				if not _scrolling:
+					_scrolling = true
+
+			# Launch the empty menu
+			if event.is_action_pressed("mouse_menu"):
+				# Handle Menu
+				_right_click(event)
 
 		# Handle Undo System
 		if event.is_action_pressed("ui_undo"):
@@ -85,6 +82,15 @@ func _unhandled_input(event):
 		if event.is_action_pressed("ui_redo"):
 			if UndoSystem.has_redo():
 				UndoSystem.redo()
+	else:
+		# Start up the scrolling
+		if event.is_action_pressed("mouse_selected"):
+			if not _scrolling:
+				_scrolling = true
+
+	# Stop scrolling if mouse is released
+	if _scrolling and event.is_action_released("mouse_selected"):
+		_scrolling = false
 
 	# Move the position of the mouse relative to the mouse
 	if event is InputEventMouseMotion and _scrolling:

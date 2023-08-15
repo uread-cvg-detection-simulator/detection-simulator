@@ -70,8 +70,9 @@ var _moving_start_pos = null
 
 ## Handles when mouse is being held
 func _on_hold():
-	_moving = true
-	_moving_start_pos = global_position
+	if clickable:
+		_moving = true
+		_moving_start_pos = global_position
 
 ## Handles when mouse has stopped being held
 func _on_hold_stop():

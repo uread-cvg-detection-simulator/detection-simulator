@@ -13,6 +13,7 @@ var waypoint_scene = preload("res://agents/waypoint.tscn")
 @export var camera: Camera2D = null : set = _set_camera
 
 var initialised = false
+var clickable = true : set = _set_clickable
 
 func _ready():
 	initialised = true
@@ -374,3 +375,9 @@ func _set_camera(new_camera):
 	# Cycle through all waypoints and set the camera
 	for waypoint in waypoints:
 		waypoint.camera = new_camera
+
+func _set_clickable(value):
+	clickable = value
+
+	for waypoint in waypoints:
+		waypoint.clickable = clickable
