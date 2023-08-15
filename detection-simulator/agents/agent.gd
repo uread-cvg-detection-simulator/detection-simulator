@@ -42,8 +42,8 @@ var playing = false
 func _ready():
 	initialised = true
 
-	_set_agent_type(agent_type)
 	_set_camera(camera)
+	_set_agent_type(agent_type)
 
 	# Create menu items and connect
 	context_menu.add_item("Delete Agent", ContextMenuIDs.DELETE)
