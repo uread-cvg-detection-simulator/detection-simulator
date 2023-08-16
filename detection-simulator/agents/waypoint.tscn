@@ -6,6 +6,7 @@
 [ext_resource type="Shader" path="res://agents/agent-colour.gdshader" id="2_jehr5"]
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_klwl4"]
+resource_local_to_scene = true
 shader = ExtResource("2_jehr5")
 shader_parameter/new_colour = Vector4(1, 1, 1, 1)
 shader_parameter/selected = false
