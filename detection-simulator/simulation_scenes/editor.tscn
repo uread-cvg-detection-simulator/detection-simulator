@@ -1,8 +1,9 @@
-[gd_scene load_steps=4 format=3 uid="uid://bok4788dfl1al"]
+[gd_scene load_steps=5 format=3 uid="uid://bok4788dfl1al"]
 
 [ext_resource type="Script" path="res://simulation_scenes/editor.gd" id="1_o3h7t"]
 [ext_resource type="Script" path="res://simulation_scenes/camera.gd" id="2_j0bt8"]
-[ext_resource type="PackedScene" uid="uid://djdqjby78q501" path="res://simulation_scenes/grid.tscn" id="3_2o4sa"]
+[ext_resource type="PackedScene" path="res://simulation_scenes/grid.tscn" id="3_2o4sa"]
+[ext_resource type="Script" path="res://simulation_scenes/editor_gui.gd" id="3_fj0mv"]
 
 [node name="editor" type="Node2D"]
 script = ExtResource("1_o3h7t")
@@ -11,8 +12,9 @@ script = ExtResource("1_o3h7t")
 script = ExtResource("2_j0bt8")
 
 [node name="CanvasLayer" type="CanvasLayer" parent="."]
+script = ExtResource("3_fj0mv")
 
-[node name="PanelContainer" type="PanelContainer" parent="CanvasLayer"]
+[node name="PlayBar" type="PanelContainer" parent="CanvasLayer"]
 anchors_preset = 12
 anchor_top = 1.0
 anchor_right = 1.0
@@ -23,23 +25,66 @@ grow_vertical = 0
 size_flags_horizontal = 0
 size_flags_vertical = 8
 
-[node name="HBoxContainer" type="HBoxContainer" parent="CanvasLayer/PanelContainer"]
+[node name="HBoxContainer" type="HBoxContainer" parent="CanvasLayer/PlayBar"]
 layout_mode = 2
 size_flags_horizontal = 0
 
-[node name="Button" type="Button" parent="CanvasLayer/PanelContainer/HBoxContainer"]
+[node name="Button" type="Button" parent="CanvasLayer/PlayBar/HBoxContainer"]
 layout_mode = 2
 text = "Play"
 
-[node name="Status" type="Label" parent="CanvasLayer/PanelContainer/HBoxContainer"]
+[node name="Status" type="Label" parent="CanvasLayer/PlayBar/HBoxContainer"]
 layout_mode = 2
 text = "Status:"
 vertical_alignment = 1
 
-[node name="StatusInfo" type="Label" parent="CanvasLayer/PanelContainer/HBoxContainer"]
+[node name="StatusInfo" type="Label" parent="CanvasLayer/PlayBar/HBoxContainer"]
 layout_mode = 2
 text = "Nothing to report"
 vertical_alignment = 1
+
+[node name="Properties" type="PanelContainer" parent="CanvasLayer"]
+offset_left = 977.0
+offset_right = 1280.0
+offset_bottom = 688.0
+
+[node name="MarginContainer" type="MarginContainer" parent="CanvasLayer/Properties"]
+layout_mode = 2
+theme_override_constants/margin_left = 10
+theme_override_constants/margin_top = 10
+theme_override_constants/margin_right = 10
+theme_override_constants/margin_bottom = 10
+
+[node name="VBoxContainer" type="VBoxContainer" parent="CanvasLayer/Properties/MarginContainer"]
+layout_mode = 2
+
+[node name="PanelContainer" type="PanelContainer" parent="CanvasLayer/Properties/MarginContainer/VBoxContainer"]
+layout_mode = 2
+
+[node name="GridContainer" type="GridContainer" parent="CanvasLayer/Properties/MarginContainer/VBoxContainer/PanelContainer"]
+layout_mode = 2
+columns = 2
+
+[node name="Label" type="Label" parent="CanvasLayer/Properties/MarginContainer/VBoxContainer/PanelContainer/GridContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "Properties"
+vertical_alignment = 1
+
+[node name="Button" type="Button" parent="CanvasLayer/Properties/MarginContainer/VBoxContainer/PanelContainer/GridContainer"]
+layout_mode = 2
+text = "X"
+
+[node name="ScrollContainer" type="ScrollContainer" parent="CanvasLayer/Properties/MarginContainer/VBoxContainer"]
+layout_mode = 2
+size_flags_vertical = 3
+horizontal_scroll_mode = 0
+
+[node name="GridContainer" type="GridContainer" parent="CanvasLayer/Properties/MarginContainer/VBoxContainer/ScrollContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+columns = 2
 
 [node name="empty_right_click_menu" type="PopupMenu" parent="."]
 size = Vector2i(28, 8)
@@ -49,4 +94,5 @@ size = Vector2i(28, 8)
 [node name="grid" parent="." node_paths=PackedStringArray("camera") instance=ExtResource("3_2o4sa")]
 camera = NodePath("../Camera2D")
 
-[connection signal="pressed" from="CanvasLayer/PanelContainer/HBoxContainer/Button" to="." method="_on_play_button_pressed"]
+[connection signal="pressed" from="CanvasLayer/PlayBar/HBoxContainer/Button" to="." method="_on_play_button_pressed"]
+[connection signal="pressed" from="CanvasLayer/Properties/MarginContainer/VBoxContainer/PanelContainer/GridContainer/Button" to="CanvasLayer" method="_on_propeties_button_pressed"]

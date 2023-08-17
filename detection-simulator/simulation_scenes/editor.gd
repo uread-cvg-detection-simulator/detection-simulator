@@ -4,8 +4,8 @@ extends Node2D
 @onready var _agent_base: PackedScene = load("res://agents/agent.tscn")
 @onready var _waypoint_base: PackedScene = load("res://agents/waypoint.tscn")
 @onready var _agent_root = $agents
-@onready var _play_button = $CanvasLayer/PanelContainer/HBoxContainer/Button
-@onready var _status_label = $CanvasLayer/PanelContainer/HBoxContainer/StatusInfo
+@onready var _play_button = $CanvasLayer/PlayBar/HBoxContainer/Button
+@onready var _status_label = $CanvasLayer/PlayBar/HBoxContainer/StatusInfo
 
 var _agent_list: Array[Agent]
 
@@ -48,13 +48,13 @@ func _process(delta):
 	if PlayTimer.play:
 		var agents: Array = get_tree().get_nodes_in_group("agent")
 		var finished_agents = 0
-		
+
 		for agent in agents:
 			if agent.playing_finished:
 				finished_agents += 1
-		
+
 		var new_status_label_text = "%d agent(s) moving - %d finished" % [len(agents) - finished_agents, finished_agents]
-		
+
 		_status_label.text = new_status_label_text
 
 
