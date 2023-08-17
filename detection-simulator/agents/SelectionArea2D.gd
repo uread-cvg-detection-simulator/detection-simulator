@@ -21,8 +21,10 @@ func _set_selected(new_selected: bool):
 	if new_selected:
 		_make_exclusive()
 		add_to_group("selected")
+		GroupHelpers.add_node_to_group(self, "selected")
 	else:
 		remove_from_group("selected")
+		GroupHelpers.remove_node_from_group(self, "selected")
 
 	selected = new_selected
 	emit_signal("selection_toggled", selected)
@@ -77,8 +79,8 @@ func _mouse_held_timeout():
 
 func _mouse_enter():
 	_mouse_hovered = true
-	add_to_group("mouse_hovered")
+	GroupHelpers.add_node_to_group(self, "mouse_hovered")
 
 func _mouse_exit():
 	_mouse_hovered = false
-	remove_from_group("mouse_hovered")
+	GroupHelpers.remove_node_from_group(self, "mouse_hovered")

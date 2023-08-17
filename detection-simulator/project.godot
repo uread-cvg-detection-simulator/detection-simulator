@@ -21,6 +21,7 @@ UndoSystem="*res://global/undo_system/undo_system.gd"
 Uuid="*res://global/uuid.gd"
 TreeFuncs="*res://global/tree_funcs.gd"
 PlayTimer="*res://global/play_timer.gd"
+GroupHelpers="*res://global/group_helpers.gd"
 
 [display]
 

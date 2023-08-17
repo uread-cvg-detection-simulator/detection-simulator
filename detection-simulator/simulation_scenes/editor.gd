@@ -136,7 +136,7 @@ func _on_empty_menu_press(id: int):
 
 				new_waypoint._selection_area.selected = true
 			else:
-				print_debug("Inconsistend Edit State")
+				print_debug("Inconsistent Edit State")
 
 
 ## Spawn a new agent at the provided position
@@ -159,7 +159,7 @@ func spawn_agent(position: Vector2):
 
 	# Add to scene tree
 	undo_action.action_method(UndoRedoAction.DoType.Do, _agent_root.add_child, [duplicate_ref], duplicate_ref)
-	undo_action.action_object_call_ref(UndoRedoAction.DoType.Do, duplicate_ref, "add_to_group", ["agent"])
+	undo_action.action_method(UndoRedoAction.DoType.Do, GroupHelpers.add_node_to_group, [duplicate_ref, "agent"], duplicate_ref)
 
 	# Set camera
 	undo_action.action_property_ref(UndoRedoAction.DoType.Do, duplicate_ref, "camera", $Camera2D)

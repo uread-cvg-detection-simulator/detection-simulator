@@ -241,11 +241,11 @@ func _context_menu(id: ContextMenuIDs):
 			var ref = undo_action.action_store_method(UndoRedoAction.DoType.Do, TreeFuncs.get_agent_with_id, [agent_id])
 			undo_action.manual_add_item_to_store(self, ref)
 
-			undo_action.action_object_call_ref(UndoRedoAction.DoType.Do, ref, "remove_from_group", ["agent"])
+			undo_action.action_method(UndoRedoAction.DoType.Do, GroupHelpers.remove_node_from_group, [ref, "agent"], ref)
 			undo_action.action_property_ref(UndoRedoAction.DoType.Do, ref, "disabled", true)
 
 			undo_action.action_property_ref(UndoRedoAction.DoType.Undo, ref, "disabled", false)
-			undo_action.action_object_call_ref(UndoRedoAction.DoType.Undo, ref, "add_to_group", ["agent"])
+			undo_action.action_method(UndoRedoAction.DoType.Undo, GroupHelpers.add_node_to_group, [ref, "agent"], ref)
 
 			undo_action.action_object_call_ref(UndoRedoAction.DoType.OnRemoval, ref, "_free_if_not_in_group")
 
