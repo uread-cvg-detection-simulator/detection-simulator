@@ -14,7 +14,8 @@ extends Node2D
 @onready var context_menu = $ContextMenu
 
 enum ContextMenuIDs {
-	DELETE
+	DELETE,
+	PROPERTIES,
 }
 
 var param_speed_mps = 1.42
@@ -41,12 +42,16 @@ func _ready():
 	_selection_area.connect("mouse_click", self._on_mouse)
 
 	context_menu.add_item("Delete Waypoint", ContextMenuIDs.DELETE)
+	context_menu.add_item("Properties", ContextMenuIDs.PROPERTIES)
 	context_menu.connect("id_pressed", self._context_menu_id_pressed)
 
 func _context_menu_id_pressed(id: ContextMenuIDs):
 	match id:
 		ContextMenuIDs.DELETE:
 			parent_object.waypoints.delete_waypoint(self)
+		ContextMenuIDs.PROPERTIES:
+			# HACK: Select the waypoint, then the properties dialog will be opened
+			_selection_area.selected = true
 
 func _on_mouse(_mouse, event):
 	print_debug("Waypoint mouse event: %s" % event)

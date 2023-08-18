@@ -23,7 +23,8 @@ var agent_type: AgentType = AgentType.Circle : set = _set_agent_type
 @onready var waypoints = $waypoints
 
 enum ContextMenuIDs {
-	DELETE
+	DELETE,
+	PROPERTIES,
 }
 
 #signal deleted(id) ## Signals when the agent has been manually deletec
@@ -47,6 +48,7 @@ func _ready():
 
 	# Create menu items and connect
 	context_menu.add_item("Delete Agent", ContextMenuIDs.DELETE)
+	context_menu.add_item("Properties", ContextMenuIDs.PROPERTIES)
 	context_menu.connect("id_pressed", self._context_menu)
 
 	PlayTimer.connect("start_playing", self._start_playing)
@@ -54,16 +56,22 @@ func _ready():
 
 func _update_target_information(waypoint: Waypoint):
 	var current_time = PlayTimer.current_time
+	var old_waypoint = playing_waypoint if playing_waypoint else waypoints.starting_node
 
-	if waypoint.param_start_time:
+	if old_waypoint.param_start_time:
 		# If waypoint has a start time parameter, set the playing_next_move_time to that
-		playing_next_move_time = waypoint.param_start_time
-	elif waypoint.param_wait_time:
+		playing_next_move_time = old_waypoint.param_start_time
+	elif old_waypoint.param_wait_time:
 		# Calculate the time at which the next move will be played
-		playing_next_move_time = current_time + waypoint.param_wait_time
+		playing_next_move_time = current_time + old_waypoint.param_wait_time
 
+	# Set the speed from the current waypoint
+	playing_speed = old_waypoint.param_speed_mps * 64.0 # TODO: get this from grid-lines
+
+	# Set the target position
 	playing_target = waypoint.global_position
-	playing_speed = waypoint.param_speed_mps * 64.0 # TODO: get this from grid-lines
+
+	# Update the current waypoint
 	playing_waypoint = waypoint
 
 
@@ -250,6 +258,10 @@ func _context_menu(id: ContextMenuIDs):
 			undo_action.action_object_call_ref(UndoRedoAction.DoType.OnRemoval, ref, "_free_if_not_in_group")
 
 			UndoSystem.add_action(undo_action)
+		ContextMenuIDs.PROPERTIES:
+			# HACK: select the current agent, and the properties window should pop up
+			if _current_agent != null:
+				_current_agent._selection_area.selected = true
 
 func reset_position():
 	global_position = waypoints.starting_node.global_position
