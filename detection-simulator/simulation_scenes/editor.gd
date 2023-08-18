@@ -6,6 +6,10 @@ extends Node2D
 @onready var _agent_root = $agents
 @onready var _play_button = $CanvasLayer/PlayBar/HBoxContainer/Button
 @onready var _status_label = $CanvasLayer/PlayBar/HBoxContainer/StatusInfo
+@onready var _save_button = $CanvasLayer/PlayBar/HBoxContainer/SaveButton
+@onready var _load_button = $CanvasLayer/PlayBar/HBoxContainer/LoadButton
+@onready var _autosave_check = $CanvasLayer/PlayBar/HBoxContainer/AutoSaveCheck
+@onready var _gui = $CanvasLayer
 
 var _agent_list: Array[Agent]
 
@@ -13,6 +17,14 @@ var _last_id = 0
 
 var _scrolling = false ## Set when drag-scrolling
 var _right_click_position = null ## Set to ensure popup menus act on correct mouse position
+
+var save_path = null
+var _current_save_hash = 0
+var _last_save_data: Dictionary = {}
+var _data_to_save = false
+
+@onready var fd_writer = $fd_writer
+@onready var fd_reader = $fd_reader
 
 enum empty_menu_enum {
 	SPAWN_AGENT,
@@ -24,6 +36,48 @@ enum empty_menu_enum {
 # Called when the node enters the scene tree for the first time.
 func _ready():
 	_prepare_menu()
+	
+	#fd_reader.current_dir = "~/"
+	#fd_writer.current_dir = "~/"
+	_save_button.disabled = true
+	_autosave_check.disabled = true
+
+func get_save_data() -> Dictionary:
+	var save_data = {
+		"version": 1,
+		"agents": [],
+		"waypoints": [],
+		"last_id": _last_id,
+	}
+
+	var agents = get_tree().get_nodes_in_group("agent")
+
+	for agent in agents:
+		save_data["agents"].append(agent.get_save_data())
+
+	return save_data
+
+func load_save_data(data: Dictionary):
+	# Clear agents and undo history
+	for agent in _agent_root.get_children():
+		agent.queue_free()
+
+	UndoSystem.clear_history()
+
+	# Load agents
+	if data.has("version"):
+		if data["version"] == 1:
+
+			for agent_data in data["agents"]:
+				spawn_agent(Vector2.ZERO)
+				var current_agent = TreeFuncs.get_agent_with_id(_last_id)
+				current_agent.load_save_data(agent_data)
+
+
+			_last_id = data["last_id"]
+			UndoSystem.clear_history()
+		else:
+			print("Unknown save data version: %d" % data["version"])
 
 func _prepare_menu():
 	_rightclick_empty.clear()
@@ -45,6 +99,8 @@ func _prepare_menu():
 
 # Called every frame. 'delta' is the elapsed time since the previous frame.
 func _process(delta):
+	_gui.resize_spacer()
+	
 	if PlayTimer.play:
 		var agents: Array = get_tree().get_nodes_in_group("agent")
 		var finished_agents = 0
@@ -56,6 +112,54 @@ func _process(delta):
 		var new_status_label_text = "%d agent(s) moving - %d finished" % [len(agents) - finished_agents, finished_agents]
 
 		_status_label.text = new_status_label_text
+
+	# Compare save data
+	var current_save_data = get_save_data()
+	var button_text = ""
+
+	var check_difference = false
+	
+	if _current_save_hash == 0:
+		check_difference = true
+		_current_save_hash = current_save_data.hash()
+	else:
+		if _current_save_hash != current_save_data.hash():
+			check_difference = true
+			_current_save_hash = current_save_data.hash()
+
+	if check_difference:
+		_save_button.disabled = true
+		if _autosave_check.button_pressed:
+			button_text = "Autosave On"
+		
+		if current_save_data.hash() != _last_save_data.hash():
+			if _autosave_check.button_pressed and save_path != null:
+				save_to_file(save_path)
+			elif len(current_save_data["agents"]) == 0:
+				_data_to_save = false
+				button_text = "No Data"
+			else:
+				_data_to_save = true
+				if not PlayTimer.play:
+					_save_button.disabled = false
+				button_text = "Unsaved Changes"
+		else:
+			_data_to_save = false
+			if not _autosave_check.button_pressed:
+				button_text = "Save"
+
+		# If no file path, add (No file set)
+		if save_path == null:
+			button_text += " (No file set)"
+		else:
+			# Get the file name (excluding directory)
+			# TODO: Does this need to be \ on Windows?
+			var file_name = save_path.split("/")[-1]
+			button_text += " (%s)" % file_name
+
+		_save_button.text = button_text
+
+	MousePosition.set_mouse_position(get_local_mouse_position(), $Camera2D.global_position)
 
 
 func _unhandled_input(event):
@@ -102,8 +206,9 @@ func _unhandled_input(event):
 func _right_click(event: InputEventMouseButton):
 	# Calculate the mouse relative position to place the
 	# right click menu at the correct location
-	var mouse_pos = get_global_mouse_position()
-	var mouse_rel_pos = mouse_pos - $Camera2D.global_position
+
+	var mouse_pos = MousePosition.mouse_global_position
+	var mouse_rel_pos = MousePosition.mouse_relative_position
 	var window_size = get_window().size / 2
 
 	_prepare_menu()
@@ -194,6 +299,54 @@ func _on_play_button_pressed():
 
 	if PlayTimer.play:
 		_play_button.text = "Stop"
+		_save_button.disabled = true
+		_load_button.disabled = true
 	else:
 		_play_button.text = "Play"
 		_status_label.text = "Nothing to report"
+		if not _autosave_check.button_pressed:
+			_save_button.disabled = false
+		_load_button.disabled = false
+
+
+
+func _on_load_button_pressed():
+	fd_reader.visible = true
+	fd_writer.visible = false
+
+
+func _on_fd_writer_file_selected(path: String):
+	save_to_file(path)
+
+	_autosave_check.disabled = false
+	_autosave_check.button_pressed = true
+	save_path = path
+
+
+func save_to_file(path: String):
+	# Check file extension is .ds-json
+	if not path.ends_with(".ds-json"):
+		path += ".ds-json"
+
+	var save_data = get_save_data()
+	_last_save_data = save_data
+
+	var save_file = FileAccess.open(path, FileAccess.WRITE)
+	save_file.store_line(JSON.stringify(save_data))
+	_current_save_hash = 0
+
+
+func _on_save_button_pressed():
+	fd_writer.visible = true
+	fd_reader.visible = false
+
+
+func _on_fd_reader_file_selected(path: String):
+	var load_file = FileAccess.open(path, FileAccess.READ)
+	
+	if load_file.file_exists(path):
+		var load_data_json = load_file.get_line()
+		var load_data = JSON.parse_string(load_data_json)
+		
+		load_save_data(load_data)
+		save_path = path

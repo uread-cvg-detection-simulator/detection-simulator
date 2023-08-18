@@ -1,6 +1,8 @@
 extends CanvasLayer
 
 @onready var play_bar = $PlayBar
+@onready var play_bar_container = $PlayBar/HBoxContainer
+@onready var play_bar_container_spacer = $PlayBar/HBoxContainer/Spacer
 @onready var properties = $Properties
 @onready var properties_grid_container = $Properties/MarginContainer/VBoxContainer/ScrollContainer/GridContainer
 
@@ -24,6 +26,29 @@ func _on_size_changed():
 	properties.size.y = viewport_size.y - play_bar.size.y
 	_properties_open_changed(properties_open)
 
+	resize_spacer()
+
+
+func resize_spacer():
+	# Modify Properties size to
+	var viewport_size = get_viewport().size
+	
+	# Expand "Spacer" (child node of play_bar_container) to fill the remaining space between previous and subsequent nodes
+	var play_bar_previous_size = 0
+	var play_bar_next_size = 0
+	var spacer_found = false
+
+	for child in play_bar_container.get_children():
+		if child == play_bar_container_spacer:
+			spacer_found = true
+			continue
+
+		if not spacer_found:
+			play_bar_previous_size += child.size.x
+		else:
+			play_bar_next_size += child.size.x
+
+	play_bar_container_spacer.custom_minimum_size.x = viewport_size.x - play_bar_previous_size - play_bar_next_size - 20
 
 func _properties_open_changed(value):
 	properties_open = value
@@ -136,6 +161,7 @@ func _process(delta):
 
 			if not properties_dict.is_empty():
 				# Update properties
+				properties_dict["Agent ID"].text = str(agent.agent_id)
 				properties_dict["Location"].text = "(%.2f, %.2f)" % [agent.global_position.x / 64.0, -agent.global_position.y / 64.0]
 
 		elif properties_current_node.parent_object is Waypoint:
@@ -150,6 +176,7 @@ func _process(delta):
 
 			if not properties_dict.is_empty():
 				# Update properties
+				properties_dict["Agent ID"].text = str(agent.agent_id)
 				properties_dict["Location"].text = "(%.2f, %.2f)" % [waypoint.global_position.x / 64.0, -waypoint.global_position.y / 64.0]
 
 	else:

@@ -54,6 +54,36 @@ func _ready():
 	PlayTimer.connect("start_playing", self._start_playing)
 	PlayTimer.connect("stop_playing", self._stop_playing)
 
+func get_save_data() -> Dictionary:
+	var data = {
+		"agent_id" : agent_id,
+		"agent_type" : agent_type,
+		"agent_version": 1,
+		"colour" : {
+			"r" : colour.r,
+			"g" : colour.g,
+			"b" : colour.b,
+			"a" : colour.a,
+		},
+		"waypoints" : waypoints.get_save_data(),
+	}
+
+	return data
+
+func load_save_data(data: Dictionary):
+	if data.has("agent_version"):
+		if data["agent_version"] == 1:
+			agent_id = data["agent_id"]
+			agent_type = data["agent_type"]
+			colour = Color(data["colour"]["r"], data["colour"]["g"], data["colour"]["b"], data["colour"]["a"])
+			waypoints.load_save_data(data["waypoints"])
+
+			global_position = waypoints.starting_node.global_position
+		else:
+			print_debug("Agent version %d not supported" % [data["agent_version"]])
+	else:
+		print_debug("Unable to verify agent information: No version number")
+
 func _update_target_information(waypoint: Waypoint):
 	var current_time = PlayTimer.current_time
 	var old_waypoint = playing_waypoint if playing_waypoint else waypoints.starting_node
@@ -180,8 +210,8 @@ func _on_hold_stop():
 
 func _on_mouse(_mouse, event):
 	if event.is_action_pressed("mouse_menu") and camera != null and clickable:
-		var mouse_pos = get_global_mouse_position()
-		var mouse_rel_pos = mouse_pos - camera.global_position
+		var mouse_pos = MousePosition.mouse_global_position
+		var mouse_rel_pos = MousePosition.mouse_relative_position
 		var window_size = get_window().size / 2
 
 		# Popup the window
@@ -243,6 +273,8 @@ func _context_menu(id: ContextMenuIDs):
 	match id:
 		ContextMenuIDs.DELETE:
 			print_debug("Deleted Agent %d" % [agent_id])
+			_current_agent._selection_area.selected = false
+			
 			var undo_action = UndoRedoAction.new()
 			undo_action.action_name = "Deleted Agent %d" % [agent_id]
 

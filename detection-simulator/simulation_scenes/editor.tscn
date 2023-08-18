@@ -2,7 +2,7 @@
 
 [ext_resource type="Script" path="res://simulation_scenes/editor.gd" id="1_o3h7t"]
 [ext_resource type="Script" path="res://simulation_scenes/camera.gd" id="2_j0bt8"]
-[ext_resource type="PackedScene" path="res://simulation_scenes/grid.tscn" id="3_2o4sa"]
+[ext_resource type="PackedScene" uid="uid://djdqjby78q501" path="res://simulation_scenes/grid.tscn" id="3_2o4sa"]
 [ext_resource type="Script" path="res://simulation_scenes/editor_gui.gd" id="3_fj0mv"]
 
 [node name="editor" type="Node2D"]
@@ -42,6 +42,21 @@ vertical_alignment = 1
 layout_mode = 2
 text = "Nothing to report"
 vertical_alignment = 1
+
+[node name="Spacer" type="Label" parent="CanvasLayer/PlayBar/HBoxContainer"]
+layout_mode = 2
+
+[node name="AutoSaveCheck" type="CheckButton" parent="CanvasLayer/PlayBar/HBoxContainer"]
+layout_mode = 2
+text = "Autosave"
+
+[node name="SaveButton" type="Button" parent="CanvasLayer/PlayBar/HBoxContainer"]
+layout_mode = 2
+text = "No Data"
+
+[node name="LoadButton" type="Button" parent="CanvasLayer/PlayBar/HBoxContainer"]
+layout_mode = 2
+text = "Load"
 
 [node name="Properties" type="PanelContainer" parent="CanvasLayer"]
 offset_left = 977.0
@@ -87,6 +102,7 @@ size_flags_vertical = 3
 columns = 2
 
 [node name="empty_right_click_menu" type="PopupMenu" parent="."]
+gui_embed_subwindows = true
 size = Vector2i(28, 8)
 
 [node name="agents" type="Node2D" parent="."]
@@ -94,5 +110,24 @@ size = Vector2i(28, 8)
 [node name="grid" parent="." node_paths=PackedStringArray("camera") instance=ExtResource("3_2o4sa")]
 camera = NodePath("../Camera2D")
 
+[node name="fd_writer" type="FileDialog" parent="."]
+initial_position = 4
+size = Vector2i(632, 500)
+access = 2
+filters = PackedStringArray("*.ds-json")
+
+[node name="fd_reader" type="FileDialog" parent="."]
+title = "Open a File"
+initial_position = 4
+size = Vector2i(515, 500)
+ok_button_text = "Open"
+file_mode = 0
+access = 2
+filters = PackedStringArray("*.ds-json")
+
 [connection signal="pressed" from="CanvasLayer/PlayBar/HBoxContainer/Button" to="." method="_on_play_button_pressed"]
+[connection signal="pressed" from="CanvasLayer/PlayBar/HBoxContainer/SaveButton" to="." method="_on_save_button_pressed"]
+[connection signal="pressed" from="CanvasLayer/PlayBar/HBoxContainer/LoadButton" to="." method="_on_load_button_pressed"]
 [connection signal="pressed" from="CanvasLayer/Properties/MarginContainer/VBoxContainer/PanelContainer/GridContainer/Button" to="CanvasLayer" method="_on_propeties_button_pressed"]
+[connection signal="file_selected" from="fd_writer" to="." method="_on_fd_writer_file_selected"]
+[connection signal="file_selected" from="fd_reader" to="." method="_on_fd_reader_file_selected"]

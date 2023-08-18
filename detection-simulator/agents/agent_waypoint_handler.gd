@@ -26,6 +26,25 @@ func _ready():
 	# Set the waypoint_lines parent variable
 	waypoint_lines.waypoint_object = self
 
+func get_save_data() -> Dictionary:
+	var save_data = {}
+	save_data["waypoints"] = []
+	save_data["waypoints_version"] = 1
+	save_data["starting_node"] = starting_node.get_save_data()
+
+	for waypoint in waypoints:
+		save_data["waypoints"].append(waypoint.get_save_data())
+
+	return save_data
+
+func load_save_data(data: Dictionary):
+	if data.has("waypoints_version"):
+		if data["waypoints_version"] <= 1:
+			starting_node.load_save_data(data["starting_node"])
+
+			for waypoint_data in data["waypoints"]:
+				var new_waypoint = add_to_end(Vector2.ZERO, false)
+				new_waypoint.load_save_data(waypoint_data)
 
 func is_empty():
 	return waypoints.is_empty()
@@ -155,7 +174,7 @@ func get_waypoint_index(waypoint: Waypoint):
 
 	return -1
 
-func add_to_end(new_global_point: Vector2) -> Waypoint:
+func add_to_end(new_global_point: Vector2, add_to_undo: bool = true) -> Waypoint:
 	# Get the end point of the array to use as a link
 	var previous_point = waypoints[-1] if not waypoints.is_empty() else starting_node
 
@@ -165,6 +184,9 @@ func add_to_end(new_global_point: Vector2) -> Waypoint:
 
 	# Queue line redraw
 	waypoint_lines.queue_redraw()
+
+	if not add_to_undo:
+		return new_waypoint
 
 	########
 	# DO

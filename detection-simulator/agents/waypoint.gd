@@ -45,6 +45,32 @@ func _ready():
 	context_menu.add_item("Properties", ContextMenuIDs.PROPERTIES)
 	context_menu.connect("id_pressed", self._context_menu_id_pressed)
 
+func get_save_data() -> Dictionary:
+	var save_data = {
+		"waypoint_version": 1,
+		"global_position": {
+			"x": global_position.x,
+			"y": global_position.y,
+		},
+		"param_speed_mps": param_speed_mps,
+		"param_start_time": param_start_time,
+		"param_wait_time": param_wait_time,
+	}
+
+	return save_data
+
+func load_save_data(data: Dictionary):
+	if data.has("waypoint_version"):
+		if data["waypoint_version"] <= 1:
+			global_position = Vector2(data["global_position"]["x"], data["global_position"]["y"])
+			param_speed_mps = data["param_speed_mps"] if data["param_speed_mps"] != null else null
+			param_start_time = data["param_start_time"] if data["param_start_time"] != null else null
+			param_wait_time = data["param_wait_time"] if data["param_wait_time"] != null else null
+		else:
+			print_debug("Unknown waypoint version: %s" % data["waypoint_version"])
+	else:
+		print_debug("Waypoint data has no version number")
+
 func _context_menu_id_pressed(id: ContextMenuIDs):
 	match id:
 		ContextMenuIDs.DELETE:
@@ -56,8 +82,8 @@ func _context_menu_id_pressed(id: ContextMenuIDs):
 func _on_mouse(_mouse, event):
 	print_debug("Waypoint mouse event: %s" % event)
 	if event.is_action_pressed("mouse_menu") and camera != null and clickable:
-		var mouse_pos = get_global_mouse_position()
-		var mouse_rel_pos = mouse_pos - camera.global_position
+		var mouse_pos = MousePosition.mouse_global_position
+		var mouse_rel_pos = MousePosition.mouse_relative_position
 		var window_size = get_window().size / 2
 
 		# Popup the window

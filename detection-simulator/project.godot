@@ -22,11 +22,13 @@ Uuid="*res://global/uuid.gd"
 TreeFuncs="*res://global/tree_funcs.gd"
 PlayTimer="*res://global/play_timer.gd"
 GroupHelpers="*res://global/group_helpers.gd"
+MousePosition="*res://global/mouse_position.gd"
 
 [display]
 
 window/size/viewport_width=1280
 window/size/viewport_height=720
+window/size/initial_position_type=3
 
 [input]
 
