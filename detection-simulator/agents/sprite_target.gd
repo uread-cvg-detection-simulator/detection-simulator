@@ -2,7 +2,7 @@ class_name AgentTarget
 extends Sprite2D
 
 var disabled: bool = true : set = _set_disabled
-@onready var _collision_shape = $RigidBody2D/CollisionShape2D
+@onready var _collision_shape = $CollisionShape2D
 @onready var _selection_shape = $SelectionArea2D/CollisionShape2D
 @onready var _selection_area = $SelectionArea2D
 
@@ -31,5 +31,5 @@ func _set_disabled(new_disabled):
 		if initialised:
 			_collision_shape.disabled = false
 			_selection_shape.disabled = false
-	
+
 	disabled = new_disabled

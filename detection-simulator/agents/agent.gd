@@ -1,5 +1,5 @@
 class_name Agent
-extends Node2D
+extends CharacterBody2D
 
 @onready var camera: Camera2D = null : set = _set_camera ## The camera to use for the mouse position
 @export var colour: Color = Color.WHITE : set = _set_sprite_colour ## The colour of the target
@@ -19,12 +19,13 @@ enum AgentType {
 						   AgentType.SquareTarget : $square_target,
 						   AgentType.PersonTarget : $person_target }
 
-@export var type_default_colours = { AgentType.Circle : Color.GREEN, 
+@export var type_default_colours = { AgentType.Circle : Color.GREEN,
 									 AgentType.SquareTarget : Color.WHITE,
 									 AgentType.PersonTarget : Color.GREEN }
 
 @onready var _current_agent: AgentTarget = null
 var agent_type: AgentType = AgentType.PersonTarget : set = _set_agent_type
+var collision_shape = null
 
 @onready var context_menu: PopupMenu = $ContextMenu
 @onready var waypoints = $waypoints
@@ -249,6 +250,11 @@ func _set_agent_type(new_agent_type: AgentType):
 			_current_agent._selection_area.disconnect("mouse_click", self._on_mouse)
 			_current_agent._selection_area.parent_object = null
 
+			remove_child(collision_shape)
+			_current_agent.add_child(collision_shape)
+			collision_shape = null
+
+
 		# Enable new
 		if new_agent_type != AgentType.Invisible:
 			_current_agent = _type_map[new_agent_type]
@@ -258,6 +264,10 @@ func _set_agent_type(new_agent_type: AgentType):
 			_current_agent._selection_area.connect("mouse_hold_end", self._on_hold_stop)
 			_current_agent._selection_area.connect("mouse_click", self._on_mouse)
 			_current_agent._selection_area.parent_object = self
+
+			collision_shape = _current_agent._collision_shape
+			_current_agent.remove_child(collision_shape)
+			add_child(collision_shape)
 
 			_set_sprite_colour(type_default_colours[new_agent_type])
 		else:
@@ -281,7 +291,7 @@ func _context_menu(id: ContextMenuIDs):
 		ContextMenuIDs.DELETE:
 			print_debug("Deleted Agent %d" % [agent_id])
 			_current_agent._selection_area.selected = false
-			
+
 			var undo_action = UndoRedoAction.new()
 			undo_action.action_name = "Deleted Agent %d" % [agent_id]
 

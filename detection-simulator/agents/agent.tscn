@@ -29,7 +29,7 @@ shader_parameter/selected = false
 [sub_resource type="CircleShape2D" id="CircleShape2D_n5v4q"]
 radius = 16.0
 
-[node name="agent" type="Node2D"]
+[node name="agent" type="CharacterBody2D"]
 script = ExtResource("1_noa6a")
 
 [node name="square_target" type="Sprite2D" parent="."]
@@ -39,15 +39,13 @@ material = SubResource("ShaderMaterial_y5pv7")
 texture = ExtResource("1_25plv")
 script = ExtResource("4_wpf02")
 
-[node name="RigidBody2D" type="RigidBody2D" parent="square_target"]
-
-[node name="CollisionShape2D" type="CollisionShape2D" parent="square_target/RigidBody2D"]
-shape = SubResource("RectangleShape2D_3p6ps")
-disabled = true
-
 [node name="SelectionArea2D" parent="square_target" instance=ExtResource("5_lpd86")]
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="square_target/SelectionArea2D"]
+shape = SubResource("RectangleShape2D_3p6ps")
+disabled = true
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="square_target"]
 shape = SubResource("RectangleShape2D_3p6ps")
 disabled = true
 
@@ -58,15 +56,13 @@ material = SubResource("ShaderMaterial_bv30b")
 texture = ExtResource("5_gg7lh")
 script = ExtResource("4_wpf02")
 
-[node name="RigidBody2D" type="RigidBody2D" parent="circle_target"]
-
-[node name="CollisionShape2D" type="CollisionShape2D" parent="circle_target/RigidBody2D"]
-shape = SubResource("CircleShape2D_n5v4q")
-disabled = true
-
 [node name="SelectionArea2D" parent="circle_target" instance=ExtResource("5_lpd86")]
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="circle_target/SelectionArea2D"]
+shape = SubResource("CircleShape2D_n5v4q")
+disabled = true
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="circle_target"]
 shape = SubResource("CircleShape2D_n5v4q")
 disabled = true
 
@@ -76,17 +72,15 @@ material = SubResource("ShaderMaterial_y5pv7")
 texture = ExtResource("7_kdpau")
 script = ExtResource("4_wpf02")
 
-[node name="RigidBody2D" type="RigidBody2D" parent="person_target"]
-
-[node name="CollisionShape2D" type="CollisionShape2D" parent="person_target/RigidBody2D"]
-shape = SubResource("RectangleShape2D_3p6ps")
-disabled = true
-metadata/_edit_lock_ = true
-
 [node name="SelectionArea2D" parent="person_target" instance=ExtResource("5_lpd86")]
 
 [node name="CollisionShape2D" type="CollisionPolygon2D" parent="person_target/SelectionArea2D"]
 polygon = PackedVector2Array(-16, 16, 16, 16, 16, 8, 11, 3, 8, 2, 8, -1, 10, -4, 10, -7, 8, -11, 6, -14, 2, -16, -2, -16, -6, -14, -8, -11, -10, -7, -10, -5, -8, -1, -8, 2, -11, 3, -16, 8)
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="person_target"]
+shape = SubResource("RectangleShape2D_3p6ps")
+disabled = true
+metadata/_edit_lock_ = true
 
 [node name="ContextMenu" type="PopupMenu" parent="."]
 gui_embed_subwindows = true
