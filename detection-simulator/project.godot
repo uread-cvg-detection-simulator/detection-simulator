@@ -57,8 +57,13 @@ mouse_multi_select={
 
 [layer_names]
 
-2d_physics/layer_1="Collision"
+2d_physics/layer_1="Agent"
+2d_physics/layer_2="Obstacle"
 2d_physics/layer_24="Selection"
+
+[physics]
+
+2d/default_gravity=0.0
 
 [rendering]
 
