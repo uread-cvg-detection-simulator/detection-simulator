@@ -1,4 +1,4 @@
-[gd_scene load_steps=14 format=3 uid="uid://p0wyr5cxelew"]
+[gd_scene load_steps=15 format=3 uid="uid://p0wyr5cxelew"]
 
 [ext_resource type="Texture2D" uid="uid://etufimgj43mn" path="res://agents/basic-target.png" id="1_25plv"]
 [ext_resource type="Script" path="res://agents/agent.gd" id="1_noa6a"]
@@ -7,6 +7,7 @@
 [ext_resource type="Texture2D" uid="uid://d2l7f37r31n52" path="res://agents/circle-target.png" id="5_gg7lh"]
 [ext_resource type="PackedScene" uid="uid://c5r11cmhlqudb" path="res://agents/SelectionArea2D.tscn" id="5_lpd86"]
 [ext_resource type="Script" path="res://agents/agent_waypoint_handler.gd" id="7_26my1"]
+[ext_resource type="Texture2D" uid="uid://coo0j3yohgekm" path="res://agents/person.png" id="7_kdpau"]
 [ext_resource type="PackedScene" uid="uid://b50ox3rfhikx8" path="res://agents/waypoint.tscn" id="8_ado8l"]
 [ext_resource type="Script" path="res://agents/waypoint_lines.gd" id="9_mdr2h"]
 
@@ -17,7 +18,7 @@ shader_parameter/new_colour = Vector4(1, 1, 1, 1)
 shader_parameter/selected = false
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_3p6ps"]
-size = Vector2(64, 64)
+size = Vector2(32, 32)
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_bv30b"]
 resource_local_to_scene = true
@@ -33,6 +34,7 @@ script = ExtResource("1_noa6a")
 
 [node name="square_target" type="Sprite2D" parent="."]
 visible = false
+z_index = 1
 material = SubResource("ShaderMaterial_y5pv7")
 texture = ExtResource("1_25plv")
 script = ExtResource("4_wpf02")
@@ -68,7 +70,26 @@ disabled = true
 shape = SubResource("CircleShape2D_n5v4q")
 disabled = true
 
+[node name="person_target" type="Sprite2D" parent="."]
+z_index = 1
+material = SubResource("ShaderMaterial_y5pv7")
+texture = ExtResource("7_kdpau")
+script = ExtResource("4_wpf02")
+
+[node name="RigidBody2D" type="RigidBody2D" parent="person_target"]
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="person_target/RigidBody2D"]
+shape = SubResource("RectangleShape2D_3p6ps")
+disabled = true
+metadata/_edit_lock_ = true
+
+[node name="SelectionArea2D" parent="person_target" instance=ExtResource("5_lpd86")]
+
+[node name="CollisionShape2D" type="CollisionPolygon2D" parent="person_target/SelectionArea2D"]
+polygon = PackedVector2Array(-16, 16, 16, 16, 16, 8, 11, 3, 8, 2, 8, -1, 10, -4, 10, -7, 8, -11, 6, -14, 2, -16, -2, -16, -6, -14, -8, -11, -10, -7, -10, -5, -8, -1, -8, 2, -11, 3, -16, 8)
+
 [node name="ContextMenu" type="PopupMenu" parent="."]
+gui_embed_subwindows = true
 size = Vector2i(28, 8)
 
 [node name="waypoints" type="Node" parent="." node_paths=PackedStringArray("parent_object")]
@@ -76,6 +97,7 @@ script = ExtResource("7_26my1")
 parent_object = NodePath("..")
 
 [node name="fake_start" parent="waypoints" instance=ExtResource("8_ado8l")]
+visible = false
 disabled = true
 
 [node name="zzz_waypoint_lines" type="Node2D" parent="waypoints"]

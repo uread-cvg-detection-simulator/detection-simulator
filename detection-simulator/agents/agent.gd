@@ -11,13 +11,20 @@ signal agent_id_set(old_id, new_id) ## Signals whenever the agent id is set
 enum AgentType {
 	Circle,
 	SquareTarget,
+	PersonTarget,
 	Invisible,
 }
 
-@onready var _type_map = {AgentType.Circle : $circle_target, AgentType.SquareTarget : $square_target}
-@export var type_default_colours = {AgentType.Circle : Color.GREEN, AgentType.SquareTarget : Color.WHITE}
+@onready var _type_map = { AgentType.Circle : $circle_target,
+						   AgentType.SquareTarget : $square_target,
+						   AgentType.PersonTarget : $person_target }
+
+@export var type_default_colours = { AgentType.Circle : Color.GREEN, 
+									 AgentType.SquareTarget : Color.WHITE,
+									 AgentType.PersonTarget : Color.GREEN }
+
 @onready var _current_agent: AgentTarget = null
-var agent_type: AgentType = AgentType.Circle : set = _set_agent_type
+var agent_type: AgentType = AgentType.PersonTarget : set = _set_agent_type
 
 @onready var context_menu: PopupMenu = $ContextMenu
 @onready var waypoints = $waypoints
