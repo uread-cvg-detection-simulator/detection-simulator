@@ -1,0 +1,26 @@
+[gd_scene load_steps=4 format=3 uid="uid://pxotaj1n83vy"]
+
+[ext_resource type="PackedScene" uid="uid://kf8tqdlm8c5t" path="res://addons/vision_cone_2d/vision_cone_2d_template.tscn" id="1_fkk1c"]
+[ext_resource type="Script" path="res://agents/sensor.gd" id="1_gwecx"]
+[ext_resource type="Script" path="res://agents/sensor_detected_lines.gd" id="3_no7rn"]
+
+[node name="sensor" type="Node2D" node_paths=PackedStringArray("vision_cone")]
+script = ExtResource("1_gwecx")
+draw_vision_cone = false
+vision_cone = NodePath("VisionCone2D")
+
+[node name="VisionCone2D" parent="." instance=ExtResource("1_fkk1c")]
+collision_layer_mask = 3
+
+[node name="VisionConeArea" parent="VisionCone2D" index="1"]
+collision_layer = 1
+
+[node name="detected_lines" type="Node2D" parent="." node_paths=PackedStringArray("sensor")]
+z_index = -1
+script = ExtResource("3_no7rn")
+sensor = NodePath("..")
+
+[connection signal="body_entered" from="VisionCone2D/VisionConeArea" to="." method="_on_vision_cone_area_body_entered"]
+[connection signal="body_exited" from="VisionCone2D/VisionConeArea" to="." method="_on_vision_cone_area_body_exited"]
+
+[editable path="VisionCone2D"]
