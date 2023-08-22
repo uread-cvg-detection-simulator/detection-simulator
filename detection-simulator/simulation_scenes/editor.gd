@@ -87,6 +87,9 @@ func load_save_data(data: Dictionary):
 	for agent in _agent_root.get_children():
 		agent.queue_free()
 
+	for sensor in _sensor_root.get_children():
+		sensor.queue_free()
+
 	UndoSystem.clear_history()
 
 	# Load agents
@@ -238,20 +241,20 @@ func _unhandled_input(event):
 		var tmp_event: InputEventMouseMotion = event
 
 		$Camera2D.position -= tmp_event.relative / $Camera2D.zoom.x
-	
+
 	if event.is_action_pressed("zoom_in"):
 		var current_zoom = $Camera2D.zoom
-		
+
 		current_zoom.x += 0.1
 		current_zoom.y += 0.1
-		
+
 		$Camera2D.zoom = current_zoom
 	if event.is_action_pressed("zoom_out"):
 		var current_zoom = $Camera2D.zoom
-		
+
 		current_zoom.x -= 0.1
 		current_zoom.y -= 0.1
-		
+
 		$Camera2D.zoom = current_zoom
 
 func _right_click(event: InputEventMouseButton):
@@ -438,6 +441,9 @@ func save_to_file(path: String):
 
 
 func _on_save_button_pressed():
+	if save_path:
+		fd_writer.current_path = save_path
+
 	fd_writer.visible = true
 	fd_reader.visible = false
 
@@ -451,3 +457,4 @@ func _on_fd_reader_file_selected(path: String):
 
 		load_save_data(load_data)
 		save_path = path
+		_autosave_check.button_pressed = false

@@ -54,7 +54,7 @@ func get_save_data() -> Dictionary:
 
 func load_save_data(data: Dictionary):
 	if data.has("sensor_version"):
-		if data["sensor_version"] <= 2:
+		if data["sensor_version"] <= 3:
 			sensor_fov_degrees = data["sensor_fov_degrees"]
 			vision_cone.rotation_degrees = data["rotation_degrees"]
 			global_position = Vector2(data["global_position"]["x"], data["global_position"]["y"])
