@@ -97,12 +97,14 @@ func load_save_data(data: Dictionary):
 				spawn_agent(Vector2.ZERO)
 				var current_agent = TreeFuncs.get_agent_with_id(_last_id)
 				current_agent.load_save_data(agent_data)
+				current_agent._current_agent._selection_area.selected = false
 
 			if data["version"] >= 2:
 				for sensor in data["sensors"]:
 					spawn_sensor(Vector2.ZERO)
-					var current_sensor = TreeFuncs.get_sensor_with_id(_last_id)
+					var current_sensor = TreeFuncs.get_sensor_with_id(_last_sensor_id)
 					current_sensor.load_save_data(sensor)
+					current_sensor.selection_area.selected = false
 
 				_last_sensor_id = data["last_sensor_id"]
 

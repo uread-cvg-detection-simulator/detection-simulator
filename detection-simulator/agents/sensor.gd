@@ -39,7 +39,8 @@ func _ready():
 
 func get_save_data() -> Dictionary:
 	var data = {
-		"sensor_version" : 2,
+		"sensor_version" : 3,
+		"sensor_id": sensor_id,
 		"sensor_fov_degrees": sensor_fov_degrees,
 		"rotation_degrees": vision_cone.rotation_degrees,
 		"sensor_distance" : sensor_distance,
@@ -62,6 +63,9 @@ func load_save_data(data: Dictionary):
 				sensor_distance = 500 / 64.0
 			elif data["sensor_version"] >= 2:
 				sensor_distance = data["sensor_distance"]
+
+			if data["sensor_version"] >= 3:
+				sensor_id = data["sensor_id"]
 		else:
 			print_debug("Sensor version not supported")
 	else:
