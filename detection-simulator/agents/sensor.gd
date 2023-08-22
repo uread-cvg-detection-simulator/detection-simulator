@@ -2,8 +2,8 @@ extends Node2D
 class_name Sensor
 
 @export_group("Parameters")
-@export var sensor_fov_degrees: float = 90.0 : set = _set_sensor_fov
-@export var sensor_distance: float = 100 : set = _set_sensor_distance
+@export var sensor_fov_degrees: float = 45.0 : set = _set_sensor_fov
+@export var sensor_distance: float = 30 : set = _set_sensor_distance
 @export var detection_line_width: float = 3.0
 @export var detection_line_colour: Color = Color.RED
 @export var draw_sensor_detections: bool = true
@@ -103,7 +103,7 @@ func _set_sensor_fov(new_value: float):
 
 	if vision_cone:
 		vision_cone.angle_deg = new_value
-		vision_cone.ray_count = int(new_value / 3)
+		vision_cone.ray_count = int(new_value / 2)
 		vision_cone.recalculate_vision(true)
 
 func _set_sensor_distance(new_value: float):
@@ -137,10 +137,9 @@ func _on_mouse_click(button, event):
 	if event.is_action_pressed("mouse_menu") and clickable:
 		var mouse_pos = MousePosition.mouse_global_position
 		var mouse_rel_pos = MousePosition.mouse_relative_position
-		var window_size = get_window().size / 2
 
 		# Popup the window
-		context_menu.popup(Rect2i(mouse_rel_pos.x + window_size.x, mouse_rel_pos.y + window_size.y, context_menu.size.x, context_menu.size.y))
+		context_menu.popup(Rect2i(mouse_rel_pos.x, mouse_rel_pos.y, context_menu.size.x, context_menu.size.y))
 
 		print_debug("Right click at (%.2f, %.2f)" % [float(mouse_pos.x) / 64, - float(mouse_pos.y) / 64])
 

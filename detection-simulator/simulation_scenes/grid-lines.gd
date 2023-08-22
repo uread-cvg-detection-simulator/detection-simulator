@@ -11,7 +11,7 @@ var camera_zoom = null
 
 func _draw():
 	if on:
-		var size = camera.get_viewport_rect().size * camera.zoom / 2
+		var size = camera.get_viewport_rect().size / (camera.zoom / 2)
 
 		var camera_position = camera.position
 

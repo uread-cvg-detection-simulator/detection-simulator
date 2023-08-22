@@ -21,7 +21,7 @@ func draw_labels():
 	# Determine which labels are on screen
 	var positions_required: Array[Vector2i] = []
 
-	var size = camera.get_viewport_rect().size * camera.zoom / 2
+	var size = camera.get_viewport_rect().size / (camera.zoom / 2)
 
 	for x in range(int((camera.position.x - size.x) / grid_size) - 1, int((size.x + camera.position.x) / grid_size) + 1):
 		for y in range(int((camera.position.y - size.y) / grid_size) - 1, int((size.y + camera.position.y) / grid_size) + 1):

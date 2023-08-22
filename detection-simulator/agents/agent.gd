@@ -220,10 +220,9 @@ func _on_mouse(_mouse, event):
 	if event.is_action_pressed("mouse_menu") and camera != null and clickable:
 		var mouse_pos = MousePosition.mouse_global_position
 		var mouse_rel_pos = MousePosition.mouse_relative_position
-		var window_size = get_window().size / 2
 
 		# Popup the window
-		context_menu.popup(Rect2i(mouse_rel_pos.x + window_size.x, mouse_rel_pos.y + window_size.y, context_menu.size.x, context_menu.size.y))
+		context_menu.popup(Rect2i(mouse_rel_pos.x, mouse_rel_pos.y, context_menu.size.x, context_menu.size.y))
 
 		print_debug("Right click at (%.2f, %.2f)" % [float(mouse_pos.x) / 64, - float(mouse_pos.y) / 64])
 

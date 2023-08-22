@@ -45,6 +45,7 @@ enum empty_menu_enum {
 	SPAWN_AGENT,
 	SPAWN_SENSOR,
 	RETURN_TO_CENTRE,
+	RESET_ZOOM,
 	CLEAR_UNDO_HISTORY,
 	CREATE_WAYPOINT,
 }
@@ -125,6 +126,7 @@ func _prepare_menu():
 	_rightclick_empty.add_item("Spawn New Sensor", empty_menu_enum.SPAWN_SENSOR)
 	_rightclick_empty.add_separator()
 	_rightclick_empty.add_item("Centre Grid", empty_menu_enum.RETURN_TO_CENTRE)
+	_rightclick_empty.add_item("Reset Zoom", empty_menu_enum.RESET_ZOOM)
 	_rightclick_empty.add_item("Clear Undo History", empty_menu_enum.CLEAR_UNDO_HISTORY)
 
 	if not _rightclick_empty.is_connected("id_pressed", self._on_empty_menu_press):
@@ -192,7 +194,7 @@ func _process(delta):
 
 		_save_button.text = button_text
 
-	MousePosition.set_mouse_position(get_local_mouse_position(), $Camera2D.global_position)
+	MousePosition.set_mouse_position(get_local_mouse_position(), get_viewport().get_mouse_position())
 
 
 func _unhandled_input(event):
@@ -233,7 +235,22 @@ func _unhandled_input(event):
 	if event is InputEventMouseMotion and _scrolling:
 		var tmp_event: InputEventMouseMotion = event
 
-		$Camera2D.position -= tmp_event.relative
+		$Camera2D.position -= tmp_event.relative / $Camera2D.zoom.x
+	
+	if event.is_action_pressed("zoom_in"):
+		var current_zoom = $Camera2D.zoom
+		
+		current_zoom.x += 0.1
+		current_zoom.y += 0.1
+		
+		$Camera2D.zoom = current_zoom
+	if event.is_action_pressed("zoom_out"):
+		var current_zoom = $Camera2D.zoom
+		
+		current_zoom.x -= 0.1
+		current_zoom.y -= 0.1
+		
+		$Camera2D.zoom = current_zoom
 
 func _right_click(event: InputEventMouseButton):
 	# Calculate the mouse relative position to place the
@@ -246,7 +263,7 @@ func _right_click(event: InputEventMouseButton):
 	_prepare_menu()
 
 	# Popup the window
-	_rightclick_empty.popup(Rect2i(mouse_rel_pos.x + window_size.x, mouse_rel_pos.y + window_size.y, _rightclick_empty.size.x, _rightclick_empty.size.y))
+	_rightclick_empty.popup(Rect2i(mouse_rel_pos.x, mouse_rel_pos.y, _rightclick_empty.size.x, _rightclick_empty.size.y))
 	_right_click_position = mouse_pos
 
 	print_debug("Right click at (%.2f, %.2f)" % [float(mouse_pos.x) / 64, - float(mouse_pos.y) / 64])
@@ -259,6 +276,8 @@ func _on_empty_menu_press(id: int):
 			spawn_sensor(_right_click_position)
 		empty_menu_enum.RETURN_TO_CENTRE:
 			$Camera2D.set_global_position(Vector2(0, 0))
+		empty_menu_enum.RESET_ZOOM:
+			$Camera2D.zoom = Vector2(1.0, 1.0)
 		empty_menu_enum.CLEAR_UNDO_HISTORY:
 			UndoSystem.clear_history()
 		empty_menu_enum.CREATE_WAYPOINT:
