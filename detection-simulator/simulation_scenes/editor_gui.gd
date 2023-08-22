@@ -1,10 +1,13 @@
 extends CanvasLayer
 
-@onready var play_bar = $PlayBar
-@onready var play_bar_container = $PlayBar/HBoxContainer
-@onready var play_bar_container_spacer = $PlayBar/HBoxContainer/Spacer
-@onready var properties = $Properties
-@onready var properties_grid_container = $Properties/MarginContainer/VBoxContainer/ScrollContainer/GridContainer
+@export_group("Play Bar")
+@export var play_bar : PanelContainer = null
+@export var play_bar_container : HBoxContainer = null
+@export var play_bar_container_spacer : Control = null
+
+@export_group("Properties")
+@export var properties : PanelContainer = null
+@export var properties_grid_container : GridContainer = null
 
 var properties_open: bool = false : set = _properties_open_changed
 var properties_current_node: Node = null

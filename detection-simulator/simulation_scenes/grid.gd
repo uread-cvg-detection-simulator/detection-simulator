@@ -1,11 +1,13 @@
 class_name Grid
 extends Node2D
 
+@export_group("Parameters")
 @export var camera: Camera2D = null : set = _camera_set
 @export var grid_size: float = 64.0 : set = _grid_size_set
 
-@onready var grid_lines = $grid_lines
-@onready var grid_labels = $grid_labels
+@export_group("Internals")
+@export var grid_lines : Node2D = null
+@export var grid_labels : Node2D = null
 
 var initialised = false
 

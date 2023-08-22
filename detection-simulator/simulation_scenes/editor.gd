@@ -1,15 +1,30 @@
 extends Node2D
 
-@onready var _rightclick_empty: PopupMenu = $empty_right_click_menu
-@onready var _agent_base: PackedScene = load("res://agents/agent.tscn")
-@onready var _waypoint_base: PackedScene = load("res://agents/waypoint.tscn")
-@onready var _agent_root = $agents
-@onready var _play_button = $CanvasLayer/PlayBar/HBoxContainer/Button
-@onready var _status_label = $CanvasLayer/PlayBar/HBoxContainer/StatusInfo
-@onready var _save_button = $CanvasLayer/PlayBar/HBoxContainer/SaveButton
-@onready var _load_button = $CanvasLayer/PlayBar/HBoxContainer/LoadButton
-@onready var _autosave_check = $CanvasLayer/PlayBar/HBoxContainer/AutoSaveCheck
-@onready var _gui = $CanvasLayer
+@export_group("Entity Groups")
+@export var _agent_root: Node2D = null
+@export var _sensor_root: Node2D = null
+
+@export_group("GUI")
+@export var _gui : CanvasLayer = null
+@export var _rightclick_empty: PopupMenu = null
+
+@export_subgroup("Labels")
+@export var _status_label : Label = null
+
+@export_subgroup("Buttons")
+@export var _play_button : Button = null
+@export var _save_button : Button = null
+@export var _load_button : Button = null
+@export var _autosave_check : CheckButton = null
+
+@export_group("Scenes")
+@export var _agent_base: PackedScene = null
+@export var _waypoint_base: PackedScene = null
+
+@export_group("File Handling")
+@export var fd_writer: FileDialog = null
+@export var fd_reader: FileDialog = null
+
 
 var _agent_list: Array[Agent]
 
@@ -23,8 +38,6 @@ var _current_save_hash = 0
 var _last_save_data: Dictionary = {}
 var _data_to_save = false
 
-@onready var fd_writer = $fd_writer
-@onready var fd_reader = $fd_reader
 
 enum empty_menu_enum {
 	SPAWN_AGENT,

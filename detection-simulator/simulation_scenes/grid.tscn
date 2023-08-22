@@ -4,8 +4,10 @@
 [ext_resource type="Script" path="res://simulation_scenes/grid-labels.gd" id="2_dqd6x"]
 [ext_resource type="Script" path="res://simulation_scenes/grid-lines.gd" id="3_33gnu"]
 
-[node name="grid" type="Node2D"]
+[node name="grid" type="Node2D" node_paths=PackedStringArray("grid_lines", "grid_labels")]
 script = ExtResource("1_x4mq7")
+grid_lines = NodePath("grid_lines")
+grid_labels = NodePath("grid_labels")
 
 [node name="grid_labels" type="Node2D" parent="."]
 script = ExtResource("2_dqd6x")

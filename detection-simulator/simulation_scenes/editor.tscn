@@ -1,18 +1,37 @@
-[gd_scene load_steps=5 format=3 uid="uid://bok4788dfl1al"]
+[gd_scene load_steps=7 format=3 uid="uid://bok4788dfl1al"]
 
 [ext_resource type="Script" path="res://simulation_scenes/editor.gd" id="1_o3h7t"]
 [ext_resource type="Script" path="res://simulation_scenes/camera.gd" id="2_j0bt8"]
+[ext_resource type="PackedScene" uid="uid://p0wyr5cxelew" path="res://agents/agent.tscn" id="2_wea12"]
 [ext_resource type="PackedScene" uid="uid://djdqjby78q501" path="res://simulation_scenes/grid.tscn" id="3_2o4sa"]
 [ext_resource type="Script" path="res://simulation_scenes/editor_gui.gd" id="3_fj0mv"]
+[ext_resource type="PackedScene" uid="uid://b50ox3rfhikx8" path="res://agents/waypoint.tscn" id="3_k3ur2"]
 
-[node name="editor" type="Node2D"]
+[node name="editor" type="Node2D" node_paths=PackedStringArray("_agent_root", "_gui", "_rightclick_empty", "_status_label", "_play_button", "_save_button", "_load_button", "_autosave_check", "fd_writer", "fd_reader")]
 script = ExtResource("1_o3h7t")
+_agent_root = NodePath("agents")
+_gui = NodePath("CanvasLayer")
+_rightclick_empty = NodePath("empty_right_click_menu")
+_status_label = NodePath("CanvasLayer/PlayBar/HBoxContainer/StatusInfo")
+_play_button = NodePath("CanvasLayer/PlayBar/HBoxContainer/PlayButton")
+_save_button = NodePath("CanvasLayer/PlayBar/HBoxContainer/SaveButton")
+_load_button = NodePath("CanvasLayer/PlayBar/HBoxContainer/LoadButton")
+_autosave_check = NodePath("CanvasLayer/PlayBar/HBoxContainer/AutoSaveCheck")
+_agent_base = ExtResource("2_wea12")
+_waypoint_base = ExtResource("3_k3ur2")
+fd_writer = NodePath("fd_writer")
+fd_reader = NodePath("fd_reader")
 
 [node name="Camera2D" type="Camera2D" parent="."]
 script = ExtResource("2_j0bt8")
 
-[node name="CanvasLayer" type="CanvasLayer" parent="."]
+[node name="CanvasLayer" type="CanvasLayer" parent="." node_paths=PackedStringArray("play_bar", "play_bar_container", "play_bar_container_spacer", "properties", "properties_grid_container")]
 script = ExtResource("3_fj0mv")
+play_bar = NodePath("PlayBar")
+play_bar_container = NodePath("PlayBar/HBoxContainer")
+play_bar_container_spacer = NodePath("PlayBar/HBoxContainer/Spacer")
+properties = NodePath("Properties")
+properties_grid_container = NodePath("Properties/MarginContainer/VBoxContainer/ScrollContainer/GridContainer")
 
 [node name="PlayBar" type="PanelContainer" parent="CanvasLayer"]
 anchors_preset = 12
@@ -29,7 +48,7 @@ size_flags_vertical = 8
 layout_mode = 2
 size_flags_horizontal = 0
 
-[node name="Button" type="Button" parent="CanvasLayer/PlayBar/HBoxContainer"]
+[node name="PlayButton" type="Button" parent="CanvasLayer/PlayBar/HBoxContainer"]
 layout_mode = 2
 text = "Play"
 
@@ -125,7 +144,7 @@ file_mode = 0
 access = 2
 filters = PackedStringArray("*.ds-json")
 
-[connection signal="pressed" from="CanvasLayer/PlayBar/HBoxContainer/Button" to="." method="_on_play_button_pressed"]
+[connection signal="pressed" from="CanvasLayer/PlayBar/HBoxContainer/PlayButton" to="." method="_on_play_button_pressed"]
 [connection signal="pressed" from="CanvasLayer/PlayBar/HBoxContainer/SaveButton" to="." method="_on_save_button_pressed"]
 [connection signal="pressed" from="CanvasLayer/PlayBar/HBoxContainer/LoadButton" to="." method="_on_load_button_pressed"]
 [connection signal="pressed" from="CanvasLayer/Properties/MarginContainer/VBoxContainer/PanelContainer/GridContainer/Button" to="CanvasLayer" method="_on_propeties_button_pressed"]

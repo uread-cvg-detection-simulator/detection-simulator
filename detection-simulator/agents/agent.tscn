@@ -30,6 +30,7 @@ shader_parameter/selected = false
 radius = 16.0
 
 [node name="agent" type="CharacterBody2D"]
+collision_mask = 3
 script = ExtResource("1_noa6a")
 
 [node name="square_target" type="Sprite2D" parent="."]
