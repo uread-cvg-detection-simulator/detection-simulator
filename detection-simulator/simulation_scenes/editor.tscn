@@ -1,4 +1,4 @@
-[gd_scene load_steps=7 format=3 uid="uid://bok4788dfl1al"]
+[gd_scene load_steps=8 format=3 uid="uid://bok4788dfl1al"]
 
 [ext_resource type="Script" path="res://simulation_scenes/editor.gd" id="1_o3h7t"]
 [ext_resource type="Script" path="res://simulation_scenes/camera.gd" id="2_j0bt8"]
@@ -6,10 +6,12 @@
 [ext_resource type="PackedScene" uid="uid://djdqjby78q501" path="res://simulation_scenes/grid.tscn" id="3_2o4sa"]
 [ext_resource type="Script" path="res://simulation_scenes/editor_gui.gd" id="3_fj0mv"]
 [ext_resource type="PackedScene" uid="uid://b50ox3rfhikx8" path="res://agents/waypoint.tscn" id="3_k3ur2"]
+[ext_resource type="PackedScene" uid="uid://pxotaj1n83vy" path="res://agents/sensor.tscn" id="5_iwj3y"]
 
-[node name="editor" type="Node2D" node_paths=PackedStringArray("_agent_root", "_gui", "_rightclick_empty", "_status_label", "_play_button", "_save_button", "_load_button", "_autosave_check", "fd_writer", "fd_reader")]
+[node name="editor" type="Node2D" node_paths=PackedStringArray("_agent_root", "_sensor_root", "_gui", "_rightclick_empty", "_status_label", "_play_button", "_save_button", "_load_button", "_autosave_check", "fd_writer", "fd_reader")]
 script = ExtResource("1_o3h7t")
 _agent_root = NodePath("agents")
+_sensor_root = NodePath("sensors")
 _gui = NodePath("CanvasLayer")
 _rightclick_empty = NodePath("empty_right_click_menu")
 _status_label = NodePath("CanvasLayer/PlayBar/HBoxContainer/StatusInfo")
@@ -19,6 +21,7 @@ _load_button = NodePath("CanvasLayer/PlayBar/HBoxContainer/LoadButton")
 _autosave_check = NodePath("CanvasLayer/PlayBar/HBoxContainer/AutoSaveCheck")
 _agent_base = ExtResource("2_wea12")
 _waypoint_base = ExtResource("3_k3ur2")
+_sensor_base = ExtResource("5_iwj3y")
 fd_writer = NodePath("fd_writer")
 fd_reader = NodePath("fd_reader")
 
@@ -125,6 +128,8 @@ gui_embed_subwindows = true
 size = Vector2i(28, 8)
 
 [node name="agents" type="Node2D" parent="."]
+
+[node name="sensors" type="Node2D" parent="."]
 
 [node name="grid" parent="." node_paths=PackedStringArray("camera") instance=ExtResource("3_2o4sa")]
 camera = NodePath("../Camera2D")

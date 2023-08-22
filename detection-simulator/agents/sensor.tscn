@@ -1,13 +1,25 @@
-[gd_scene load_steps=5 format=3 uid="uid://pxotaj1n83vy"]
+[gd_scene load_steps=8 format=3 uid="uid://pxotaj1n83vy"]
 
 [ext_resource type="PackedScene" uid="uid://kf8tqdlm8c5t" path="res://addons/vision_cone_2d/vision_cone_2d_template.tscn" id="1_fkk1c"]
 [ext_resource type="Script" path="res://agents/sensor.gd" id="1_gwecx"]
+[ext_resource type="Shader" path="res://agents/agent-colour.gdshader" id="3_5ct4b"]
 [ext_resource type="Script" path="res://agents/sensor_detected_lines.gd" id="3_no7rn"]
 [ext_resource type="Texture2D" uid="uid://brxbf2vvd8wi6" path="res://agents/camera.png" id="4_j7cge"]
+[ext_resource type="PackedScene" uid="uid://c5r11cmhlqudb" path="res://agents/SelectionArea2D.tscn" id="5_eb1s1"]
 
-[node name="sensor" type="Node2D" node_paths=PackedStringArray("vision_cone")]
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_u0jsf"]
+resource_local_to_scene = true
+shader = ExtResource("3_5ct4b")
+shader_parameter/new_colour = Vector4(1, 1, 1, 1)
+shader_parameter/selected = false
+
+[node name="sensor" type="Node2D" node_paths=PackedStringArray("vision_cone", "selection_area", "selection_area_collision", "context_menu", "sprite")]
 script = ExtResource("1_gwecx")
 vision_cone = NodePath("VisionCone2D")
+selection_area = NodePath("SelectionArea2D")
+selection_area_collision = NodePath("SelectionArea2D/CollisionPolygon2D")
+context_menu = NodePath("ContextMenu")
+sprite = NodePath("Sprite2D")
 
 [node name="VisionCone2D" parent="." instance=ExtResource("1_fkk1c")]
 collision_layer_mask = 3
@@ -15,15 +27,32 @@ collision_layer_mask = 3
 [node name="VisionConeArea" parent="VisionCone2D" index="1"]
 collision_layer = 1
 
-[node name="detected_lines" type="Node2D" parent="." node_paths=PackedStringArray("sensor")]
+[node name="Sprite2D" type="Sprite2D" parent="."]
+material = SubResource("ShaderMaterial_u0jsf")
+texture = ExtResource("4_j7cge")
+
+[node name="SelectionArea2D" parent="." node_paths=PackedStringArray("parent_object") instance=ExtResource("5_eb1s1")]
+parent_object = NodePath("..")
+
+[node name="CollisionPolygon2D" type="CollisionPolygon2D" parent="SelectionArea2D"]
+polygon = PackedVector2Array(-16, -5, 9, -13, 14, -11, 16, -4, 16, 1, 11, 7, 11, 12, 7, 12, 6, 13, 5, 13, 2, 11, -1, 10, -3, 11, -10, 11, -12, 10, -12, 8, -14, 8, -15, 7, -15, 5, -16, 4)
+
+[node name="Node" type="Node" parent="."]
+
+[node name="detected_lines" type="Node2D" parent="Node" node_paths=PackedStringArray("sensor")]
 z_index = -1
 script = ExtResource("3_no7rn")
-sensor = NodePath("..")
+sensor = NodePath("../..")
 
-[node name="Sprite2D" type="Sprite2D" parent="."]
-texture = ExtResource("4_j7cge")
+[node name="ContextMenu" type="PopupMenu" parent="."]
+gui_embed_subwindows = true
+size = Vector2i(28, 8)
 
 [connection signal="body_entered" from="VisionCone2D/VisionConeArea" to="." method="_on_vision_cone_area_body_entered"]
 [connection signal="body_exited" from="VisionCone2D/VisionConeArea" to="." method="_on_vision_cone_area_body_exited"]
+[connection signal="mouse_click" from="SelectionArea2D" to="." method="_on_mouse_click"]
+[connection signal="mouse_hold_end" from="SelectionArea2D" to="." method="_on_mouse_hold_end"]
+[connection signal="mouse_hold_start" from="SelectionArea2D" to="." method="_on_mouse_hold_start"]
+[connection signal="selection_toggled" from="SelectionArea2D" to="." method="_on_selection_toggled"]
 
 [editable path="VisionCone2D"]

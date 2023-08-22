@@ -35,7 +35,7 @@ func _on_size_changed():
 func resize_spacer():
 	# Modify Properties size to
 	var viewport_size = get_viewport().size
-	
+
 	# Expand "Spacer" (child node of play_bar_container) to fill the remaining space between previous and subsequent nodes
 	var play_bar_previous_size = 0
 	var play_bar_next_size = 0
@@ -181,6 +181,19 @@ func _process(delta):
 				# Update properties
 				properties_dict["Agent ID"].text = str(agent.agent_id)
 				properties_dict["Location"].text = "(%.2f, %.2f)" % [waypoint.global_position.x / 64.0, -waypoint.global_position.y / 64.0]
+		elif properties_current_node.parent_object is Sensor:
+			var sensor = properties_current_node.parent_object
+
+			# If disabled, disable all properties and close
+			if sensor.disabled:
+				_clear_properties()
+				properties_open = false
+				return
+
+			if not properties_dict.is_empty():
+				properties_dict["Sensor ID"].text = str(sensor.sensor_id)
+				properties_dict["Location"].text = "(%.2f, %.2f)" % [sensor.global_position.x / 64.0, -sensor.global_position.y / 64.0]
+
 
 	else:
 		if not properties_dict.is_empty() or not properties_editable_dict.is_empty():
@@ -405,6 +418,144 @@ func _on_grouped(group: String, node: Node):
 							if properties_dict["Agent ID"].text == str(agent_id) and properties_dict["Waypoint Index"].text == str(waypoint_index):
 								properties_editable_dict["Wait (s)"].text = str(old_value) if old_value != null else "0"
 						, [agent.agent_id, old_value])
+
+					# Add the action to the undo system
+					UndoSystem.add_action(new_action, false)
+			)
+
+		if node.parent_object is Sensor:
+			var sensor: Sensor = node.parent_object
+
+			_add_property("Sensor ID", str(sensor.sensor_id))
+			_add_property("Location", "(%.2f, %.2f)" % [sensor.global_position.x / 64.0, sensor.global_position.y / 64.0])
+
+			_add_editable_property("Rotation", str(sensor.vision_cone.rotation_degrees),
+				func(new_value: String):
+					var value = _on_editable_change("Rotation", EditablePropertyType.TYPE_FLOAT, new_value)
+					var old_value = sensor.vision_cone.rotation_degrees
+
+					# If value is null (unparseable) or the same as the old value, return
+					if value == null or old_value == value:
+						return
+
+					# Update the value
+					sensor.vision_cone.rotation_degrees = value
+
+					######
+					# Add undo/redo action for sensor.vision_cone.rotation_degrees
+					######
+
+					var new_action = UndoRedoAction.new()
+					new_action.action_name = "Set Sensor Rotation"
+
+					# Add a reference to the sensor
+					var sensor_ref = new_action.action_store_method(UndoRedoAction.DoType.Do, func(sensor_id): return TreeFuncs.get_sensor_with_id(sensor_id).vision_cone, [sensor.sensor_id])
+					new_action.manual_add_item_to_store(sensor, sensor_ref)
+
+					# Update/restore the value
+					new_action.action_property_ref(UndoRedoAction.DoType.Do, sensor_ref, "rotation_degrees", new_value)
+					new_action.action_property_ref(UndoRedoAction.DoType.Undo, sensor_ref, "rotation_degrees", old_value)
+
+					# Update the label
+					new_action.action_method(UndoRedoAction.DoType.Do, func(sensor_id, new_value):
+						if "Rotation" in properties_editable_dict and "Sensor ID" in properties_dict:
+							if properties_dict["Sensor ID"].text == str(sensor_id):
+								properties_editable_dict["Rotation"].text = str(new_value)
+						, [sensor.sensor_id, new_value])
+
+					new_action.action_method(UndoRedoAction.DoType.Undo, func(sensor_id, old_value):
+						if "Rotation" in properties_editable_dict and "Sensor ID" in properties_dict:
+							if properties_dict["Sensor ID"].text == str(sensor_id):
+								properties_editable_dict["Rotation"].text = str(old_value)
+						, [sensor.sensor_id, old_value])
+
+					# Add the action to the undo system
+					UndoSystem.add_action(new_action, false)
+			)
+
+			_add_editable_property("FoV", str(sensor.sensor_fov_degrees),
+				func(new_value: String):
+					var value = _on_editable_change("FoV", EditablePropertyType.TYPE_FLOAT, new_value)
+					var old_value = sensor.sensor_fov_degrees
+
+					# If value is null (unparseable) or the same as the old value, return
+					if value == null or old_value == value:
+						return
+
+					# Update the value
+					sensor.sensor_fov_degrees = value
+
+					######
+					# Add undo/redo action for sensor.sensor_fov_degrees
+					######
+
+					var new_action = UndoRedoAction.new()
+					new_action.action_name = "Set Sensor FoV"
+
+					# Add a reference to the sensor
+					var sensor_ref = new_action.action_store_method(UndoRedoAction.DoType.Do, TreeFuncs.get_sensor_with_id, [sensor.sensor_id])
+					new_action.manual_add_item_to_store(sensor, sensor_ref)
+
+					# Update/restore the value
+					new_action.action_property_ref(UndoRedoAction.DoType.Do, sensor_ref, "sensor_fov_degrees", new_value)
+					new_action.action_property_ref(UndoRedoAction.DoType.Undo, sensor_ref, "sensor_fov_degrees", old_value)
+
+					# Update the label
+					new_action.action_method(UndoRedoAction.DoType.Do, func(sensor_id, new_value):
+						if "FoV" in properties_editable_dict and "Sensor ID" in properties_dict:
+							if properties_dict["Sensor ID"].text == str(sensor_id):
+								properties_editable_dict["FoV"].text = str(new_value)
+						, [sensor.sensor_id, new_value])
+
+					new_action.action_method(UndoRedoAction.DoType.Undo, func(sensor_id, old_value):
+						if "FoV" in properties_editable_dict and "Sensor ID" in properties_dict:
+							if properties_dict["Sensor ID"].text == str(sensor_id):
+								properties_editable_dict["FoV"].text = str(old_value)
+						, [sensor.sensor_id, old_value])
+
+					# Add the action to the undo system
+					UndoSystem.add_action(new_action, false)
+			)
+
+			_add_editable_property("Distance", str(sensor.sensor_distance),
+				func(new_value: String):
+					var value = _on_editable_change("Distance", EditablePropertyType.TYPE_FLOAT, new_value)
+					var old_value = sensor.sensor_distance
+
+					# If value is null (unparseable) or the same as the old value, return
+					if value == null or old_value == value:
+						return
+
+					# Update the value
+					sensor.sensor_distance = value
+
+					######
+					# Add undo/redo action for sensor.sensor_distance
+					######
+
+					var new_action = UndoRedoAction.new()
+					new_action.action_name = "Set Sensor Distance"
+
+					# Add a reference to the sensor
+					var sensor_ref = new_action.action_store_method(UndoRedoAction.DoType.Do, TreeFuncs.get_sensor_with_id, [sensor.sensor_id])
+					new_action.manual_add_item_to_store(sensor, sensor_ref)
+
+					# Update/restore the value
+					new_action.action_property_ref(UndoRedoAction.DoType.Do, sensor_ref, "sensor_distance", new_value)
+					new_action.action_property_ref(UndoRedoAction.DoType.Undo, sensor_ref, "sensor_distance", old_value)
+
+					# Update the label
+					new_action.action_method(UndoRedoAction.DoType.Do, func(sensor_id, new_value):
+						if "Distance" in properties_editable_dict and "Sensor ID" in properties_dict:
+							if properties_dict["Sensor ID"].text == str(sensor_id):
+								properties_editable_dict["Distance"].text = str(new_value)
+						, [sensor.sensor_id, new_value])
+
+					new_action.action_method(UndoRedoAction.DoType.Undo, func(sensor_id, old_value):
+						if "Distance" in properties_editable_dict and "Sensor ID" in properties_dict:
+							if properties_dict["Sensor ID"].text == str(sensor_id):
+								properties_editable_dict["Distance"].text = str(old_value)
+						, [sensor.sensor_id, old_value])
 
 					# Add the action to the undo system
 					UndoSystem.add_action(new_action, false)

@@ -11,4 +11,4 @@ func _draw():
 		var detected_objects = sensor.current_detections
 
 		for agent in detected_objects:
-			draw_line(position, agent.position, sensor.detection_line_colour, sensor.detection_line_width)
+			draw_line(sensor.global_position, agent.global_position, sensor.detection_line_colour, sensor.detection_line_width)

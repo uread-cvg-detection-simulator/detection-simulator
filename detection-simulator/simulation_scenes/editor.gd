@@ -20,6 +20,7 @@ extends Node2D
 @export_group("Scenes")
 @export var _agent_base: PackedScene = null
 @export var _waypoint_base: PackedScene = null
+@export var _sensor_base: PackedScene = null
 
 @export_group("File Handling")
 @export var fd_writer: FileDialog = null
@@ -29,6 +30,7 @@ extends Node2D
 var _agent_list: Array[Agent]
 
 var _last_id = 0
+var _last_sensor_id = 0
 
 var _scrolling = false ## Set when drag-scrolling
 var _right_click_position = null ## Set to ensure popup menus act on correct mouse position
@@ -41,6 +43,7 @@ var _data_to_save = false
 
 enum empty_menu_enum {
 	SPAWN_AGENT,
+	SPAWN_SENSOR,
 	RETURN_TO_CENTRE,
 	CLEAR_UNDO_HISTORY,
 	CREATE_WAYPOINT,
@@ -49,7 +52,7 @@ enum empty_menu_enum {
 # Called when the node enters the scene tree for the first time.
 func _ready():
 	_prepare_menu()
-	
+
 	#fd_reader.current_dir = "~/"
 	#fd_writer.current_dir = "~/"
 	_save_button.disabled = true
@@ -57,16 +60,24 @@ func _ready():
 
 func get_save_data() -> Dictionary:
 	var save_data = {
-		"version": 1,
+		"version": 2,
 		"agents": [],
-		"waypoints": [],
+		"sensors": [],
 		"last_id": _last_id,
+		"last_sensor_id": _last_sensor_id,
 	}
 
+	# Load Agents
 	var agents = get_tree().get_nodes_in_group("agent")
 
 	for agent in agents:
 		save_data["agents"].append(agent.get_save_data())
+
+	# Load Sensors
+	var sensors = get_tree().get_nodes_in_group("sensor")
+
+	for sensor in sensors:
+		save_data["sensors"].append(sensor.get_save_data())
 
 	return save_data
 
@@ -79,12 +90,20 @@ func load_save_data(data: Dictionary):
 
 	# Load agents
 	if data.has("version"):
-		if data["version"] == 1:
+		if data["version"] <= 2:
 
 			for agent_data in data["agents"]:
 				spawn_agent(Vector2.ZERO)
 				var current_agent = TreeFuncs.get_agent_with_id(_last_id)
 				current_agent.load_save_data(agent_data)
+
+			if data["version"] >= 2:
+				for sensor in data["sensors"]:
+					spawn_sensor(Vector2.ZERO)
+					var current_sensor = TreeFuncs.get_sensor_with_id(_last_id)
+					current_sensor.load_save_data(sensor)
+
+				_last_sensor_id = data["last_sensor_id"]
 
 
 			_last_id = data["last_id"]
@@ -103,6 +122,7 @@ func _prepare_menu():
 			_rightclick_empty.add_separator()
 
 	_rightclick_empty.add_item("Spawn New Agent", empty_menu_enum.SPAWN_AGENT)
+	_rightclick_empty.add_item("Spawn New Sensor", empty_menu_enum.SPAWN_SENSOR)
 	_rightclick_empty.add_separator()
 	_rightclick_empty.add_item("Centre Grid", empty_menu_enum.RETURN_TO_CENTRE)
 	_rightclick_empty.add_item("Clear Undo History", empty_menu_enum.CLEAR_UNDO_HISTORY)
@@ -113,7 +133,7 @@ func _prepare_menu():
 # Called every frame. 'delta' is the elapsed time since the previous frame.
 func _process(delta):
 	_gui.resize_spacer()
-	
+
 	if PlayTimer.play:
 		var agents: Array = get_tree().get_nodes_in_group("agent")
 		var finished_agents = 0
@@ -131,7 +151,7 @@ func _process(delta):
 	var button_text = ""
 
 	var check_difference = false
-	
+
 	if _current_save_hash == 0:
 		check_difference = true
 		_current_save_hash = current_save_data.hash()
@@ -144,7 +164,7 @@ func _process(delta):
 		_save_button.disabled = true
 		if _autosave_check.button_pressed:
 			button_text = "Autosave On"
-		
+
 		if current_save_data.hash() != _last_save_data.hash():
 			if _autosave_check.button_pressed and save_path != null:
 				save_to_file(save_path)
@@ -215,7 +235,6 @@ func _unhandled_input(event):
 
 		$Camera2D.position -= tmp_event.relative
 
-
 func _right_click(event: InputEventMouseButton):
 	# Calculate the mouse relative position to place the
 	# right click menu at the correct location
@@ -236,6 +255,8 @@ func _on_empty_menu_press(id: int):
 	match id:
 		empty_menu_enum.SPAWN_AGENT:
 			spawn_agent(_right_click_position)
+		empty_menu_enum.SPAWN_SENSOR:
+			spawn_sensor(_right_click_position)
 		empty_menu_enum.RETURN_TO_CENTRE:
 			$Camera2D.set_global_position(Vector2(0, 0))
 		empty_menu_enum.CLEAR_UNDO_HISTORY:
@@ -306,6 +327,52 @@ func spawn_agent(position: Vector2):
 
 	TreeFuncs.get_agent_with_id(_last_id)._current_agent._selection_area.selected = true
 
+func spawn_sensor(position: Vector2):
+	var undo_action = UndoRedoAction.new()
+	undo_action.action_name = "Spawn Sensor %d" % [_last_sensor_id + 1]
+
+	############
+	# DO ACTIONS
+	############
+
+	# Create the new sensor at the provided location
+	var newinstance_ref = undo_action.action_store_method(UndoRedoAction.DoType.Do, _sensor_base.instantiate)
+
+	# Set position and sensor id
+	undo_action.action_property_ref(UndoRedoAction.DoType.Do, newinstance_ref, "global_position", position)
+	undo_action.action_property_ref(UndoRedoAction.DoType.Do, newinstance_ref, "sensor_id", _last_sensor_id + 1)
+	undo_action.action_property(UndoRedoAction.DoType.Do, self, "_last_sensor_id", _last_sensor_id + 1)
+
+	# Add to scene tree
+	undo_action.action_method(UndoRedoAction.DoType.Do, _sensor_root.add_child, [newinstance_ref], newinstance_ref)
+	undo_action.action_method(UndoRedoAction.DoType.Do, GroupHelpers.add_node_to_group, [newinstance_ref, "sensor"], newinstance_ref)
+
+	##############
+	# UNDO ACTIONS
+	##############
+
+	# Remove from scene tree
+	undo_action.action_method(UndoRedoAction.DoType.Undo, _sensor_root.remove_child, [newinstance_ref], newinstance_ref)
+
+	# Reset last id
+	undo_action.action_property(UndoRedoAction.DoType.Undo, self, "_last_sensor_id", _last_sensor_id)
+
+	# Queue Deletion
+	undo_action.action_object_call_ref(UndoRedoAction.DoType.Undo, newinstance_ref, "queue_free")
+
+	# Remove Reference
+	undo_action.action_remove_item(UndoRedoAction.DoType.Undo, newinstance_ref)
+
+	########
+	# COMMIT
+	########
+
+	UndoSystem.add_action(undo_action)
+
+	TreeFuncs.get_sensor_with_id(_last_sensor_id).selection_area.selected = true
+
+
+
 ## Start playing
 func _on_play_button_pressed():
 	PlayTimer.play = not PlayTimer.play
@@ -356,10 +423,10 @@ func _on_save_button_pressed():
 
 func _on_fd_reader_file_selected(path: String):
 	var load_file = FileAccess.open(path, FileAccess.READ)
-	
+
 	if load_file.file_exists(path):
 		var load_data_json = load_file.get_line()
 		var load_data = JSON.parse_string(load_data_json)
-		
+
 		load_save_data(load_data)
 		save_path = path
