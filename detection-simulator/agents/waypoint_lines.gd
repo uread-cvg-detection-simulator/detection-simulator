@@ -2,9 +2,10 @@ extends Node2D
 
 var waypoint_object = null
 var camera: Camera2D = null : set = _camera_set
+@export var draw_lines: bool = true
 
 func _draw():
-	if waypoint_object != null:
+	if waypoint_object != null and draw_lines:
 		# Get the waypoints from the waypoint object
 		var waypoints: Array[Waypoint] = waypoint_object.waypoints
 

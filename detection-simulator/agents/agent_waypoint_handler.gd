@@ -11,6 +11,7 @@ var waypoint_scene = preload("res://agents/waypoint.tscn")
 @export var link_line_colour = Color(0.0, 0.0, 0.0, 1.0)
 
 @export var camera: Camera2D = null : set = _set_camera
+@export var disabled: bool = false : set = _set_disabled
 
 var initialised = false
 var clickable = true : set = _set_clickable
@@ -403,3 +404,11 @@ func _set_clickable(value):
 
 	for waypoint in waypoints:
 		waypoint.clickable = clickable
+
+func _set_disabled(value):
+	disabled = value
+	waypoint_lines.draw_lines = not value
+	waypoint_lines.queue_redraw()
+
+	for waypoint in waypoints:
+		waypoint.disabled = disabled

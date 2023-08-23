@@ -280,6 +280,7 @@ func _set_disabled(new_value: bool):
 
 	disabled = new_value
 	visible = not new_value
+	waypoints.disabled = new_value
 
 func _free_if_not_in_group():
 	if not is_in_group("agent"):
