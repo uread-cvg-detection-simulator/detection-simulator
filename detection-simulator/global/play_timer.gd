@@ -3,10 +3,10 @@ extends Node
 var current_time: float = 0.00
 var previous_time: float = 0.00
 var play: bool = false : set = _set_play
+var exporting: bool = false
 
 signal start_playing()
 signal stop_playing()
-
 
 func _physics_process(delta):
 	if play:

@@ -6,9 +6,9 @@
 [ext_resource type="PackedScene" uid="uid://djdqjby78q501" path="res://simulation_scenes/grid.tscn" id="3_2o4sa"]
 [ext_resource type="Script" path="res://simulation_scenes/editor_gui.gd" id="3_fj0mv"]
 [ext_resource type="PackedScene" uid="uid://b50ox3rfhikx8" path="res://agents/waypoint.tscn" id="3_k3ur2"]
-[ext_resource type="PackedScene" uid="uid://pxotaj1n83vy" path="res://agents/sensor.tscn" id="5_iwj3y"]
+[ext_resource type="PackedScene" uid="uid://cbubj74lwpjac" path="res://agents/sensor.tscn" id="5_iwj3y"]
 
-[node name="editor" type="Node2D" node_paths=PackedStringArray("_agent_root", "_sensor_root", "_gui", "_rightclick_empty", "_status_label", "_play_button", "_save_button", "_load_button", "_autosave_check", "fd_writer", "fd_reader")]
+[node name="editor" type="Node2D" node_paths=PackedStringArray("_agent_root", "_sensor_root", "_gui", "_rightclick_empty", "_status_label", "_play_button", "_save_button", "_load_button", "_export_button", "_autosave_check", "fd_writer", "fd_reader")]
 script = ExtResource("1_o3h7t")
 _agent_root = NodePath("agents")
 _sensor_root = NodePath("sensors")
@@ -18,6 +18,7 @@ _status_label = NodePath("CanvasLayer/PlayBar/HBoxContainer/StatusInfo")
 _play_button = NodePath("CanvasLayer/PlayBar/HBoxContainer/PlayButton")
 _save_button = NodePath("CanvasLayer/PlayBar/HBoxContainer/SaveButton")
 _load_button = NodePath("CanvasLayer/PlayBar/HBoxContainer/LoadButton")
+_export_button = NodePath("CanvasLayer/PlayBar/HBoxContainer/ExportButton")
 _autosave_check = NodePath("CanvasLayer/PlayBar/HBoxContainer/AutoSaveCheck")
 _agent_base = ExtResource("2_wea12")
 _waypoint_base = ExtResource("3_k3ur2")
@@ -75,6 +76,10 @@ text = "Autosave"
 [node name="SaveButton" type="Button" parent="CanvasLayer/PlayBar/HBoxContainer"]
 layout_mode = 2
 text = "No Data"
+
+[node name="ExportButton" type="Button" parent="CanvasLayer/PlayBar/HBoxContainer"]
+layout_mode = 2
+text = "Export"
 
 [node name="LoadButton" type="Button" parent="CanvasLayer/PlayBar/HBoxContainer"]
 layout_mode = 2
@@ -151,6 +156,7 @@ filters = PackedStringArray("*.ds-json")
 
 [connection signal="pressed" from="CanvasLayer/PlayBar/HBoxContainer/PlayButton" to="." method="_on_play_button_pressed"]
 [connection signal="pressed" from="CanvasLayer/PlayBar/HBoxContainer/SaveButton" to="." method="_on_save_button_pressed"]
+[connection signal="pressed" from="CanvasLayer/PlayBar/HBoxContainer/ExportButton" to="." method="_on_export_button_pressed"]
 [connection signal="pressed" from="CanvasLayer/PlayBar/HBoxContainer/LoadButton" to="." method="_on_load_button_pressed"]
 [connection signal="pressed" from="CanvasLayer/Properties/MarginContainer/VBoxContainer/PanelContainer/GridContainer/Button" to="CanvasLayer" method="_on_propeties_button_pressed"]
 [connection signal="file_selected" from="fd_writer" to="." method="_on_fd_writer_file_selected"]

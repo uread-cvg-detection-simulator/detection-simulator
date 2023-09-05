@@ -11,6 +11,13 @@ class_name Sensor
 @export var disabled: bool = false : set = _set_disabled
 @export var clickable: bool = true
 
+@export_group("Export Parameters")
+@export_range(0, 60) var export_framerate: int = 30: set = _set_framerate
+var export_timestep: float = INF
+var exporting: bool = false
+var export_last_time: float = INF
+var export_last_data: Dictionary = {}
+
 @export_group("Internal")
 @export var vision_cone: VisionCone2D = null
 @export var selection_area: SelectionArea2D = null
@@ -31,11 +38,15 @@ func _ready():
 	sensor_fov_degrees = sensor_fov_degrees
 	draw_vision_cone = draw_vision_cone
 	sensor_distance = sensor_distance
+	export_framerate = export_framerate
 
 	# Create menu items and connect
 	context_menu.add_item("Delete Sensor", ContextMenuIDs.DELETE)
 	context_menu.add_item("Properties", ContextMenuIDs.PROPERTIES)
 	context_menu.connect("id_pressed", self._context_menu)
+
+	PlayTimer.connect("start_playing", self._start_playing)
+	PlayTimer.connect("stop_playing", self._stop_playing)
 
 func get_save_data() -> Dictionary:
 	var data = {
@@ -71,9 +82,92 @@ func load_save_data(data: Dictionary):
 	else:
 		print_debug("Sensor version not found")
 
+func _start_playing():
+	if not disabled:
+		if file_access_base_path != "":
+			exporting = true
+			export_last_time = -1
+
+func _stop_playing():
+	if not disabled:
+		exporting = false
+		export_last_time = INF
+
+		if file_access_sensor:
+			file_access_sensor.store_string("]")
+			file_access_sensor.close()
+			file_access_sensor = null
+
+		for agent in file_access_agents.values():
+			agent.store_string("]")
+			agent.close()
+
+		file_access_agents.clear()
+
 # Called every frame. 'delta' is the elapsed time since the previous frame.
 func _process(delta):
 	pass
+
+var file_access_sensor: FileAccess = null
+var file_access_agents: Dictionary = {}
+var file_access_base_path: String = ""
+
+func _physics_process(delta):
+	if exporting:
+		# Determind if we should export this frame (based on PlayTimer and timestep)
+		var current_time = PlayTimer.current_time
+
+		if current_time >= export_last_time + export_timestep:
+			# Ensure the last_time is divisible by the timestep (everything is float)
+			export_last_time = float(int(current_time / export_timestep)) * export_timestep
+
+			var agent_data: Array[Dictionary] = []
+
+			# Export the data for each agent
+			for agent in current_detections:
+				# Get the data for the agent
+				var data = agent.play_export()
+
+				agent_data.append(data)
+
+			if not agent_data.is_empty():
+				# Export the data for the sensor
+				var export_data = {
+					"sensor_id": sensor_id,
+					"timestamp_ms": "%016d" % int(export_last_time * 1000),
+					"detections": agent_data
+				}
+
+				# Write the data to the file
+				if not file_access_sensor:
+					file_access_sensor = FileAccess.open(file_access_base_path + "_sensor_%03d.json" % sensor_id, FileAccess.WRITE)
+					file_access_sensor.store_string("[")
+				else:
+					# Write a comma to seperate the json objects
+					file_access_sensor.store_string(",")
+
+				file_access_sensor.store_string(JSON.stringify((export_data)))
+
+				export_last_data = export_data
+
+			# Export the data for each agent
+			for agent in current_detections:
+				# Get the data for the agent
+				var data = agent.play_export()
+
+				# Write the data to the file
+				if not file_access_agents.has(agent.agent_id):
+					file_access_agents[agent.agent_id] = FileAccess.open(file_access_base_path + "_sensor_%03d_detection_%03d.json" % [sensor_id, agent.agent_id], FileAccess.WRITE)
+					file_access_agents[agent.agent_id].store_string("[")
+				else:
+					# Write a comma to seperate the json objects
+					file_access_agents[agent.agent_id].store_string(",")
+
+				# Add timestamp to the data
+				data["timestamp_ms"] = "%016d" % int(export_last_time * 1000)
+
+				# Write the data to the file
+				file_access_agents[agent.agent_id].store_string(JSON.stringify(data))
 
 func _context_menu(id: ContextMenuIDs):
 	match id:
@@ -182,3 +276,7 @@ func _unhandled_input(event):
 
 func _on_selection_toggled(selection):
 	sprite.material.set_shader_parameter("selected", selection)
+
+func _set_framerate(value):
+	export_framerate = value
+	export_timestep = 1.0 / float(value)

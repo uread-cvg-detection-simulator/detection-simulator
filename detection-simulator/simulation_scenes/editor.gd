@@ -15,6 +15,7 @@ extends Node2D
 @export var _play_button : Button = null
 @export var _save_button : Button = null
 @export var _load_button : Button = null
+@export var _export_button : Button = null
 @export var _autosave_check : CheckButton = null
 
 @export_group("Scenes")
@@ -36,6 +37,7 @@ var _scrolling = false ## Set when drag-scrolling
 var _right_click_position = null ## Set to ensure popup menus act on correct mouse position
 
 var save_path = null
+var save_path_export_base = null
 var _current_save_hash = 0
 var _last_save_data: Dictionary = {}
 var _data_to_save = false
@@ -149,9 +151,15 @@ func _process(delta):
 			if agent.playing_finished:
 				finished_agents += 1
 
-		var new_status_label_text = "%d agent(s) moving - %d finished" % [len(agents) - finished_agents, finished_agents]
+		var time = PlayTimer.current_time
+		var time_string = "%02d:%02d:%02d" % [int(time) / 3600, (int(time) / 60) % 60, int(time) % 60]
+		var new_status_label_text = "%d agent(s) moving - %d finished" % [len(agents) - finished_agents, finished_agents] if len(agents) != finished_agents else "All agents finished"
 
-		_status_label.text = new_status_label_text
+		_status_label.text = time_string + " - " + new_status_label_text
+
+		# Stop playing if all agents are finished and exporting
+		if finished_agents == len(agents) and PlayTimer.exporting:
+			_on_export_finished()
 
 	# Compare save data
 	var current_save_data = get_save_data()
@@ -169,6 +177,8 @@ func _process(delta):
 
 	if check_difference:
 		_save_button.disabled = true
+		_check_enable_export()
+
 		if _autosave_check.button_pressed:
 			button_text = "Autosave On"
 
@@ -405,13 +415,23 @@ func _on_play_button_pressed():
 		_play_button.text = "Stop"
 		_save_button.disabled = true
 		_load_button.disabled = true
+		_export_button.disabled = true
 	else:
 		_play_button.text = "Play"
 		_status_label.text = "Nothing to report"
 		if not _autosave_check.button_pressed:
 			_save_button.disabled = false
 		_load_button.disabled = false
+		_check_enable_export()
 
+func _check_enable_export():
+	var agents: Array = get_tree().get_nodes_in_group("agent")
+	var sensors: Array = get_tree().get_nodes_in_group("sensor")
+
+	if save_path != null and len(agents) > 0 and len(sensors) > 0:
+		_export_button.disabled = false
+	else:
+		_export_button.disabled = true
 
 
 func _on_load_button_pressed():
@@ -432,6 +452,9 @@ func save_to_file(path: String):
 	if not path.ends_with(".ds-json"):
 		path += ".ds-json"
 
+	var path_no_extension = path.substr(0, path.length() - 8)
+	save_path_export_base = path_no_extension + "_EXPORT"
+
 	var save_data = get_save_data()
 	_last_save_data = save_data
 
@@ -447,6 +470,37 @@ func _on_save_button_pressed():
 	fd_writer.visible = true
 	fd_reader.visible = false
 
+func _on_export_button_pressed():
+	# Set all the base paths of the sensors
+	var sensors: Array = get_tree().get_nodes_in_group("sensor")
+
+	if save_path:
+		for sensor in sensors:
+			sensor.file_access_base_path = save_path_export_base
+
+		PlayTimer.exporting = true
+		PlayTimer.play = true
+
+		_play_button.disabled = true
+		_save_button.disabled = true
+		_load_button.disabled = true
+		_export_button.text = "Exporting..."
+		_export_button.disabled = true
+	else:
+		print_debug("No save path set")
+
+func _on_export_finished():
+	PlayTimer.exporting = false
+	PlayTimer.play = false
+
+	_export_button.text = "Export"
+	_status_label.text = "Nothing to report"
+	if not _autosave_check.button_pressed:
+		_save_button.disabled = false
+	_play_button.disabled = false
+	_load_button.disabled = false
+	_check_enable_export()
+
 
 func _on_fd_reader_file_selected(path: String):
 	var load_file = FileAccess.open(path, FileAccess.READ)
@@ -458,3 +512,4 @@ func _on_fd_reader_file_selected(path: String):
 		load_save_data(load_data)
 		save_path = path
 		_autosave_check.button_pressed = false
+

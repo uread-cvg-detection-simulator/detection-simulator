@@ -19,6 +19,13 @@ enum AgentType {
 						   AgentType.SquareTarget : $square_target,
 						   AgentType.PersonTarget : $person_target }
 
+var _type_string = {
+	AgentType.Circle : "Circle",
+	AgentType.SquareTarget: "Square",
+	AgentType.PersonTarget: "Person",
+	AgentType.Invisible: "Invisible"
+}
+
 @export var type_default_colours = { AgentType.Circle : Color.GREEN,
 									 AgentType.SquareTarget : Color.WHITE,
 									 AgentType.PersonTarget : Color.GREEN }
@@ -46,6 +53,9 @@ var playing_target: Vector2 = Vector2.INF ## The target position of the next mov
 var playing_speed: float = 1.0 ## The speed at which the agent will move
 var playing_finished: bool = false ## Specifies whether the agent has finished playing
 var playing = false
+
+var exporting_path = null
+var exporting_file_access: FileAccess = null
 
 # Called when the node enters the scene tree for the first time.
 func _ready():
@@ -92,6 +102,17 @@ func load_save_data(data: Dictionary):
 	else:
 		print_debug("Unable to verify agent information: No version number")
 
+func play_export() -> Dictionary:
+	var data = {
+		"id" : agent_id,
+		"type" : _type_string[agent_type],
+		"x": global_position.x / 64.0,
+		"y": - global_position.y / 64.0,
+	}
+
+	return data
+
+
 func _update_target_information(waypoint: Waypoint):
 	var current_time = PlayTimer.current_time
 	var old_waypoint = playing_waypoint if playing_waypoint else waypoints.starting_node
@@ -121,6 +142,9 @@ func _start_playing():
 		clickable = false
 		waypoints.clickable = false
 
+		#if PlayTimer.exporting and exporting_path != null:
+		#	exporting_file_access = FileAccess.open(exporting_path, FileAccess.WRITE)
+
 ## Resets agent's playing parameters and position
 func _stop_playing():
 	playing_next_move_time = 0.0
@@ -132,6 +156,10 @@ func _stop_playing():
 
 	global_position = waypoints.starting_node.global_position
 	waypoints.clickable = true
+
+	if exporting_file_access != null:
+		exporting_file_access.close()
+		exporting_file_access = null
 
 func _physics_process(delta):
 	if not disabled:
@@ -147,6 +175,9 @@ func _physics_process(delta):
 				else:
 					playing_finished = true
 					playing = false
+
+			if PlayTimer.exporting and exporting_file_access:
+				pass
 
 # Called every frame. 'delta' is the elapsed time since the previous frame.
 func _process(delta):
