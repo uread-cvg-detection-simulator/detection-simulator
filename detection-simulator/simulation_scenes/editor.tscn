@@ -1,4 +1,4 @@
-[gd_scene load_steps=8 format=3 uid="uid://bok4788dfl1al"]
+[gd_scene load_steps=9 format=3 uid="uid://bok4788dfl1al"]
 
 [ext_resource type="Script" path="res://simulation_scenes/editor.gd" id="1_o3h7t"]
 [ext_resource type="Script" path="res://simulation_scenes/camera.gd" id="2_j0bt8"]
@@ -7,6 +7,7 @@
 [ext_resource type="Script" path="res://simulation_scenes/editor_gui.gd" id="3_fj0mv"]
 [ext_resource type="PackedScene" uid="uid://b50ox3rfhikx8" path="res://agents/waypoint.tscn" id="3_k3ur2"]
 [ext_resource type="PackedScene" uid="uid://cbubj74lwpjac" path="res://agents/sensor.tscn" id="5_iwj3y"]
+[ext_resource type="Script" path="res://simulation_scenes/global_exporter.gd" id="8_1i7iy"]
 
 [node name="editor" type="Node2D" node_paths=PackedStringArray("_agent_root", "_sensor_root", "_gui", "_rightclick_empty", "_status_label", "_play_button", "_save_button", "_load_button", "_export_button", "_autosave_check", "fd_writer", "fd_reader")]
 script = ExtResource("1_o3h7t")
@@ -153,6 +154,9 @@ ok_button_text = "Open"
 file_mode = 0
 access = 2
 filters = PackedStringArray("*.ds-json")
+
+[node name="global_exporter" type="Node" parent="."]
+script = ExtResource("8_1i7iy")
 
 [connection signal="pressed" from="CanvasLayer/PlayBar/HBoxContainer/PlayButton" to="." method="_on_play_button_pressed"]
 [connection signal="pressed" from="CanvasLayer/PlayBar/HBoxContainer/SaveButton" to="." method="_on_save_button_pressed"]
