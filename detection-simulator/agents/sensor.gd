@@ -134,7 +134,7 @@ func _physics_process(delta):
 				# Export the data for the sensor
 				var export_data = {
 					"sensor_id": sensor_id,
-					"timestamp_ms": "%016d" % int(export_last_time * 1000),
+					"timestamp_ms": int(export_last_time * 1000),
 					"detections": agent_data
 				}
 
@@ -164,7 +164,7 @@ func _physics_process(delta):
 					file_access_agents[agent.agent_id].store_string(",")
 
 				# Add timestamp to the data
-				data["timestamp_ms"] = "%016d" % int(export_last_time * 1000)
+				data["timestamp_ms"] = int(export_last_time * 1000)
 
 				# Write the data to the file
 				file_access_agents[agent.agent_id].store_string(JSON.stringify(data))

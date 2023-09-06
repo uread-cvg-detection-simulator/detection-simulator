@@ -1,4 +1,5 @@
 extends Node2D
+class_name ScenarioEditor
 
 @export_group("Entity Groups")
 @export var _agent_root: Node2D = null
@@ -428,7 +429,7 @@ func _check_enable_export():
 	var agents: Array = get_tree().get_nodes_in_group("agent")
 	var sensors: Array = get_tree().get_nodes_in_group("sensor")
 
-	if save_path != null and len(agents) > 0 and len(sensors) > 0:
+	if save_path != null and len(agents) > 0 and len(sensors) > 0 and save_path_export_base != null:
 		_export_button.disabled = false
 	else:
 		_export_button.disabled = true
