@@ -1,4 +1,5 @@
 extends Node
+class_name GlobalExporter
 
 @export_group("Parameters")
 @export_range(0, 60) var export_framerate: int = 30: set = _set_framerate
@@ -37,7 +38,7 @@ func _physics_process(_delta):
 			global_agent_export(export_last_time)
 			global_sensor_export(export_last_time)
 
-## Export all agents into a global file, and into separate files
+## Export all agents into a global file, and into separate files for every frame
 func global_agent_export(timestamp: float):
 	# Get all the exported data from the agent
 	var all_agents = get_tree().get_nodes_in_group("agent")
@@ -54,12 +55,14 @@ func global_agent_export(timestamp: float):
 			"detections": all_agent_data
 		}
 
+		# Open the file and handle the separators
 		if not global_all_fileaccess:
 			global_all_fileaccess = FileAccess.open(save_base + "_global_all.json", FileAccess.WRITE)
 			global_all_fileaccess.store_string("[")
 		else:
 			global_all_fileaccess.store_string(",")
 
+		# Export the data
 		global_all_fileaccess.store_string(JSON.stringify(export_data))
 
 		# Export to separate files
@@ -68,15 +71,19 @@ func global_agent_export(timestamp: float):
 
 			var agent_id = ad["id"]
 
+			# Open the file and handle the separators
 			if not global_all_separate_fileaccess.has(agent_id):
 				global_all_separate_fileaccess[agent_id] = FileAccess.open(save_base + "_global_all_%03d.json" % agent_id, FileAccess.WRITE)
 				global_all_separate_fileaccess[agent_id].store_string("[")
 			else:
 				global_all_separate_fileaccess[agent_id].store_string(",")
 
+			# Export the data
 			global_all_separate_fileaccess[agent_id].store_string(JSON.stringify(ad))
 
+## Export all agents within sensor range into a global file, and into separate files for every frame
 func global_sensor_export(timestamp: float):
+	# Get all the agents in sensor range
 	var all_sensors: Array = get_tree().get_nodes_in_group("sensor")
 
 	var all_agent_data: Dictionary = {}
@@ -94,12 +101,14 @@ func global_sensor_export(timestamp: float):
 			"detections": all_agent_data
 		}
 
+		# Open the file and handle the separators
 		if not global_sensor_fileaccess:
 			global_sensor_fileaccess = FileAccess.open(save_base + "_global_sensor.json", FileAccess.WRITE)
 			global_sensor_fileaccess.store_string("[")
 		else:
 			global_sensor_fileaccess.store_string(",")
 
+		# Export the data
 		global_sensor_fileaccess.store_string(JSON.stringify(export_data))
 
 		# Export to separate files
@@ -108,24 +117,30 @@ func global_sensor_export(timestamp: float):
 
 			var agent_id = ad["id"]
 
+			# Open the file and handle the separators
 			if not global_sensor_separate_fileaccess.has(agent_id):
 				global_sensor_separate_fileaccess[agent_id] = FileAccess.open(save_base + "_global_sensor_%03d.json" % agent_id, FileAccess.WRITE)
 				global_sensor_separate_fileaccess[agent_id].store_string("[")
 			else:
 				global_sensor_separate_fileaccess[agent_id].store_string(",")
 
+			# Export the data
 			global_sensor_separate_fileaccess[agent_id].store_string(JSON.stringify(ad))
 
+## Receive a signal from the PlayTimer to start
 func _start_playing():
 	if PlayTimer.exporting:
 		save_base = editor_base.save_path_export_base
 		exporting = true
 		export_last_time = -1
 
+## Receive a signal from the PlayTimer to stop
 func _stop_playing():
 	save_base = ""
 	exporting = false
 	export_last_time = INF
+
+	# Close all the file accessors
 
 	if global_all_fileaccess != null:
 		global_all_fileaccess.store_string("]")
@@ -149,6 +164,7 @@ func _stop_playing():
 
 	global_sensor_separate_fileaccess.clear()
 
+## Setter for the framerate (also sets the timestep)
 func _set_framerate(value):
 	export_framerate = value
 	export_timestep = 1.0 / value
