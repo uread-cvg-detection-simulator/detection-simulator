@@ -16,6 +16,7 @@ extends Node2D
 enum ContextMenuIDs {
 	DELETE,
 	PROPERTIES,
+	LINK_WAYPOINT,
 }
 
 var param_speed_mps = 1.42
@@ -27,6 +28,8 @@ var parent_object: Agent = null
 var initialised = false
 @export var camera: Camera2D = null
 
+var attempting_link = false
+var linked_nodes: Array[Waypoint] = []
 
 # Called when the node enters the scene tree for the first time.
 func _ready():
@@ -43,6 +46,7 @@ func _ready():
 
 	context_menu.add_item("Delete Waypoint", ContextMenuIDs.DELETE)
 	context_menu.add_item("Properties", ContextMenuIDs.PROPERTIES)
+	context_menu.add_item("Link Waypoint", ContextMenuIDs.LINK_WAYPOINT)
 	context_menu.connect("id_pressed", self._context_menu_id_pressed)
 
 func get_save_data() -> Dictionary:
@@ -78,6 +82,91 @@ func _context_menu_id_pressed(id: ContextMenuIDs):
 		ContextMenuIDs.PROPERTIES:
 			# HACK: Select the waypoint, then the properties dialog will be opened
 			_selection_area.selected = true
+		ContextMenuIDs.LINK_WAYPOINT:
+			# Start selection for another waypoint
+			GroupHelpers.connect("node_grouped", self._on_link_grouped)
+			print_debug("Start linking waypoint")
+			attempting_link = true
+
+func _on_link_grouped(group: String, node: Node):
+
+	if group == "selected":
+
+		var waypoint_node = null;
+
+		if node.parent_object is Waypoint:
+			waypoint_node = node.parent_object
+		elif node.parent_object is Agent:
+			waypoint_node = node.parent_object.waypoints.starting_node
+		else:
+			print_debug("Node is not a waypoint or agent")
+			return
+
+		# Check if waypoint is already linked
+		if waypoint_node in linked_nodes:
+			print_debug("Waypoint already linked")
+			return
+
+		# Check if waypoint is from the same agent
+		if waypoint_node.parent_object == parent_object:
+			print_debug("Waypoint from same agent")
+			return
+
+		#linked_nodes.append(node)
+		#node.linked_nodes.append(self)
+
+		GroupHelpers.disconnect("node_grouped", self._on_link_grouped)
+		attempting_link = false
+
+		######
+		# Add undo action
+		######
+
+		var undo_action = UndoRedoAction.new()
+
+		var agent_id = waypoint_node.parent_object.agent_id
+		var waypoint_index = waypoint_node.parent_object.waypoints.get_waypoint_index(self)
+
+		var other_agent_id = waypoint_node.parent_object.agent_id
+		var other_waypoint_index = waypoint_node.parent_object.waypoints.get_waypoint_index(waypoint_node)
+
+		undo_action.action_name = "Link Waypoints A%sW%s to A%sW%s" % [agent_id, waypoint_index, waypoint_node.parent_object.agent_id, other_waypoint_index]
+
+		# Get the agent refs
+		var agent_ref = undo_action.action_store_method(UndoRedoAction.DoType.Do, TreeFuncs.get_agent_with_id, [agent_id])
+		var other_agent_ref = undo_action.action_store_method(UndoRedoAction.DoType.Do, TreeFuncs.get_agent_with_id, [other_agent_id])
+		undo_action.manual_add_item_to_store(parent_object, agent_ref)
+		undo_action.manual_add_item_to_store(parent_object, other_agent_ref)
+
+		# Get the waypoint refs
+		var waypoint_ref = undo_action.action_store_method(UndoRedoAction.DoType.Do, func(agent, index):
+			return agent.waypoints.waypoints[index]
+			, [agent_ref, waypoint_index], agent_ref)
+		undo_action.manual_add_item_to_store(self, waypoint_ref)
+
+		var other_waypoint_ref = undo_action.action_store_method(UndoRedoAction.DoType.Do, func(agent, index):
+			return agent.waypoints.waypoints[index]
+			, [other_agent_ref, other_waypoint_index], other_agent_ref)
+		undo_action.manual_add_item_to_store(waypoint_node, other_waypoint_ref)
+
+		# Add the waypoint to the other agent's linked waypoints
+		undo_action.action_method(UndoRedoAction.DoType.Do, func(waypoint, other_waypoint):
+			waypoint.linked_nodes.append(other_waypoint)
+			other_waypoint.linked_nodes.append(waypoint)
+			, [waypoint_ref, other_waypoint_ref], waypoint_ref)
+
+		# Undo the waypoint from the other agent's linked waypoints
+		undo_action.action_method(UndoRedoAction.DoType.Undo, func(waypoint, other_waypoint):
+			waypoint.linked_nodes.erase(other_waypoint)
+			other_waypoint.linked_nodes.erase(waypoint)
+			, [waypoint_ref, other_waypoint_ref], waypoint_ref)
+
+		UndoSystem.add_action(undo_action)
+
+
+
+
+
 
 func _on_mouse(_mouse, event):
 	print_debug("Waypoint mouse event: %s" % event)
@@ -163,6 +252,12 @@ func _unhandled_input(event):
 
 		if parent_object:
 			parent_object.waypoints.waypoint_lines.queue_redraw()
+
+	# Stop linking if ui_cancel is pressed
+	if event.is_action_pressed("ui_cancel") and attempting_link:
+		GroupHelpers.disconnect("node_grouped", self._on_link_grouped)
+		attempting_link = false
+		print_debug("Stop linking waypoint")
 
 
 func _disable(new_disable: bool):
