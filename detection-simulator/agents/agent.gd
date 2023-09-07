@@ -12,23 +12,27 @@ enum AgentType {
 	Circle,
 	SquareTarget,
 	PersonTarget,
+	BoatTarget,
 	Invisible,
 }
 
 @onready var _type_map = { AgentType.Circle : $circle_target,
 						   AgentType.SquareTarget : $square_target,
-						   AgentType.PersonTarget : $person_target }
+						   AgentType.PersonTarget : $person_target,
+						   AgentType.BoatTarget : $boat_target }
 
 var _type_string = {
 	AgentType.Circle : "Circle",
 	AgentType.SquareTarget: "Square",
 	AgentType.PersonTarget: "Person",
+	AgentType.BoatTarget: "Boat",
 	AgentType.Invisible: "Invisible"
 }
 
 @export var type_default_colours = { AgentType.Circle : Color.GREEN,
 									 AgentType.SquareTarget : Color.WHITE,
-									 AgentType.PersonTarget : Color.GREEN }
+									 AgentType.PersonTarget : Color.GREEN,
+									 AgentType.BoatTarget: Color.GREEN }
 
 @onready var _current_agent: AgentTarget = null
 var agent_type: AgentType = AgentType.PersonTarget : set = _set_agent_type

@@ -1,4 +1,4 @@
-[gd_scene load_steps=15 format=3 uid="uid://p0wyr5cxelew"]
+[gd_scene load_steps=16 format=3 uid="uid://p0wyr5cxelew"]
 
 [ext_resource type="Texture2D" uid="uid://etufimgj43mn" path="res://agents/basic-target.png" id="1_25plv"]
 [ext_resource type="Script" path="res://agents/agent.gd" id="1_noa6a"]
@@ -9,6 +9,7 @@
 [ext_resource type="Script" path="res://agents/agent_waypoint_handler.gd" id="7_26my1"]
 [ext_resource type="Texture2D" uid="uid://coo0j3yohgekm" path="res://agents/person.png" id="7_kdpau"]
 [ext_resource type="PackedScene" uid="uid://b50ox3rfhikx8" path="res://agents/waypoint.tscn" id="8_ado8l"]
+[ext_resource type="Texture2D" uid="uid://8n7q8rg7dyw2" path="res://agents/boat.png" id="8_jeg6q"]
 [ext_resource type="Script" path="res://agents/waypoint_lines.gd" id="9_mdr2h"]
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_y5pv7"]
@@ -68,6 +69,7 @@ shape = SubResource("CircleShape2D_n5v4q")
 disabled = true
 
 [node name="person_target" type="Sprite2D" parent="."]
+visible = false
 z_index = 1
 material = SubResource("ShaderMaterial_y5pv7")
 texture = ExtResource("7_kdpau")
@@ -79,6 +81,23 @@ script = ExtResource("4_wpf02")
 polygon = PackedVector2Array(-16, 16, 16, 16, 16, 8, 11, 3, 8, 2, 8, -1, 10, -4, 10, -7, 8, -11, 6, -14, 2, -16, -2, -16, -6, -14, -8, -11, -10, -7, -10, -5, -8, -1, -8, 2, -11, 3, -16, 8)
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="person_target"]
+shape = SubResource("RectangleShape2D_3p6ps")
+disabled = true
+metadata/_edit_lock_ = true
+
+[node name="boat_target" type="Sprite2D" parent="."]
+z_index = 1
+material = SubResource("ShaderMaterial_y5pv7")
+scale = Vector2(2, 2)
+texture = ExtResource("8_jeg6q")
+script = ExtResource("4_wpf02")
+
+[node name="SelectionArea2D" parent="boat_target" instance=ExtResource("5_lpd86")]
+
+[node name="CollisionShape2D" type="CollisionPolygon2D" parent="boat_target/SelectionArea2D"]
+polygon = PackedVector2Array(2.5, 7, 8.5, 7, 12.5, 6, 15, 4, 16, 4, 16, 8.5, 13, 13, 11, 16, -10.5, 16, -12.5, 14, -16, 9, -8, 9, -2, 8, -3, -7, -6, -13, 1.5, -13, 8, -9.5, 12, -6, 6, -2, 1, 0)
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="boat_target"]
 shape = SubResource("RectangleShape2D_3p6ps")
 disabled = true
 metadata/_edit_lock_ = true

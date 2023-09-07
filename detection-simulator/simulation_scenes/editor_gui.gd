@@ -73,48 +73,70 @@ func _add_property(name: String, value: String):
 	label.text = name
 	label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 
-	var value_label = Label.new()
-	value_label.text = value
+	var value_option = Label.new()
+	value_option.text = value
 
 	properties_grid_container.add_child(label)
-	properties_grid_container.add_child(value_label)
+	properties_grid_container.add_child(value_option)
 
-	properties_dict[name] = value_label
+	properties_dict[name] = value_option
 
 func _add_editable_property(name: String, initial_value: String, callback: Callable):
 	var label = Label.new()
 	label.text = name
 	label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 
-	var value_label = LineEdit.new()
-	value_label.text = initial_value
+	var value_option = LineEdit.new()
+	value_option.text = initial_value
 
 	properties_grid_container.add_child(label)
-	properties_grid_container.add_child(value_label)
+	properties_grid_container.add_child(value_option)
 
 	# Add a signal to the LineEdit to update the property
-	value_label.connect("text_changed", callback)
+	value_option.connect("text_changed", callback)
 
-	properties_editable_dict[name] = value_label
+	properties_editable_dict[name] = value_option
 
 func _add_editable_check(name: String, initial_value: bool):
 	var label = Label.new()
 	label.text = name
 	label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 
-	var value_label = CheckButton.new()
-	value_label.pressed = initial_value
+	var value_option = CheckButton.new()
+	value_option.pressed = initial_value
 
 	properties_grid_container.add_child(label)
-	properties_grid_container.add_child(value_label)
+	properties_grid_container.add_child(value_option)
 
 	# Add a signal to the LineEdit to update the property
-	#value_label.connect("pressed", self._on_property_changed, [name, value_label])
+	#value_option.connect("pressed", self._on_property_changed, [name, value_option])
+
+func _add_dropdown(name: String, options: Array[String], default_value: int, callback: Callable):
+	var label = Label.new()
+	label.text = name
+	label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+
+	var value_option = OptionButton.new()
+	value_option.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+
+	for option_i in options.size():
+		value_option.add_item(options[option_i], option_i)
+
+	value_option.select(default_value)
+
+	properties_grid_container.add_child(label)
+	properties_grid_container.add_child(value_option)
+
+	# Add a signal to the LineEdit to update the property
+	value_option.connect("item_selected", callback)
+
+	properties_editable_dict[name] = value_option
 
 enum EditablePropertyType {
 	TYPE_STRING,
 	TYPE_INT,
 	TYPE_FLOAT,
+	TYPE_OPTION,
 }
 
 ## Validate the value of a property
@@ -213,6 +235,65 @@ func _on_grouped(group: String, node: Node):
 			# Add agent_id to properties
 			_add_property("Agent ID", str(agent.agent_id))
 			_add_property("Location", "(%.2f, %.2f)" % [agent.global_position.x / 64.0, -agent.global_position.y / 64.0])
+
+			var agent_type_index: int = -1
+
+			match agent.agent_type:
+				Agent.AgentType.PersonTarget:
+					agent_type_index = 0
+				Agent.AgentType.BoatTarget:
+					agent_type_index = 1
+
+			_add_dropdown("Agent Type", ["Person", "Boat"], agent_type_index,
+				func(selected_index: int):
+					var new_target = null
+					match selected_index:
+						0:
+							new_target = Agent.AgentType.PersonTarget
+						1:
+							new_target = Agent.AgentType.BoatTarget
+
+					var old_target = agent.agent_type
+
+					# If the new target is the same as the old target, return
+					if new_target == old_target:
+						return
+
+					# Update the value
+					agent.agent_type = new_target
+
+					######
+					# Add undo/redo action for agent.agent_type
+					######
+
+					var new_action = UndoRedoAction.new()
+					new_action.action_name = "Change A%d Type %s -> %s" % [agent.agent_id, old_target, new_target]
+
+					# Add a reference to the agent
+					var agent_ref = new_action.action_store_method(UndoRedoAction.DoType.Do, TreeFuncs.get_agent_with_id, [agent.agent_id])
+					new_action.manual_add_item_to_store(agent, agent_ref)
+
+					# Update/restore the value
+					new_action.action_property_ref(UndoRedoAction.DoType.Do, agent_ref, "agent_type", new_target)
+					new_action.action_property_ref(UndoRedoAction.DoType.Undo, agent_ref, "agent_type", old_target)
+
+					# Update the option button
+					new_action.action_method(UndoRedoAction.DoType.Do, func(agent_id, new_value):
+						if "Agent Type" in properties_editable_dict and "Agent ID" in properties_dict:
+							if properties_dict["Agent ID"].text == str(agent_id):
+								properties_editable_dict["Agent Type"].select(new_value)
+						, [agent.agent_id, selected_index])
+
+					new_action.action_method(UndoRedoAction.DoType.Undo, func(agent_id, old_value):
+						if "Agent Type" in properties_editable_dict and "Agent ID" in properties_dict:
+							if properties_dict["Agent ID"].text == str(agent_id):
+								properties_editable_dict["Agent Type"].select(old_value)
+						, [agent.agent_id, old_target])
+
+					# Add the action to the undo system
+					UndoSystem.add_action(new_action, false)
+			)
+
 			_add_editable_property("Speed", str(agent.waypoints.starting_node.param_speed_mps),
 				func(new_value: String):
 					var value = _on_editable_change("Speed", EditablePropertyType.TYPE_FLOAT, new_value)
