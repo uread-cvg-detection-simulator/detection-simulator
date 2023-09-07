@@ -23,6 +23,7 @@ func _ready():
 
 	# Set the starting node
 	starting_node.global_position = parent_object.global_position
+	starting_node.parent_object = parent_object
 
 	# Set the waypoint_lines parent variable
 	waypoint_lines.waypoint_object = self
@@ -173,7 +174,10 @@ func get_waypoint_index(waypoint: Waypoint):
 		if waypoints[i] == waypoint:
 			return i
 
-	return -1
+	if waypoint == starting_node:
+		return -1
+
+	return -2
 
 func add_to_end(new_global_point: Vector2, add_to_undo: bool = true) -> Waypoint:
 	# Get the end point of the array to use as a link
