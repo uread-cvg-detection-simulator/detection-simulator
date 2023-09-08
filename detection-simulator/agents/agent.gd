@@ -53,6 +53,7 @@ var disabled: bool = false : set = _set_disabled ## Disables everything internal
 
 var playing_next_move_time: float = 0.0 ## The time at which the next move will be played
 var playing_waypoint: Waypoint = null ## The waypoint that the agent is currently moving towards
+var playing_last_waypoint: Waypoint = null ## The last waypoint
 var playing_target: Vector2 = Vector2.INF ## The target position of the next move
 var playing_speed: float = 1.0 ## The speed at which the agent will move
 var playing_finished: bool = false ## Specifies whether the agent has finished playing
@@ -135,6 +136,10 @@ func _update_target_information(waypoint: Waypoint):
 	playing_target = waypoint.global_position
 
 	# Update the current waypoint
+	if playing_last_waypoint:
+		playing_last_waypoint.linked_ready = false
+
+	playing_last_waypoint = playing_waypoint
 	playing_waypoint = waypoint
 
 
@@ -157,6 +162,12 @@ func _stop_playing():
 	playing_finished = false
 	playing = false
 	clickable = true
+	playing_waypoint = null
+
+	if playing_last_waypoint:
+		playing_last_waypoint.linked_ready = false
+
+	playing_last_waypoint = null
 
 	global_position = waypoints.starting_node.global_position
 	waypoints.clickable = true
@@ -168,20 +179,31 @@ func _stop_playing():
 func _physics_process(delta):
 	if not disabled:
 		if playing and playing_next_move_time < PlayTimer.current_time:
-			# Update position
-			# TODO: use navigation system
-			global_position = global_position.move_toward(playing_target, playing_speed * delta)
 
-			# If reached target, update target information with next waypoint if there is one
-			if global_position == playing_target:
-				if playing_waypoint.pt_next:
-					_update_target_information(playing_waypoint.pt_next)
-				else:
-					playing_finished = true
-					playing = false
+			var ready = true
 
-			if PlayTimer.exporting and exporting_file_access:
-				pass
+			if playing_last_waypoint and not playing_last_waypoint.linked_nodes.is_empty():
+				playing_last_waypoint.linked_ready = true
+
+				# Wait until all linked nodes are ready
+				for node in playing_last_waypoint.linked_nodes:
+					if not node.linked_ready:
+						ready = false
+						break
+
+			if ready:
+				# Update position
+				# TODO: use navigation system
+				global_position = global_position.move_toward(playing_target, playing_speed * delta)
+
+				# If reached target, update target information with next waypoint if there is one
+				if global_position == playing_target:
+					if playing_waypoint.pt_next:
+						_update_target_information(playing_waypoint.pt_next)
+					else:
+						playing_finished = true
+						playing = false
+
 
 # Called every frame. 'delta' is the elapsed time since the previous frame.
 func _process(delta):

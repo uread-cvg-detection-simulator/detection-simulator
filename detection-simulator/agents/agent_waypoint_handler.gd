@@ -179,6 +179,14 @@ func get_waypoint_index(waypoint: Waypoint):
 
 	return -2
 
+func get_waypoint(waypoint_index: int):
+	if waypoint_index == -1:
+		return starting_node
+	elif waypoint_index < waypoints.size():
+		return waypoints[waypoint_index]
+	else:
+		return null
+
 func add_to_end(new_global_point: Vector2, add_to_undo: bool = true) -> Waypoint:
 	# Get the end point of the array to use as a link
 	var previous_point = waypoints[-1] if not waypoints.is_empty() else starting_node

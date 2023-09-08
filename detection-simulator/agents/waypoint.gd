@@ -30,6 +30,9 @@ var initialised = false
 
 var attempting_link = false
 var linked_nodes: Array[Waypoint] = []
+var linked_ready: bool = false
+
+var load_linked_nodes: Array = []
 
 # Called when the node enters the scene tree for the first time.
 func _ready():
@@ -51,7 +54,7 @@ func _ready():
 
 func get_save_data() -> Dictionary:
 	var save_data = {
-		"waypoint_version": 1,
+		"waypoint_version": 2,
 		"global_position": {
 			"x": global_position.x,
 			"y": global_position.y,
@@ -59,21 +62,51 @@ func get_save_data() -> Dictionary:
 		"param_speed_mps": param_speed_mps,
 		"param_start_time": param_start_time,
 		"param_wait_time": param_wait_time,
+		"linked_nodes": [],
 	}
+
+	for node in linked_nodes:
+		var node_data = {
+			"agent_id": node.parent_object.agent_id,
+			"waypoint_index": node.parent_object.waypoints.get_waypoint_index(node),
+		}
+
+		save_data["linked_nodes"].append(node_data)
 
 	return save_data
 
 func load_save_data(data: Dictionary):
 	if data.has("waypoint_version"):
-		if data["waypoint_version"] <= 1:
+		if data["waypoint_version"] <= 2:
 			global_position = Vector2(data["global_position"]["x"], data["global_position"]["y"])
 			param_speed_mps = data["param_speed_mps"] if data["param_speed_mps"] != null else null
 			param_start_time = data["param_start_time"] if data["param_start_time"] != null else null
 			param_wait_time = data["param_wait_time"] if data["param_wait_time"] != null else null
+
+			if data["waypoint_version"] >= 2:
+				if not data["linked_nodes"].is_empty():
+					load_linked_nodes = data["linked_nodes"]
 		else:
 			print_debug("Unknown waypoint version: %s" % data["waypoint_version"])
 	else:
 		print_debug("Waypoint data has no version number")
+
+func _process(delta):
+	if not load_linked_nodes.is_empty():
+		for node_data in load_linked_nodes:
+			var agent_id = node_data["agent_id"]
+			var waypoint_index = node_data["waypoint_index"]
+
+			var agent: Agent = TreeFuncs.get_agent_with_id(agent_id)
+			var waypoint = agent.waypoints.get_waypoint(waypoint_index)
+
+			if waypoint not in linked_nodes:
+				linked_nodes.append(waypoint)
+				waypoint.linked_nodes.append(self)
+
+		parent_object.waypoints.waypoint_lines.queue_redraw()
+
+		load_linked_nodes.clear()
 
 func _context_menu_id_pressed(id: ContextMenuIDs):
 	match id:
