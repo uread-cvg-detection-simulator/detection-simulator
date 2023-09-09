@@ -21,6 +21,8 @@
 
 				dev-package-list = with pkgs; [ godot_4 ];
 
+				godot_export_templates = import ./godot_export_templates.nix { inherit pkgs; godot_version = pkgs.godot_4.version; };
+
 				nix-shell-script = pkgs.writeShellScriptBin "godot" ''
 					#!/bin/bash
 					$GODOT_CMD --path $PROJECT_NAME -e
@@ -64,14 +66,24 @@
 
 				all-scripts = [ nix-shell-script godot-build-windows godot-build-linux godot-build-macos godot-build-html5 godot-build-all ];
 
+				project_name = "detection-simulator";
 			in
 			{
 				devShells = {
 					default = pkgs.mkShell {
-						packages = dev-package-list ++ all-scripts;
+						packages = dev-package-list ++ all-scripts ++ [ godot_export_templates ];
 						shellHook = ''
 							export GODOT_CMD="${pkgs.godot_4}/bin/godot4"
 							set -a; source .env; set +a;
+
+							# Link export templates if not already done ~/.local/share/godot/export_templates/VERSION.stable (update if symlink is to incorrect location)
+							if [ ! -d ~/.local/share/godot/export_templates/${pkgs.godot_4.version}.stable ]; then
+								mkdir -p ~/.local/share/godot/export_templates
+								ln -s ${godot_export_templates}/templates ~/.local/share/godot/export_templates/${pkgs.godot_4.version}.stable
+							elif [ "$(readlink ~/.local/share/godot/export_templates/${pkgs.godot_4.version}.stable)" != "${godot_export_templates}/templates" ]; then
+								rm -r ~/.local/share/godot/export_templates/${pkgs.godot_4.version}.stable
+								ln -s ${godot_export_templates}/templates ~/.local/share/godot/export_templates/${pkgs.godot_4.version}.stable
+							fi
 						'';
 					};
 
@@ -80,6 +92,15 @@
 						shellHook = ''
 							export GODOT_CMD="nixGL ${pkgs.godot_4}/bin/godot4"
 							set -a; source .env; set +a;
+
+							# Link export templates if not already done ~/.local/share/godot/export_templates/VERSION.stable (update if symlink is to incorrect location)
+							if [ ! -d ~/.local/share/godot/export_templates/${pkgs.godot_4.version}.stable ]; then
+								mkdir -p ~/.local/share/godot/export_templates
+								ln -s ${godot_export_templates}/templates ~/.local/share/godot/export_templates/${pkgs.godot_4.version}.stable
+							elif [ "$(readlink ~/.local/share/godot/export_templates/${pkgs.godot_4.version}.stable)" != "${godot_export_templates}/templates" ]; then
+								rm -r ~/.local/share/godot/export_templates/${pkgs.godot_4.version}.stable
+								ln -s ${godot_export_templates}/templates ~/.local/share/godot/export_templates/${pkgs.godot_4.version}.stable
+							fi
 						'';
 					};
 				};
