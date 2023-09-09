@@ -142,6 +142,8 @@ func _update_target_information(waypoint: Waypoint):
 	playing_last_waypoint = playing_waypoint
 	playing_waypoint = waypoint
 
+	linked_check = true
+
 
 ## Start pathing through the waypoints
 func _start_playing():
@@ -163,11 +165,12 @@ func _stop_playing():
 	playing = false
 	clickable = true
 	playing_waypoint = null
-
-	if playing_last_waypoint:
-		playing_last_waypoint.linked_ready = false
-
 	playing_last_waypoint = null
+
+	waypoints.starting_node.linked_ready = false
+
+	for waypoint in waypoints.waypoints:
+		waypoint.linked_ready = false
 
 	global_position = waypoints.starting_node.global_position
 	waypoints.clickable = true
@@ -176,22 +179,47 @@ func _stop_playing():
 		exporting_file_access.close()
 		exporting_file_access = null
 
+var ignore_linked_nodes: Array[Waypoint] = []
+var linked_check = true
+
 func _physics_process(delta):
 	if not disabled:
 		if playing and playing_next_move_time < PlayTimer.current_time:
 
 			var ready = true
 
-			if playing_last_waypoint and not playing_last_waypoint.linked_nodes.is_empty():
+			if linked_check and playing_last_waypoint and not playing_last_waypoint.linked_nodes.is_empty():
 				playing_last_waypoint.linked_ready = true
+
+				var max_wait_time = 0
 
 				# Wait until all linked nodes are ready
 				for node in playing_last_waypoint.linked_nodes:
+					if node in ignore_linked_nodes:
+						continue
+
 					if not node.linked_ready:
 						ready = false
-						break
+					else:
+						if node.pt_next == null:
+							if node.param_wait_time:
+								if playing_last_waypoint.param_wait_time and node.param_wait_time < playing_last_waypoint.param_wait_time:
+									continue
+
+								max_wait_time = max(node.param_wait_time, max_wait_time)
+								ignore_linked_nodes.append(node)
+								ready = false
+							else:
+								continue
+
+				if max_wait_time != 0 and not ready:
+					var diff = (max_wait_time - (playing_last_waypoint.param_wait_time if playing_last_waypoint.param_wait_time else 0))
+					playing_next_move_time = PlayTimer.current_time + diff
 
 			if ready:
+				linked_check = false
+
+				ignore_linked_nodes.clear()
 				# Update position
 				# TODO: use navigation system
 				global_position = global_position.move_toward(playing_target, playing_speed * delta)
@@ -201,6 +229,7 @@ func _physics_process(delta):
 					if playing_waypoint.pt_next:
 						_update_target_information(playing_waypoint.pt_next)
 					else:
+						playing_waypoint.linked_ready = true
 						playing_finished = true
 						playing = false
 
