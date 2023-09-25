@@ -13,6 +13,7 @@ config_version=5
 config/name="detection-simulator"
 run/main_scene="res://simulation_scenes/editor.tscn"
 config/features=PackedStringArray("4.1", "Forward Plus")
+run/max_fps=60
 config/icon="res://icon.svg"
 
 [autoload]
