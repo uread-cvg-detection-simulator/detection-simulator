@@ -244,7 +244,7 @@ func _on_grouped(group: String, node: Node):
 				Agent.AgentType.BoatTarget:
 					agent_type_index = 1
 
-			_add_dropdown("Agent Type", ["Person", "Boat"], agent_type_index,
+			_add_dropdown("Agent Type", ["Person", "Ship"], agent_type_index,
 				func(selected_index: int):
 					var new_target = null
 					match selected_index:
