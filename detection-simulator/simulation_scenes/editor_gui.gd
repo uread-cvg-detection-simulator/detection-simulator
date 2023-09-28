@@ -261,6 +261,7 @@ func _on_grouped(group: String, node: Node):
 
 					# Update the value
 					agent.agent_type = new_target
+					agent._current_agent._selection_area.selected = true
 
 					######
 					# Add undo/redo action for agent.agent_type
