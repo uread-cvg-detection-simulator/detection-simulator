@@ -519,15 +519,21 @@ func _on_grouped(group: String, node: Node):
 
 					# Add combined string, and delete button
 					var combined_str = "%s -> %s" % [current_node_str, linked_node_str]
+
+					var label = Label.new()
+					label.text = combined_str
+					label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+
 					var delete_button = Button.new()
 					delete_button.text = "X"
 					delete_button.connect("pressed", func():
-						var agent_ = TreeFuncs.get_agent_with_id(agent_id)
+						var agent_ = TreeFuncs.get_agent_with_id(agent.agent_id)
 						agent_.waypoints.unlink_waypoints(current_node_id, linked_node_id)
 					)
 
 
-					properties_grid_container.add_child(combined_str)
+					properties_grid_container.add_child(label)
+					properties_grid_container.add_child(delete_button)
 
 
 
