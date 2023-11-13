@@ -528,9 +528,20 @@ func _on_grouped(group: String, node: Node):
 					delete_button.text = "X"
 					delete_button.connect("pressed", func():
 						var agent_ = TreeFuncs.get_agent_with_id(agent.agent_id)
-						agent_.waypoints.unlink_waypoints(current_node_id, linked_node_id)
-					)
+						var other_agent = TreeFuncs.get_agent_with_id(linked_node.parent_object.agent_id)
 
+						# Remove the link
+						var waypoint_ = agent_.waypoints.waypoints[current_node_id]
+						var linked_waypoint = other_agent.waypoints.waypoints[linked_node_id]
+
+						waypoint_.unlink_waypoint(linked_waypoint)
+
+						# Delete the button and label
+						properties_grid_container.remove_child(label)
+						label.queue_free()
+						properties_grid_container.remove_child(delete_button)
+						delete_button.queue_free()
+					)
 
 					properties_grid_container.add_child(label)
 					properties_grid_container.add_child(delete_button)
