@@ -199,6 +199,10 @@ func _on_link_grouped(group: String, node: Node):
 			agent.waypoints.waypoint_lines.queue_redraw()
 			, [agent_ref], agent_ref)
 
+		######
+		# UNDO
+		######
+
 		# Undo the waypoint from the other agent's linked waypoints
 		undo_action.action_method(UndoRedoAction.DoType.Undo, func(waypoint, other_waypoint):
 			waypoint.linked_nodes.erase(other_waypoint)
@@ -212,10 +216,66 @@ func _on_link_grouped(group: String, node: Node):
 
 		UndoSystem.add_action(undo_action)
 
+func unlink_waypoint(node: Waypoint):
+	if node in linked_nodes:
+		# linked_nodes.erase(node)
+		# node.linked_nodes.erase(self)
 
+		######
+		# Add undo action
+		######
 
+		var undo_action = UndoRedoAction.new()
+		undo_action.action_name = "Unlink Waypoints A%sW%s to A%sW%s" % [parent_object.agent_id, parent_object.waypoints.get_waypoint_index(self), node.parent_object.agent_id, node.parent_object.waypoints.get_waypoint_index(node)]
 
+		# Get the agent refs
+		var agent_ref = undo_action.action_store_method(UndoRedoAction.DoType.Do, TreeFuncs.get_agent_with_id, [parent_object.agent_id])
+		var other_agent_ref = undo_action.action_store_method(UndoRedoAction.DoType.Do, TreeFuncs.get_agent_with_id, [node.parent_object.agent_id])
 
+		# Get the waypoint refs
+		var waypoint_ref = undo_action.action_store_method(UndoRedoAction.DoType.Do, func(agent, index):
+			if index == -1:
+				return agent.waypoints.starting_node
+			else:
+				return agent.waypoints.waypoints[index]
+			, [agent_ref, parent_object.waypoints.get_waypoint_index(self)], agent_ref)
+
+		var other_waypoint_ref = undo_action.action_store_method(UndoRedoAction.DoType.Do, func(agent, index):
+			if index == -1:
+				return agent.waypoints.starting_node
+			else:
+				return agent.waypoints.waypoints[index]
+			, [other_agent_ref, node.parent_object.waypoints.get_waypoint_index(node)], other_agent_ref)
+
+		# Remove the waypoint from both agents' linked waypoints
+		undo_action.action_method(UndoRedoAction.DoType.Do, func(waypoint, other_waypoint):
+			waypoint.linked_nodes.erase(other_waypoint)
+			other_waypoint.linked_nodes.erase(waypoint)
+			, [waypoint_ref, other_waypoint_ref], [waypoint_ref, other_waypoint_ref])
+
+		# Queue redraw of waypoint lines
+		undo_action.action_method(UndoRedoAction.DoType.Do, func(agent, other_agent):
+			agent.waypoints.waypoint_lines.queue_redraw()
+			other_agent.waypoints.waypoint_lines.queue_redraw()
+			, [agent_ref, other_agent_ref], [agent_ref, other_agent_ref])
+
+		######
+		# UNDO
+		######
+
+		# Add the waypoint to both agents' linked waypoints
+		undo_action.action_method(UndoRedoAction.DoType.Undo, func(waypoint, other_waypoint):
+			waypoint.linked_nodes.append(other_waypoint)
+			other_waypoint.linked_nodes.append(waypoint)
+			, [waypoint_ref, other_waypoint_ref], [waypoint_ref, other_waypoint_ref])
+
+		# Queue redraw of waypoint lines
+		undo_action.action_method(UndoRedoAction.DoType.Undo, func(agent, other_agent):
+			agent.waypoints.waypoint_lines.queue_redraw()
+			other_agent.waypoints.waypoint_lines.queue_redraw()
+			, [agent_ref, other_agent_ref], [agent_ref, other_agent_ref])
+
+		UndoSystem.add_action(undo_action)
 
 func _on_mouse(_mouse, event):
 	print_debug("Waypoint mouse event: %s" % event)

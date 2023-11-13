@@ -505,6 +505,53 @@ func _on_grouped(group: String, node: Node):
 					UndoSystem.add_action(new_action, false)
 			)
 
+			# Add linked nodes, with button to unlink
+			var linked_nodes = waypoint.linked_nodes
+
+			if linked_nodes.size() > 0:
+				_add_property("Linked Nodes", "")
+
+				var current_node_id = agent.waypoints.get_waypoint_index(waypoint)
+				var current_node_str = "A%dW%d" % [agent.agent_id, current_node_id]
+
+				for linked_node in linked_nodes:
+					var linked_node_id = linked_node.parent_object.waypoints.get_waypoint_index(linked_node)
+					var linked_node_str = "A%dW%d" % [linked_node.parent_object.agent_id, linked_node_id]
+
+					# Add combined string, and delete button
+					var combined_str = "%s -> %s" % [current_node_str, linked_node_str]
+
+					var label = Label.new()
+					label.text = combined_str
+					label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+
+					var delete_button = Button.new()
+					delete_button.text = "X"
+					delete_button.connect("pressed", func():
+						var agent_ = TreeFuncs.get_agent_with_id(agent.agent_id)
+						var other_agent = TreeFuncs.get_agent_with_id(linked_node.parent_object.agent_id)
+
+						# Remove the link
+						var waypoint_ = agent_.waypoints.waypoints[current_node_id]
+						var linked_waypoint = other_agent.waypoints.waypoints[linked_node_id]
+
+						waypoint_.unlink_waypoint(linked_waypoint)
+
+						# Delete the button and label
+						properties_grid_container.remove_child(label)
+						label.queue_free()
+						properties_grid_container.remove_child(delete_button)
+						delete_button.queue_free()
+					)
+
+					properties_grid_container.add_child(label)
+					properties_grid_container.add_child(delete_button)
+
+
+
+			else:
+				_add_property("Linked Nodes", "None")
+
 		if node.parent_object is Sensor:
 			var sensor: Sensor = node.parent_object
 
