@@ -43,6 +43,8 @@ var _current_save_hash = 0
 var _last_save_data: Dictionary = {}
 var _data_to_save = false
 
+signal play_agents_finished
+
 
 enum empty_menu_enum {
 	SPAWN_AGENT,
@@ -159,8 +161,11 @@ func _process(delta):
 		_status_label.text = time_string + " - " + new_status_label_text
 
 		# Stop playing if all agents are finished and exporting
-		if finished_agents == len(agents) and PlayTimer.exporting:
-			_on_export_finished()
+		if finished_agents == len(agents):
+			if PlayTimer.exporting:
+				_on_export_finished()
+
+			play_agents_finished.emit()
 
 	# Compare save data
 	var current_save_data = get_save_data()
