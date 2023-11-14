@@ -42,7 +42,7 @@ func test_agent_position():
 	assert_vector2(agent.position).is_equal(Vector2.ZERO)
 
 func _spawn_and_get_agent(position: Vector2) -> Agent:
-	runner.invoke("spawn_agent", Vector2(0, 0))
+	runner.invoke("spawn_agent", position)
 
 	var id: int = runner.get_property("_last_id")
 	var agent: Agent = TreeFuncs.get_agent_with_id(id)
