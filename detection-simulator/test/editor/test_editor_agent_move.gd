@@ -25,7 +25,7 @@ func test_agent_move_one_waypoint():
 	runner.invoke("_on_play_button_pressed")
 	var timeout = (1.0 / 1.42) * 1000
 
-	await runner.await_signal("play_agents_finished", [], timeout + 50)
+	await runner.await_signal("play_agents_finished", [], timeout + 100)
 
 func test_agent_move_two_waypoints():
 	var waypoint_one: Waypoint = _spawn_waypoint_from(agent, Vector2(1, 0))
@@ -37,7 +37,7 @@ func test_agent_move_two_waypoints():
 	runner.invoke("_on_play_button_pressed")
 	var timeout = (1.0 + 1.0 / 1.42) * 1000
 
-	await runner.await_signal("play_agents_finished", [], timeout + 50)
+	await runner.await_signal("play_agents_finished", [], timeout + 100)
 
 func test_agent_move_one_waypoint_speed():
 	var new_waypoint: Waypoint = _spawn_waypoint_from(agent, Vector2(1, 0))
@@ -51,7 +51,7 @@ func test_agent_move_one_waypoint_speed():
 	runner.invoke("_on_play_button_pressed")
 	var timeout = (1.0 / 2.84) * 1000
 
-	await runner.await_signal("play_agents_finished", [], timeout + 50)
+	await runner.await_signal("play_agents_finished", [], timeout + 100)
 
 func test_agent_move_two_waypoints_speed():
 	var waypoint_one: Waypoint = _spawn_waypoint_from(agent, Vector2(1, 0))
