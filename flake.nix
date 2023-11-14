@@ -25,35 +25,35 @@
 
 				nix-shell-script = pkgs.writeShellScriptBin "godot" ''
 					#!/bin/bash
-					$GODOT_CMD --path $PROJECT_NAME -e
+					$GODOT_BIN --path $PROJECT_NAME -e
 				'';
 
 				godot-build-windows = pkgs.writeShellScriptBin "godot-build-windows" ''
 					#!/bin/bash
 					BUILD_PATH=build/windows
 					mkdir -p $BUILD_PATH
-					$GODOT_CMD --path $PROJECT_NAME --headless --export-release "Windows Desktop" ../$BUILD_PATH/$PROJECT_NAME.exe
+					$GODOT_BIN --path $PROJECT_NAME --headless --export-release "Windows Desktop" ../$BUILD_PATH/$PROJECT_NAME.exe
 				'';
 
 				godot-build-linux = pkgs.writeShellScriptBin "godot-build-linux" ''
 					#!/bin/bash
 					BUILD_PATH=build/linux
 					mkdir -p $BUILD_PATH
-					$GODOT_CMD --path $PROJECT_NAME --headless --export-release "Linux/X11" ../$BUILD_PATH/$PROJECT_NAME.x86_64
+					$GODOT_BIN --path $PROJECT_NAME --headless --export-release "Linux/X11" ../$BUILD_PATH/$PROJECT_NAME.x86_64
 				'';
 
 				godot-build-macos = pkgs.writeShellScriptBin "godot-build-macos" ''
 					#!/bin/bash
 					BUILD_PATH=build/macos
 					mkdir -p $BUILD_PATH
-					$GODOT_CMD --path $PROJECT_NAME --headless --export-release "macOS" ../$BUILD_PATH/$PROJECT_NAME.zip
+					$GODOT_BIN --path $PROJECT_NAME --headless --export-release "macOS" ../$BUILD_PATH/$PROJECT_NAME.zip
 				'';
 
 				godot-build-html5 = pkgs.writeShellScriptBin "godot-build-html5" ''
 					#!/bin/bash
 					BUILD_PATH=build/html5
 					mkdir -p $BUILD_PATH
-					$GODOT_CMD --path $PROJECT_NAME --headless --export-release "Web" ../$BUILD_PATH/index.html
+					$GODOT_BIN --path $PROJECT_NAME --headless --export-release "Web" ../$BUILD_PATH/index.html
 				'';
 
 				godot-build-all = pkgs.writeShellScriptBin "godot-build-all" ''
@@ -73,7 +73,7 @@
 					default = pkgs.mkShell {
 						packages = dev-package-list ++ all-scripts ++ [ godot_export_templates ];
 						shellHook = ''
-							export GODOT_CMD="${pkgs.godot_4}/bin/godot4"
+							export GODOT_BIN="${pkgs.godot_4}/bin/godot4"
 							set -a; source .env; set +a;
 
 							# Link export templates if not already done ~/.local/share/godot/export_templates/VERSION.stable (update if symlink is to incorrect location)
@@ -90,7 +90,7 @@
 					nonnix = pkgs.mkShell {
 						packages = dev-package-list ++ [ pkgs.nixgl.auto.nixGLDefault ] ++ all-scripts;
 						shellHook = ''
-							export GODOT_CMD="nixGL ${pkgs.godot_4}/bin/godot4"
+							export GODOT_BIN="nixGL ${pkgs.godot_4}/bin/godot4"
 							set -a; source .env; set +a;
 
 							# Link export templates if not already done ~/.local/share/godot/export_templates/VERSION.stable (update if symlink is to incorrect location)

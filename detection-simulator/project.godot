@@ -25,6 +25,10 @@ PlayTimer="*res://global/play_timer.gd"
 GroupHelpers="*res://global/group_helpers.gd"
 MousePosition="*res://global/mouse_position.gd"
 
+[debug]
+
+file_logging/enable_file_logging=true
+
 [display]
 
 window/size/viewport_width=1280
