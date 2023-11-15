@@ -23,41 +23,48 @@ func after_test():
 	if PlayTimer.play:
 		runner.invoke("_on_play_button_pressed")
 
-
 func test_multiple_agents_with_waypoints():
 	assert_object(agent).is_not_null()
 	assert_object(agent_two).is_not_null()
 
 	# Create two waypoints for each agent at X = 1 and X = 2
-	var wp_agent_one_1 = _spawn_waypoint_from(agent, Vector2(1, 0))
-	var wp_agent_one_2 = _spawn_waypoint_from(wp_agent_one_1, Vector2(2, 0))
+	var wp_agent_one_1: Waypoint = _spawn_waypoint_from(agent, Vector2(1, 0))
+	var wp_agent_one_2: Waypoint = _spawn_waypoint_from(wp_agent_one_1, Vector2(2, 0))
 
-	var wp_agent_two_1 = _spawn_waypoint_from(agent_two, Vector2(1, 5))
-	var wp_agent_two_2 = _spawn_waypoint_from(wp_agent_two_1, Vector2(2, 5))
+	var wp_agent_two_1: Waypoint = _spawn_waypoint_from(agent_two, Vector2(1, 5))
+	var wp_agent_two_2: Waypoint = _spawn_waypoint_from(wp_agent_two_1, Vector2(2, 5))
 
 func test_link_in_place():
 	assert_object(agent).is_not_null()
 	assert_object(agent_two).is_not_null()
 
 	# Create two waypoints for each agent at X = 1 and X = 2
-	var wp_agent_one_1 = _spawn_waypoint_from(agent, Vector2(1, 0))
-	var wp_agent_one_2 = _spawn_waypoint_from(wp_agent_one_1, Vector2(2, 0))
+	var wp_agent_one_1: Waypoint = _spawn_waypoint_from(agent, Vector2(1, 0))
+	var wp_agent_one_2: Waypoint = _spawn_waypoint_from(wp_agent_one_1, Vector2(2, 0))
 
-	var wp_agent_two_1 = _spawn_waypoint_from(agent_two, Vector2(1, 5))
-	var wp_agent_two_2 = _spawn_waypoint_from(wp_agent_two_1, Vector2(2, 5))
+	var wp_agent_two_1: Waypoint = _spawn_waypoint_from(agent_two, Vector2(1, 5))
+	var wp_agent_two_2: Waypoint = _spawn_waypoint_from(wp_agent_two_1, Vector2(2, 5))
 
 	# Link the first points of both agents
-
-
+	wp_agent_one_1.link_waypoint(wp_agent_two_1)
+	
+	assert_array(wp_agent_one_1.linked_nodes).has_size(1)
+	assert_array(wp_agent_two_1.linked_nodes).has_size(1)
+	
+	assert_object(wp_agent_one_1.linked_nodes[0]).is_same(wp_agent_two_1)
+	assert_object(wp_agent_two_1.linked_nodes[0]).is_same(wp_agent_one_1)
 
 
 func _spawn_waypoint_from(selected_object, position: Vector2) -> Waypoint:
 	var selection = null
+	var agent = null
 
 	if selected_object is Agent:
 		selection = selected_object._current_agent._selection_area
+		agent = selected_object
 	if selected_object is Waypoint:
 		selection = selected_object._selection_area
+		agent = selected_object.parent_object
 
 	assert_object(selection).is_not_null()
 	selection.selected = true
