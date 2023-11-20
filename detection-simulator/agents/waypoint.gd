@@ -47,10 +47,17 @@ func _ready():
 	_selection_area.connect("mouse_hold_end", self._on_hold_stop)
 	_selection_area.connect("mouse_click", self._on_mouse)
 
+	_prepare_menu()
+
+func _prepare_menu():
+	context_menu.clear()
+
 	context_menu.add_item("Delete Waypoint", ContextMenuIDs.DELETE)
 	context_menu.add_item("Properties", ContextMenuIDs.PROPERTIES)
 	context_menu.add_item("Start Linking...", ContextMenuIDs.LINK_WAYPOINT)
-	context_menu.connect("id_pressed", self._context_menu_id_pressed)
+
+	if not context_menu.is_connected("id_pressed", self._context_menu_id_pressed):
+		context_menu.connect("id_pressed", self._context_menu_id_pressed)
 
 func get_save_data() -> Dictionary:
 	var save_data = {
