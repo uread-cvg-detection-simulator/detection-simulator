@@ -9,7 +9,7 @@
 [ext_resource type="PackedScene" uid="uid://pxotaj1n83vy" path="res://agents/sensor.tscn" id="5_iwj3y"]
 [ext_resource type="Script" path="res://simulation_scenes/global_exporter.gd" id="8_1i7iy"]
 
-[node name="editor" type="Node2D" node_paths=PackedStringArray("_agent_root", "_sensor_root", "_gui", "_rightclick_empty", "_status_label", "_play_button", "_save_button", "_load_button", "_export_button", "_autosave_check", "fd_writer", "fd_reader")]
+[node name="editor" type="Node2D" node_paths=PackedStringArray("_agent_root", "_sensor_root", "_gui", "_rightclick_empty", "_status_label", "_play_button", "_save_button", "_load_button", "_export_button", "_autosave_check", "_camera", "fd_writer", "fd_reader")]
 script = ExtResource("1_o3h7t")
 _agent_root = NodePath("agents")
 _sensor_root = NodePath("sensors")
@@ -24,6 +24,7 @@ _autosave_check = NodePath("CanvasLayer/PlayBar/HBoxContainer/AutoSaveCheck")
 _agent_base = ExtResource("2_wea12")
 _waypoint_base = ExtResource("3_k3ur2")
 _sensor_base = ExtResource("5_iwj3y")
+_camera = NodePath("Camera2D")
 fd_writer = NodePath("fd_writer")
 fd_reader = NodePath("fd_reader")
 

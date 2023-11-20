@@ -1,3 +1,4 @@
+class_name EditorCamera
 extends Camera2D
 
 signal camera_moved(old, new)
