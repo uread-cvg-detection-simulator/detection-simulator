@@ -8,7 +8,7 @@ func before():
 	runner = auto_free(scene_runner(editor_scene))
 
 func before_test():
-	agent = _spawn_and_get_agent(Vector2.ZERO)
+	agent = TestFuncs.spawn_and_get_agent(Vector2.ZERO, runner)
 
 func after_test():
 	agent.free()
@@ -19,7 +19,7 @@ func after_test():
 		runner.invoke("_on_play_button_pressed")
 
 func test_agent_move_one_waypoint():
-	var new_waypoint: Waypoint = _spawn_waypoint_from(agent, Vector2(1, 0))
+	var new_waypoint: Waypoint = TestFuncs.spawn_waypoint_from(agent, Vector2(1, 0), runner)
 	assert_object(new_waypoint).is_not_null()
 
 	runner.invoke("_on_play_button_pressed")
@@ -28,10 +28,10 @@ func test_agent_move_one_waypoint():
 	await runner.await_signal("play_agents_finished", [], timeout + 100)
 
 func test_agent_move_two_waypoints():
-	var waypoint_one: Waypoint = _spawn_waypoint_from(agent, Vector2(1, 0))
+	var waypoint_one: Waypoint = TestFuncs.spawn_waypoint_from(agent, Vector2(1, 0), runner)
 	assert_object(waypoint_one).is_not_null()
 
-	var waypoint_two: Waypoint = _spawn_waypoint_from(waypoint_one, Vector2(1, 1))
+	var waypoint_two: Waypoint = TestFuncs.spawn_waypoint_from(waypoint_one, Vector2(1, 1), runner)
 	assert_object(waypoint_two).is_not_null()
 
 	runner.invoke("_on_play_button_pressed")
@@ -40,7 +40,7 @@ func test_agent_move_two_waypoints():
 	await runner.await_signal("play_agents_finished", [], timeout + 100)
 
 func test_agent_move_one_waypoint_speed():
-	var new_waypoint: Waypoint = _spawn_waypoint_from(agent, Vector2(1, 0))
+	var new_waypoint: Waypoint = TestFuncs.spawn_waypoint_from(agent, Vector2(1, 0), runner)
 	assert_object(new_waypoint).is_not_null()
 
 	var origin_waypoint: Waypoint = agent.waypoints.get_waypoint(-1)
@@ -54,12 +54,12 @@ func test_agent_move_one_waypoint_speed():
 	await runner.await_signal("play_agents_finished", [], timeout + 100)
 
 func test_agent_move_two_waypoints_speed():
-	var waypoint_one: Waypoint = _spawn_waypoint_from(agent, Vector2(1, 0))
+	var waypoint_one: Waypoint = TestFuncs.spawn_waypoint_from(agent, Vector2(1, 0), runner)
 	assert_object(waypoint_one).is_not_null()
 
 	waypoint_one.param_speed_mps = 2.84
 
-	var waypoint_two: Waypoint = _spawn_waypoint_from(waypoint_one, Vector2(1, 1))
+	var waypoint_two: Waypoint = TestFuncs.spawn_waypoint_from(waypoint_one, Vector2(1, 1), runner)
 	assert_object(waypoint_two).is_not_null()
 
 	runner.invoke("_on_play_button_pressed")
@@ -67,44 +67,3 @@ func test_agent_move_two_waypoints_speed():
 
 	await runner.await_signal("play_agents_finished", [], timeout + 100)
 
-func _spawn_waypoint_from(selected_object, position: Vector2) -> Waypoint:
-	var selection = null
-
-	if selected_object is Agent:
-		selection = selected_object._current_agent._selection_area
-	if selected_object is Waypoint:
-		selection = selected_object._selection_area
-
-	assert_object(selection).is_not_null()
-	selection.selected = true
-
-	var position_mod: Vector2 = Vector2(position.x * 64.0, position.y * 64.0)
-
-	runner.set_property("_right_click_position", position_mod)
-	runner.invoke("_on_empty_menu_press", ScenarioEditor.empty_menu_enum.CREATE_WAYPOINT)
-
-	# Get waypoints object
-	var waypoints = agent.waypoints
-
-	# Get index of selected object to get the new waypoint
-
-	var new_waypoint: Waypoint = null
-
-	if selected_object is Agent:
-		new_waypoint = waypoints.get_waypoint(0)
-
-	if selected_object is Waypoint:
-		var selected_index = waypoints.get_waypoint_index(selected_object)
-		new_waypoint = waypoints.get_waypoint(selected_index + 1)
-
-	assert_object(new_waypoint).is_not_null()
-
-	return new_waypoint
-
-func _spawn_and_get_agent(position: Vector2) -> Agent:
-	runner.invoke("spawn_agent", position)
-
-	var id: int = runner.get_property("_last_id")
-	var agent: Agent = TreeFuncs.get_agent_with_id(id)
-
-	return agent
