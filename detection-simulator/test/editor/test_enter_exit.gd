@@ -15,15 +15,27 @@ func before():
 	runner = auto_free(scene_runner(editor_scene))
 
 func before_test():
-	agent = _spawn_and_get_agent(Vector2.ZERO)
-	agent_two = _spawn_and_get_agent(Vector2(0, 5))
+	agent = TestFuncs.spawn_and_get_agent(Vector2.ZERO, runner)
+	agent_two = TestFuncs.spawn_and_get_agent(Vector2(0, 5), runner)
 
 	# Create two waypoints for each agent at X = 1 and X = 2
-	wp_agent_one_1 = _spawn_waypoint_from(agent, Vector2(1, 0))
-	wp_agent_one_2 = _spawn_waypoint_from(wp_agent_one_1, Vector2(2, 0))
+	wp_agent_one_1 = TestFuncs.spawn_waypoint_from(agent, Vector2(1, 0), runner)
+	assert_object(wp_agent_one_1).is_not_null().override_failure_message("WP A1W1 is Null")
+	await await_idle_frame()
 
-	wp_agent_two_1 = _spawn_waypoint_from(agent_two, Vector2(1, 5))
-	wp_agent_two_2 = _spawn_waypoint_from(wp_agent_two_1, Vector2(2, 5))
+	wp_agent_one_2 = TestFuncs.spawn_waypoint_from(wp_agent_one_1, Vector2(2, 0), runner)
+	assert_object(wp_agent_one_1).is_not_null().override_failure_message("WP A1W2 is Null")
+	await await_idle_frame()
+
+	wp_agent_two_1 = TestFuncs.spawn_waypoint_from(agent_two, Vector2(1, 5), runner)
+	assert_object(wp_agent_one_1).is_not_null().override_failure_message("WP A2W1 is Null")
+	await await_idle_frame()
+
+	wp_agent_two_2 = TestFuncs.spawn_waypoint_from(wp_agent_two_1, Vector2(2, 5), runner)
+	assert_object(wp_agent_one_1).is_not_null().override_failure_message("WP A2W1 is Null")
+	await await_idle_frame()
+
+
 
 func after_test():
 	agent.free()
@@ -55,6 +67,9 @@ func test_agent_enter_context_no_selection_no_option():
 	wp_agent_two_1._prepare_menu()
 	assert_bool(_find_string_in_context_menu(wp_agent_two_1.context_menu, "Enter Vehicle")).is_false()
 
+	await await_idle_frame()
+	pass
+
 func test_agent_enter_context_selection_option():
 	assert_object(agent).is_not_null()
 	assert_object(agent_two).is_not_null()
@@ -70,59 +85,35 @@ func test_agent_enter_context_selection_option():
 	wp_agent_two_1._prepare_menu()
 	assert_bool(_find_string_in_context_menu(wp_agent_two_1.context_menu, "Enter Vehicle")).is_true()
 
+func test_agent_enter_context_selection_option_on_click():
+	assert_object(agent).is_not_null()
+	assert_object(agent_two).is_not_null()
+	assert_object(wp_agent_one_1).is_not_null()
+	assert_object(wp_agent_one_2).is_not_null()
+	assert_object(wp_agent_two_1).is_not_null()
+	assert_object(wp_agent_two_2).is_not_null()
+
+	wp_agent_one_1._selection_area.selected = true
+
+	# Move mouse to waypoint position and right click
+	var position = wp_agent_two_1.global_position
+
+	runner.set_mouse_pos(position)
+	await await_idle_frame()
+
+	runner.simulate_mouse_button_press(MOUSE_BUTTON_RIGHT)
+	await await_idle_frame()
+
+	assert_bool(_find_string_in_context_menu(wp_agent_two_1.context_menu, "Enter Vehicle")).is_true()
 
 func _find_string_in_context_menu(context_menu: PopupMenu, string: String):
 	var string_found: bool = false
 
 	for i in range(context_menu.item_count):
-		if context_menu.get_item_text(i) == string:
+		var item = context_menu.get_item_text(i)
+		if item == string:
 			string_found = true
 			break
 
 	return string_found
 
-
-func _spawn_waypoint_from(selected_object, position: Vector2) -> Waypoint:
-	var selection = null
-	var agent = null
-
-	if selected_object is Agent:
-		selection = selected_object._current_agent._selection_area
-		agent = selected_object
-	if selected_object is Waypoint:
-		selection = selected_object._selection_area
-		agent = selected_object.parent_object
-
-	assert_object(selection).is_not_null()
-	selection.selected = true
-
-	var position_mod: Vector2 = Vector2(position.x * 64.0, position.y * 64.0)
-
-	runner.set_property("_right_click_position", position_mod)
-	runner.invoke("_on_empty_menu_press", ScenarioEditor.empty_menu_enum.CREATE_WAYPOINT)
-
-	# Get waypoints object
-	var waypoints = agent.waypoints
-
-	# Get index of selected object to get the new waypoint
-
-	var new_waypoint: Waypoint = null
-
-	if selected_object is Agent:
-		new_waypoint = waypoints.get_waypoint(0)
-
-	if selected_object is Waypoint:
-		var selected_index = waypoints.get_waypoint_index(selected_object)
-		new_waypoint = waypoints.get_waypoint(selected_index + 1)
-
-	assert_object(new_waypoint).is_not_null()
-
-	return new_waypoint
-
-func _spawn_and_get_agent(position: Vector2) -> Agent:
-	runner.invoke("spawn_agent", position)
-
-	var id: int = runner.get_property("_last_id")
-	var agent: Agent = TreeFuncs.get_agent_with_id(id)
-
-	return agent
