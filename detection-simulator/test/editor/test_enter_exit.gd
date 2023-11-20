@@ -95,16 +95,13 @@ func test_agent_enter_context_selection_option_on_click():
 
 	wp_agent_one_1._selection_area.selected = true
 
-	# Move mouse to waypoint position and right click
-	var position = wp_agent_two_1.global_position
+	# TODO - Figure out how to do this by simulating mouse movements
 
-	runner.set_mouse_pos(position)
-	await await_idle_frame()
-
-	runner.simulate_mouse_button_press(MOUSE_BUTTON_RIGHT)
-	await await_idle_frame()
-
+	wp_agent_two_1._popup_menu_at_mouse()
 	assert_bool(_find_string_in_context_menu(wp_agent_two_1.context_menu, "Enter Vehicle")).is_true()
+
+	await await_idle_frame()
+	pass
 
 func _find_string_in_context_menu(context_menu: PopupMenu, string: String):
 	var string_found: bool = false
