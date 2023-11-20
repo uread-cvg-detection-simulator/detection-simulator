@@ -319,13 +319,17 @@ func unlink_waypoint(node: Waypoint):
 
 func _on_mouse(_mouse, event):
 	if event.is_action_pressed("mouse_menu") and camera != null and clickable:
-		var mouse_pos = MousePosition.mouse_global_position
-		var mouse_rel_pos = MousePosition.mouse_relative_position
+		_popup_menu_at_mouse()
 
-		## TODO - PREPARE MENU
 
-		# Popup the window
-		context_menu.popup(Rect2i(mouse_rel_pos.x, mouse_rel_pos.y, context_menu.size.x, context_menu.size.y))
+func _popup_menu_at_mouse():
+	var mouse_pos = MousePosition.mouse_global_position
+	var mouse_rel_pos = MousePosition.mouse_relative_position
+
+	_prepare_menu()
+
+	# Popup the window
+	context_menu.popup(Rect2i(mouse_rel_pos.x, mouse_rel_pos.y, context_menu.size.x, context_menu.size.y))
 
 
 func _on_selected(selected: bool):
