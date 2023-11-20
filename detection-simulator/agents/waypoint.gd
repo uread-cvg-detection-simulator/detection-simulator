@@ -17,6 +17,7 @@ enum ContextMenuIDs {
 	DELETE,
 	PROPERTIES,
 	LINK_WAYPOINT,
+	ENTER_VEHICLE,
 }
 
 var param_speed_mps = 1.42
@@ -54,7 +55,25 @@ func _prepare_menu():
 
 	context_menu.add_item("Delete Waypoint", ContextMenuIDs.DELETE)
 	context_menu.add_item("Properties", ContextMenuIDs.PROPERTIES)
+
+	context_menu.add_separator()
 	context_menu.add_item("Start Linking...", ContextMenuIDs.LINK_WAYPOINT)
+
+	# If waypoint of another agent is selected, add "Enter Vehicle" to the menu
+	var all_selected_objects = get_tree().get_nodes_in_group("selected")
+
+	if not all_selected_objects.is_empty():
+		var selected_object = all_selected_objects[0].parent_object
+
+		if selected_object is Waypoint:
+			if selected_object.parent_object != parent_object:
+				context_menu.add_separator()
+				context_menu.add_item("Enter Vehicle", ContextMenuIDs.ENTER_VEHICLE)
+
+		if selected_object is Agent:
+			if selected_object != parent_object:
+				context_menu.add_separator()
+				context_menu.add_item("Enter Vehicle", ContextMenuIDs.ENTER_VEHICLE)
 
 	if not context_menu.is_connected("id_pressed", self._context_menu_id_pressed):
 		context_menu.connect("id_pressed", self._context_menu_id_pressed)
@@ -299,15 +318,15 @@ func unlink_waypoint(node: Waypoint):
 		UndoSystem.add_action(undo_action)
 
 func _on_mouse(_mouse, event):
-	print_debug("Waypoint mouse event: %s" % event)
 	if event.is_action_pressed("mouse_menu") and camera != null and clickable:
 		var mouse_pos = MousePosition.mouse_global_position
 		var mouse_rel_pos = MousePosition.mouse_relative_position
 
+		## TODO - PREPARE MENU
+
 		# Popup the window
 		context_menu.popup(Rect2i(mouse_rel_pos.x, mouse_rel_pos.y, context_menu.size.x, context_menu.size.y))
 
-		print_debug("Right click on waypoint at (%.2f, %.2f)" % [float(mouse_pos.x) / 64, - float(mouse_pos.y) / 64])
 
 func _on_selected(selected: bool):
 	if initialised:
