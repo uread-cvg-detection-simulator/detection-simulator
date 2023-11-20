@@ -64,7 +64,13 @@
 					${godot-build-html5}/bin/godot-build-html5
 				'';
 
-				all-scripts = [ nix-shell-script godot-build-windows godot-build-linux godot-build-macos godot-build-html5 godot-build-all ];
+				godot-run-tests = pkgs.writeShellScriptBin "godot-run-tests" ''
+					#!/bin/bash
+					cd $PROJECT_NAME
+					./addons/gdUnit4/runtest.sh -a test -c
+				'';
+
+				all-scripts = [ nix-shell-script godot-build-windows godot-build-linux godot-build-macos godot-build-html5 godot-build-all godot-run-tests];
 
 				project_name = "detection-simulator";
 			in
