@@ -34,12 +34,14 @@ func test_multiple_agents_with_waypoints():
 
 	# Create two waypoints for each agent at X = 1 and X = 2
 	var wp_agent_one_1: Waypoint = TestFuncs.spawn_waypoint_from(agent, Vector2(1, 0), runner)
-	var wp_agent_one_2: Waypoint = TestFuncs.spawn_waypoint_from(wp_agent_one_1, Vector2(2, 0), runner)
-
-	var wp_agent_two_1: Waypoint = TestFuncs.spawn_waypoint_from(agent_two, Vector2(1, 5), runner)
-	var wp_agent_two_2: Waypoint = TestFuncs.spawn_waypoint_from(wp_agent_two_1, Vector2(2, 5), runner)
-
 	await await_idle_frame()
+	var wp_agent_one_2: Waypoint = TestFuncs.spawn_waypoint_from(wp_agent_one_1, Vector2(2, 0), runner)
+	await await_idle_frame()
+	var wp_agent_two_1: Waypoint = TestFuncs.spawn_waypoint_from(agent_two, Vector2(1, 5), runner)
+	await await_idle_frame()
+	var wp_agent_two_2: Waypoint = TestFuncs.spawn_waypoint_from(wp_agent_two_1, Vector2(2, 5), runner)
+	await await_idle_frame()
+
 	pass
 
 func test_link_in_place():
