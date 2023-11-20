@@ -70,7 +70,7 @@ func test_agent_enter_context_no_selection_no_option():
 	await await_idle_frame()
 	pass
 
-func test_agent_enter_context_selection_option():
+func test_agent_enter_context_selection_option_nonvehicle():
 	assert_object(agent).is_not_null()
 	assert_object(agent_two).is_not_null()
 	assert_object(wp_agent_one_1).is_not_null()
@@ -78,9 +78,30 @@ func test_agent_enter_context_selection_option():
 	assert_object(wp_agent_two_1).is_not_null()
 	assert_object(wp_agent_two_2).is_not_null()
 
+	agent_two.agent_type = Agent.AgentType.PersonTarget
+
 	# Check right click PopupMenu (waypoint.context_menu) does contain "Enter Vehicle"
 	# after selecting a waypoint of another agent
 	wp_agent_one_1._selection_area.selected = true
+	await await_idle_frame()
+
+	wp_agent_two_1._prepare_menu()
+	assert_bool(_find_string_in_context_menu(wp_agent_two_1.context_menu, "Enter Vehicle")).is_false()
+
+func test_agent_enter_context_selection_option_vehicle():
+	assert_object(agent).is_not_null()
+	assert_object(agent_two).is_not_null()
+	assert_object(wp_agent_one_1).is_not_null()
+	assert_object(wp_agent_one_2).is_not_null()
+	assert_object(wp_agent_two_1).is_not_null()
+	assert_object(wp_agent_two_2).is_not_null()
+
+	agent_two.agent_type = Agent.AgentType.BoatTarget
+
+	# Check right click PopupMenu (waypoint.context_menu) does contain "Enter Vehicle"
+	# after selecting a waypoint of another agent
+	wp_agent_one_1._selection_area.selected = true
+	await await_idle_frame()
 
 	wp_agent_two_1._prepare_menu()
 	assert_bool(_find_string_in_context_menu(wp_agent_two_1.context_menu, "Enter Vehicle")).is_true()
@@ -93,7 +114,10 @@ func test_agent_enter_context_selection_option_on_click():
 	assert_object(wp_agent_two_1).is_not_null()
 	assert_object(wp_agent_two_2).is_not_null()
 
+	agent_two.agent_type = Agent.AgentType.BoatTarget
+
 	wp_agent_one_1._selection_area.selected = true
+	await await_idle_frame()
 
 	# TODO - Figure out how to do this by simulating mouse movements
 

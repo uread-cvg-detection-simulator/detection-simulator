@@ -29,6 +29,11 @@ var _type_string = {
 	AgentType.Invisible: "Invisible"
 }
 
+@export var type_is_vehicle = { AgentType.Circle : false,
+								AgentType.SquareTarget: false,
+								AgentType.PersonTarget: false,
+								AgentType.BoatTarget: true}
+
 @export var type_default_colours = { AgentType.Circle : Color.GREEN,
 									 AgentType.SquareTarget : Color.WHITE,
 									 AgentType.PersonTarget : Color.GREEN,
@@ -36,6 +41,7 @@ var _type_string = {
 
 @onready var _current_agent: AgentTarget = null
 var agent_type: AgentType = AgentType.PersonTarget : set = _set_agent_type
+var is_vehicle: bool = false
 var collision_shape = null
 
 @onready var context_menu: PopupMenu = $ContextMenu
@@ -339,7 +345,6 @@ func _set_agent_type(new_agent_type: AgentType):
 			_current_agent.add_child(collision_shape)
 			collision_shape = null
 
-
 		# Enable new
 		if new_agent_type != AgentType.Invisible:
 			_current_agent = _type_map[new_agent_type]
@@ -355,6 +360,8 @@ func _set_agent_type(new_agent_type: AgentType):
 			add_child(collision_shape)
 
 			_set_sprite_colour(type_default_colours[new_agent_type])
+
+			is_vehicle = type_is_vehicle[new_agent_type]
 		else:
 			_current_agent = null
 

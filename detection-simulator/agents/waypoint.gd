@@ -66,12 +66,12 @@ func _prepare_menu():
 		var selected_object = all_selected_objects[0].parent_object
 
 		if selected_object is Waypoint:
-			if selected_object.parent_object != parent_object:
+			if selected_object.parent_object != parent_object and parent_object.is_vehicle:
 				context_menu.add_separator()
 				context_menu.add_item("Enter Vehicle", ContextMenuIDs.ENTER_VEHICLE)
 
 		if selected_object is Agent:
-			if selected_object != parent_object:
+			if selected_object != parent_object and parent_object.is_vehicle:
 				context_menu.add_separator()
 				context_menu.add_item("Enter Vehicle", ContextMenuIDs.ENTER_VEHICLE)
 
