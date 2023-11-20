@@ -7,7 +7,7 @@ var agent = null
 
 func before():
 	runner = auto_free(scene_runner(editor_scene))
-	agent = _spawn_and_get_agent(Vector2.ZERO)
+	agent = TestFuncs.spawn_and_get_agent(Vector2.ZERO, runner)
 
 func test_last_id_first():
 	# Assert the last id was set
@@ -40,11 +40,3 @@ func test_agent_id():
 func test_agent_position():
 	# Check position is 0,0
 	assert_vector2(agent.position).is_equal(Vector2.ZERO)
-
-func _spawn_and_get_agent(position: Vector2) -> Agent:
-	runner.invoke("spawn_agent", position)
-
-	var id: int = runner.get_property("_last_id")
-	var agent: Agent = TreeFuncs.get_agent_with_id(id)
-
-	return agent

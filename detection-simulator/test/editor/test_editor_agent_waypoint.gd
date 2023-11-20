@@ -9,7 +9,7 @@ func before():
 	runner = auto_free(scene_runner(editor_scene))
 
 func before_test():
-	agent = _spawn_and_get_agent(Vector2.ZERO)
+	agent = TestFuncs.spawn_and_get_agent(Vector2.ZERO, runner)
 
 func after_test():
 	agent.free()
@@ -43,15 +43,18 @@ func test_agent_deselect_waypoint_not_in_menu():
 
 	assert_str(text).is_not_equal("Create Waypoint")
 
+	await await_idle_frame()
+	pass
+
 func test_waypoint_place():
 	assert_object(agent).is_not_null()
 
 	agent._current_agent._selection_area.selected = true
 
 	# Place waypoint at 10,0
-	var place_position = Vector2(10 * 64, 0 * 64)
-	runner.set_property("_right_click_position", place_position)
-	runner.invoke("_on_empty_menu_press", ScenarioEditor.empty_menu_enum.CREATE_WAYPOINT)
+	var place_position = Vector2(5, 0)
+	var place_act_position = Vector2(place_position.x * 64, place_position.y * -64)
+	TestFuncs.spawn_waypoint_from(agent, place_position, runner)
 
 	# Get waypoints object
 	var waypoints = agent.waypoints
@@ -62,13 +65,8 @@ func test_waypoint_place():
 	# Test placed at correct position
 	var new_waypoint: Waypoint = waypoints.get_waypoint(0)
 
-	assert_vector(new_waypoint.position).is_equal(place_position)
+	assert_vector(new_waypoint.position).is_equal(place_act_position)
 
+	await await_idle_frame()
+	pass
 
-func _spawn_and_get_agent(position: Vector2) -> Agent:
-	runner.invoke("spawn_agent", position)
-
-	var id: int = runner.get_property("_last_id")
-	var agent: Agent = TreeFuncs.get_agent_with_id(id)
-
-	return agent
