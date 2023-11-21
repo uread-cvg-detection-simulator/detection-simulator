@@ -170,7 +170,7 @@ func _clear_properties():
 	properties_editable_dict.clear()
 
 	for child in properties_grid_container.get_children():
-		child.free()
+		child.queue_free()
 
 func _process(delta):
 	if properties_current_node != null:
