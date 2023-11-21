@@ -48,7 +48,6 @@ func _ready():
 	_selection_area.connect("mouse_hold_end", self._on_hold_stop)
 	_selection_area.connect("mouse_click", self._on_mouse)
 
-	_prepare_menu()
 
 func _prepare_menu():
 	context_menu.clear()
@@ -64,16 +63,19 @@ func _prepare_menu():
 
 	if not all_selected_objects.is_empty():
 		var selected_object = all_selected_objects[0].parent_object
+		var valid_enter_exit = false
 
 		if selected_object is Waypoint:
 			if selected_object.parent_object != parent_object and parent_object.is_vehicle:
-				context_menu.add_separator()
-				context_menu.add_item("Enter Vehicle", ContextMenuIDs.ENTER_VEHICLE)
+				valid_enter_exit = true
 
 		if selected_object is Agent:
 			if selected_object != parent_object and parent_object.is_vehicle:
-				context_menu.add_separator()
-				context_menu.add_item("Enter Vehicle", ContextMenuIDs.ENTER_VEHICLE)
+				valid_enter_exit = true
+
+		if valid_enter_exit:
+			context_menu.add_separator()
+			context_menu.add_item("Enter Vehicle", ContextMenuIDs.ENTER_VEHICLE)
 
 	if not context_menu.is_connected("id_pressed", self._context_menu_id_pressed):
 		context_menu.connect("id_pressed", self._context_menu_id_pressed)
