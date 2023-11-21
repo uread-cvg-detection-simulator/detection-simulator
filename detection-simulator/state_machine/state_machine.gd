@@ -12,6 +12,7 @@ signal transitioned(state_name)
 
 # Path to the initial active state. We export it to be able to pick the initial state in the inspector.
 @export var initial_state: StateMachineState = null
+@export var states_visible: bool = false : set = _set_states_visible
 @export var label: Label = null
 
 # The current active state. At the start of the game, we get the `initial_state`.
@@ -40,6 +41,8 @@ func _ready() -> void:
 			label.text = state.name
 
 		print_debug("SM [ %s ] - Initialised" % owner.name)
+
+		states_visible = states_visible
 	else:
 		printerr("SM [ %s ] - No states?" % owner.name)
 		queue_free()
@@ -101,3 +104,9 @@ func _on_child_enter(node):
 func _on_child_exit(node):
 	if node is StateMachineState:
 		all_states.erase(node.name)
+
+func _set_states_visible(value):
+	states_visible = value
+
+	if label:
+		label.visible = value
