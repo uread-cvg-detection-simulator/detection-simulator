@@ -1,3 +1,4 @@
+class_name AgentWaypointHandler
 extends Node
 
 @export var parent_object: Agent = null
@@ -187,12 +188,12 @@ func get_waypoint(waypoint_index: int):
 	else:
 		return null
 
-func add_to_end(new_global_point: Vector2, add_to_undo: bool = true) -> Waypoint:
+func add_to_end(new_global_point: Vector2, add_to_undo: bool = true, waypoint_type: Waypoint.WaypointType = Waypoint.WaypointType.WAYPOINT) -> Waypoint:
 	# Get the end point of the array to use as a link
 	var previous_point = waypoints[-1] if not waypoints.is_empty() else starting_node
 
 	# Instantiate and append
-	var new_waypoint = _instantiate_waypoint(new_global_point, previous_point, null)
+	var new_waypoint = _instantiate_waypoint(new_global_point, previous_point, null, waypoint_type)
 	waypoints.append(new_waypoint)
 
 	# Queue line redraw
@@ -221,7 +222,7 @@ func add_to_end(new_global_point: Vector2, add_to_undo: bool = true) -> Waypoint
 
 	# Instantiate the new waypoint
 	var undo_new_waypoint = undo_action.action_store_method(UndoRedoAction.DoType.Do, func(x, new_global_point, previous_point):
-		return x.waypoints._instantiate_waypoint(new_global_point, previous_point, null)
+		return x.waypoints._instantiate_waypoint(new_global_point, previous_point, null, waypoint_type)
 		, [undo_agent_ref, new_global_point, undo_previous_point], [undo_agent_ref, undo_previous_point]
 	)
 
@@ -288,7 +289,7 @@ func _get_insert_pos(current_point: Waypoint) -> Array:
 
 	return [insert_pos, next_point]
 
-func insert_after(current_point: Waypoint, new_global_point: Vector2) -> Waypoint:
+func insert_after(current_point: Waypoint, new_global_point: Vector2, waypoint_type: Waypoint.WaypointType = Waypoint.WaypointType.WAYPOINT) -> Waypoint:
 
 	var rv = _get_insert_pos(current_point)
 
@@ -299,9 +300,9 @@ func insert_after(current_point: Waypoint, new_global_point: Vector2) -> Waypoin
 		return null
 
 	if next_point == null:
-		return add_to_end(new_global_point)
+		return add_to_end(new_global_point, true, waypoint_type)
 
-	var new_waypoint = _instantiate_waypoint(new_global_point, current_point, next_point)
+	var new_waypoint: Waypoint = _instantiate_waypoint(new_global_point, current_point, next_point, waypoint_type)
 	new_waypoint.camera = camera
 
 	waypoints.insert(insert_pos, new_waypoint)
@@ -333,7 +334,7 @@ func insert_after(current_point: Waypoint, new_global_point: Vector2) -> Waypoin
 
 	# Instantiate the new waypoint
 	var undo_new_waypoint = undo_action.action_store_method(UndoRedoAction.DoType.Do, func(x, current_point, next_point):
-		return x.waypoints._instantiate_waypoint(new_global_point, current_point, next_point)
+		return x.waypoints._instantiate_waypoint(new_global_point, current_point, next_point, waypoint_type)
 		, [undo_agent_ref, undo_current_point, undo_next_point], [undo_agent_ref, undo_current_point, undo_next_point]
 	)
 
@@ -383,7 +384,7 @@ func insert_after(current_point: Waypoint, new_global_point: Vector2) -> Waypoin
 
 	return new_waypoint
 
-func _instantiate_waypoint(new_global_point: Vector2, previous_point: Waypoint, next_point: Waypoint):
+func _instantiate_waypoint(new_global_point: Vector2, previous_point: Waypoint, next_point: Waypoint, waypoint_type: Waypoint.WaypointType = Waypoint.WaypointType.WAYPOINT) -> Waypoint:
 	print_debug("Instantiating waypoint at %s [%s -> %s]" % [new_global_point, previous_point, next_point])
 	var new_waypoint: Node2D = waypoint_scene.instantiate()
 	new_waypoint.global_position = new_global_point
@@ -401,6 +402,10 @@ func _instantiate_waypoint(new_global_point: Vector2, previous_point: Waypoint, 
 	if next_point:
 		next_point.pt_previous = new_waypoint
 		new_waypoint.pt_next = next_point
+		
+	if waypoint_type != Waypoint.WaypointType.WAYPOINT:
+		new_waypoint.disabled = true
+		new_waypoint.waypoint_type = waypoint_type
 
 	return new_waypoint
 

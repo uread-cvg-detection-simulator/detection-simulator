@@ -20,6 +20,14 @@ enum ContextMenuIDs {
 	ENTER_VEHICLE,
 }
 
+enum WaypointType {
+	WAYPOINT,
+	ENTER,
+	EXIT,
+}
+
+var waypoint_type = WaypointType.WAYPOINT
+
 var param_speed_mps = 1.42
 var param_start_time = null
 var param_wait_time = null
@@ -148,6 +156,30 @@ func _context_menu_id_pressed(id: ContextMenuIDs):
 			GroupHelpers.connect("node_grouped", self._on_link_grouped)
 			print_debug("Start linking waypoint")
 			attempting_link = true
+		ContextMenuIDs.ENTER_VEHICLE:
+			_on_enter_vehicle()
+
+func _on_enter_vehicle():
+	# If waypoint of another agent is selected, add "Enter Vehicle" to the menu
+	var all_selected_objects = get_tree().get_nodes_in_group("selected")
+
+	if not all_selected_objects.is_empty():
+		var selected_object = all_selected_objects[0].parent_object
+		var waypoint_handler: AgentWaypointHandler = null
+		var curr_wp: Waypoint = null
+
+		if selected_object is Waypoint:
+			waypoint_handler = selected_object.parent_object.waypoints
+			curr_wp = selected_object
+
+		if selected_object is Agent:
+			waypoint_handler = selected_object.waypoints
+			curr_wp = waypoint_handler.starting_node
+		
+		if waypoint_handler == null:
+			print_debug("Unknown object type on Enter Vehicle")
+		
+		waypoint_handler.insert_after(curr_wp, global_position, WaypointType.ENTER)
 
 func _on_link_grouped(group: String, node: Node):
 

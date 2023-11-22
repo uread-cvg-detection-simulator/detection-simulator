@@ -6,7 +6,6 @@ var agent: Agent = null
 var agent_two: Agent = null
 
 var wp_agent_one_1: Waypoint = null
-var wp_agent_one_2: Waypoint = null
 
 var wp_agent_two_1: Waypoint = null
 var wp_agent_two_2: Waypoint = null
@@ -23,10 +22,6 @@ func before_test():
 	assert_object(wp_agent_one_1).is_not_null().override_failure_message("WP A1W1 is Null")
 	await await_idle_frame()
 
-	wp_agent_one_2 = TestFuncs.spawn_waypoint_from(wp_agent_one_1, Vector2(2, 0), runner)
-	assert_object(wp_agent_one_1).is_not_null().override_failure_message("WP A1W2 is Null")
-	await await_idle_frame()
-
 	wp_agent_two_1 = TestFuncs.spawn_waypoint_from(agent_two, Vector2(1, 5), runner)
 	assert_object(wp_agent_one_1).is_not_null().override_failure_message("WP A2W1 is Null")
 	await await_idle_frame()
@@ -37,6 +32,7 @@ func before_test():
 
 
 
+
 func after_test():
 	agent.free()
 	agent_two.free()
@@ -44,7 +40,6 @@ func after_test():
 	agent_two = null
 
 	wp_agent_one_1 = null
-	wp_agent_one_2 = null
 	wp_agent_two_1 = null
 	wp_agent_two_2 = null
 
@@ -58,7 +53,6 @@ func test_agent_enter_context_no_selection_no_option():
 	assert_object(agent).is_not_null()
 	assert_object(agent_two).is_not_null()
 	assert_object(wp_agent_one_1).is_not_null()
-	assert_object(wp_agent_one_2).is_not_null()
 	assert_object(wp_agent_two_1).is_not_null()
 	assert_object(wp_agent_two_2).is_not_null()
 
@@ -74,7 +68,6 @@ func test_agent_enter_context_selection_option_nonvehicle():
 	assert_object(agent).is_not_null()
 	assert_object(agent_two).is_not_null()
 	assert_object(wp_agent_one_1).is_not_null()
-	assert_object(wp_agent_one_2).is_not_null()
 	assert_object(wp_agent_two_1).is_not_null()
 	assert_object(wp_agent_two_2).is_not_null()
 
@@ -92,7 +85,6 @@ func test_agent_enter_context_selection_option_vehicle():
 	assert_object(agent).is_not_null()
 	assert_object(agent_two).is_not_null()
 	assert_object(wp_agent_one_1).is_not_null()
-	assert_object(wp_agent_one_2).is_not_null()
 	assert_object(wp_agent_two_1).is_not_null()
 	assert_object(wp_agent_two_2).is_not_null()
 
@@ -110,7 +102,6 @@ func test_agent_enter_context_selection_option_on_click():
 	assert_object(agent).is_not_null()
 	assert_object(agent_two).is_not_null()
 	assert_object(wp_agent_one_1).is_not_null()
-	assert_object(wp_agent_one_2).is_not_null()
 	assert_object(wp_agent_two_1).is_not_null()
 	assert_object(wp_agent_two_2).is_not_null()
 
@@ -126,6 +117,29 @@ func test_agent_enter_context_selection_option_on_click():
 
 	await await_idle_frame()
 	pass
+
+func test_agent_enter_on_click():
+	assert_object(agent).is_not_null()
+	assert_object(agent_two).is_not_null()
+	assert_object(wp_agent_one_1).is_not_null()
+	assert_object(wp_agent_two_1).is_not_null()
+	assert_object(wp_agent_two_2).is_not_null()
+
+	agent_two.agent_type = Agent.AgentType.BoatTarget
+
+	wp_agent_one_1._selection_area.selected = true
+	await await_idle_frame()
+
+	wp_agent_two_1._on_enter_vehicle()
+
+	# Check A1's last waypoint is an Enter Vehicle type
+	var last_wp: Waypoint = agent.waypoints.get_waypoint(agent.waypoints.waypoints.size() -1)
+	assert_that(last_wp.waypoint_type == Waypoint.WaypointType.ENTER)
+
+	# Check the last wp is disabled
+	assert_bool(last_wp.disabled).is_true()
+
+
 
 func _find_string_in_context_menu(context_menu: PopupMenu, string: String):
 	var string_found: bool = false

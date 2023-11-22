@@ -49,7 +49,7 @@ var is_vehicle: bool = false
 var collision_shape = null
 
 @onready var context_menu: PopupMenu = $ContextMenu
-@onready var waypoints = $waypoints
+@onready var waypoints: AgentWaypointHandler = $waypoints
 
 enum ContextMenuIDs {
 	DELETE,

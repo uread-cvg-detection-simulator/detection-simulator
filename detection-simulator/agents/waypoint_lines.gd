@@ -14,6 +14,7 @@ func _draw():
 			var line_width = waypoint_object.link_line_size
 			var line_color = waypoint_object.link_line_colour
 			var link_line_colour = Color.YELLOW
+			var enter_line_colour = Color.BLUE
 
 			var current_waypoint = waypoints[0]
 
@@ -21,7 +22,10 @@ func _draw():
 				var previous_waypoint = current_waypoint.pt_previous
 
 				if previous_waypoint != null:
-					draw_line(current_waypoint.position, previous_waypoint.position, line_color, line_width)
+					if current_waypoint.waypoint_type != Waypoint.WaypointType.WAYPOINT or previous_waypoint.waypoint_type != Waypoint.WaypointType.WAYPOINT:
+						draw_line(current_waypoint.position, previous_waypoint.position, enter_line_colour, line_width)
+					else:
+						draw_line(current_waypoint.position, previous_waypoint.position, line_color, line_width)
 
 				# If linked, draw the link line
 				if not current_waypoint.linked_nodes.is_empty():
