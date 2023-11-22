@@ -30,4 +30,5 @@ func enter(_msg := {}, _old_state_name: String = "") -> bool:
 # Virtual function. Called by the state machine before changing the active state. Use this function
 # to clean up the state.
 func exit() -> void:
-	pass
+	owner.clickable = false
+	owner.waypoints.clickable = false

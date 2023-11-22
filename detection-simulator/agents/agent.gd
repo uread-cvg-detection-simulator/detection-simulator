@@ -124,8 +124,6 @@ func play_export() -> Dictionary:
 ## Start pathing through the waypoints
 func _start_playing():
 	if not disabled:
-		clickable = false
-		waypoints.clickable = false
 
 		state_machine.transition_to("follow_waypoints")
 

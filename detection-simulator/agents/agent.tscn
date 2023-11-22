@@ -1,4 +1,4 @@
-[gd_scene load_steps=20 format=3 uid="uid://p0wyr5cxelew"]
+[gd_scene load_steps=21 format=3 uid="uid://p0wyr5cxelew"]
 
 [ext_resource type="Texture2D" uid="uid://etufimgj43mn" path="res://agents/basic-target.png" id="1_25plv"]
 [ext_resource type="Script" path="res://agents/agent.gd" id="1_noa6a"]
@@ -10,6 +10,7 @@
 [ext_resource type="Texture2D" uid="uid://d2l7f37r31n52" path="res://agents/circle-target.png" id="5_gg7lh"]
 [ext_resource type="PackedScene" uid="uid://c5r11cmhlqudb" path="res://agents/SelectionArea2D.tscn" id="5_lpd86"]
 [ext_resource type="Script" path="res://agents/agent_states/idle_state.gd" id="5_owfar"]
+[ext_resource type="Script" path="res://agents/agent_states/wait_waypoint_conditions.gd" id="6_oles0"]
 [ext_resource type="Script" path="res://agents/agent_waypoint_handler.gd" id="7_26my1"]
 [ext_resource type="Texture2D" uid="uid://coo0j3yohgekm" path="res://agents/person.png" id="7_kdpau"]
 [ext_resource type="PackedScene" uid="uid://b50ox3rfhikx8" path="res://agents/waypoint.tscn" id="8_ado8l"]
@@ -41,6 +42,7 @@ state_machine = NodePath("state_machine")
 
 [node name="state_machine" parent="." node_paths=PackedStringArray("initial_state") instance=ExtResource("2_j52yj")]
 initial_state = NodePath("editor_state")
+states_visible = true
 
 [node name="editor_state" type="Node2D" parent="state_machine"]
 script = ExtResource("3_f130x")
@@ -50,6 +52,9 @@ script = ExtResource("4_udhad")
 
 [node name="idle" type="Node2D" parent="state_machine"]
 script = ExtResource("5_owfar")
+
+[node name="wait_waypoint_conditions" type="Node2D" parent="state_machine"]
+script = ExtResource("6_oles0")
 
 [node name="square_target" type="Sprite2D" parent="."]
 visible = false
