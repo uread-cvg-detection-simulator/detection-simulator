@@ -21,32 +21,34 @@ func physics_update(_delta: float) -> void:
 func _check_ready() -> bool:
 	if playing_next_move_time < PlayTimer.current_time:
 		var ready = true
-		var max_wait_time = 0
 
-		playing_last_waypoint.linked_ready = true
+		if playing_last_waypoint:
+			var max_wait_time = 0
 
-		# Wait until all linked nodes are ready
-		for node in playing_last_waypoint.linked_nodes:
-			if node in ignore_linked_nodes:
-				continue
+			playing_last_waypoint.linked_ready = true
 
-			if not node.linked_ready:
-				ready = false
-			else:
-				if node.pt_next == null:
-					if node.param_wait_time:
-						if playing_last_waypoint.param_wait_time and node.param_wait_time < playing_last_waypoint.param_wait_time:
+			# Wait until all linked nodes are ready
+			for node in playing_last_waypoint.linked_nodes:
+				if node in ignore_linked_nodes:
+					continue
+
+				if not node.linked_ready:
+					ready = false
+				else:
+					if node.pt_next == null:
+						if node.param_wait_time:
+							if playing_last_waypoint.param_wait_time and node.param_wait_time < playing_last_waypoint.param_wait_time:
+								continue
+
+							max_wait_time = max(node.param_wait_time, max_wait_time)
+							ignore_linked_nodes.append(node)
+							ready = false
+						else:
 							continue
 
-						max_wait_time = max(node.param_wait_time, max_wait_time)
-						ignore_linked_nodes.append(node)
-						ready = false
-					else:
-						continue
-
-		if max_wait_time != 0 and not ready:
-			var diff = (max_wait_time - (playing_last_waypoint.param_wait_time if playing_last_waypoint.param_wait_time else 0))
-			playing_next_move_time = PlayTimer.current_time + diff
+			if max_wait_time != 0 and not ready:
+				var diff = (max_wait_time - (playing_last_waypoint.param_wait_time if playing_last_waypoint.param_wait_time else 0))
+				playing_next_move_time = PlayTimer.current_time + diff
 
 		return ready
 	else:
