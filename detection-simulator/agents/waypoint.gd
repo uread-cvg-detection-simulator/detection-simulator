@@ -41,6 +41,9 @@ var attempting_link = false
 var linked_nodes: Array[Waypoint] = []
 var linked_ready: bool = false
 
+var enter_nodes: Array[Waypoint] = []
+var exit_nodes: Array[Waypoint] = []
+
 var load_linked_nodes: Array = []
 
 # Called when the node enters the scene tree for the first time.
@@ -160,7 +163,6 @@ func _context_menu_id_pressed(id: ContextMenuIDs):
 			_on_enter_vehicle()
 
 func _on_enter_vehicle():
-	# If waypoint of another agent is selected, add "Enter Vehicle" to the menu
 	var all_selected_objects = get_tree().get_nodes_in_group("selected")
 
 	if not all_selected_objects.is_empty():
@@ -179,7 +181,7 @@ func _on_enter_vehicle():
 		if waypoint_handler == null:
 			print_debug("Unknown object type on Enter Vehicle")
 		
-		waypoint_handler.insert_after(curr_wp, global_position, WaypointType.ENTER)
+		waypoint_handler.insert_after(curr_wp, global_position, WaypointType.ENTER, self)
 
 func _on_link_grouped(group: String, node: Node):
 

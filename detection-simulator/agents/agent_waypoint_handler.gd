@@ -188,13 +188,20 @@ func get_waypoint(waypoint_index: int):
 	else:
 		return null
 
-func add_to_end(new_global_point: Vector2, add_to_undo: bool = true, waypoint_type: Waypoint.WaypointType = Waypoint.WaypointType.WAYPOINT) -> Waypoint:
+func add_to_end(new_global_point: Vector2, add_to_undo: bool = true, waypoint_type: Waypoint.WaypointType = Waypoint.WaypointType.WAYPOINT, reference_waypoint: Waypoint = null) -> Waypoint:
 	# Get the end point of the array to use as a link
 	var previous_point = waypoints[-1] if not waypoints.is_empty() else starting_node
 
 	# Instantiate and append
 	var new_waypoint = _instantiate_waypoint(new_global_point, previous_point, null, waypoint_type)
 	waypoints.append(new_waypoint)
+
+	# Add to the reference waypoint if enter/exit type
+	if reference_waypoint:
+		if waypoint_type == Waypoint.WaypointType.ENTER:
+			reference_waypoint.enter_nodes.append(new_waypoint)
+		elif waypoint_type == Waypoint.WaypointType.EXIT:
+			reference_waypoint.exit_nodes.append(new_waypoint)
 
 	# Queue line redraw
 	waypoint_lines.queue_redraw()
@@ -220,6 +227,23 @@ func add_to_end(new_global_point: Vector2, add_to_undo: bool = true, waypoint_ty
 		, [undo_agent_ref], undo_agent_ref
 	)
 
+	# If reference waypoint, get the reference waypoint
+	var undo_ref_wp_agent = null
+	var undo_ref_wp = null
+
+	if reference_waypoint:
+		undo_ref_wp_agent = undo_action.action_store_method(UndoRedoAction.DoType.Do, TreeFuncs.get_agent_with_id, [reference_waypoint.parent_object.agent_id])
+		undo_action.manual_add_item_to_store(reference_waypoint.parent_object, undo_ref_wp_agent)
+
+		var reference_waypoint_index = reference_waypoint.parent_object.waypoints.get_waypoint_index(reference_waypoint)
+
+		undo_ref_wp = undo_action.action_store_method(UndoRedoAction.DoType.Do, func(x, ref_wp_index):
+			return x.waypoints.waypoints[ref_wp_index]
+			, [undo_ref_wp_agent, reference_waypoint_index], [undo_ref_wp_agent]
+		)
+
+		undo_action.manual_add_item_to_store(reference_waypoint, undo_ref_wp)
+
 	# Instantiate the new waypoint
 	var undo_new_waypoint = undo_action.action_store_method(UndoRedoAction.DoType.Do, func(x, new_global_point, previous_point):
 		return x.waypoints._instantiate_waypoint(new_global_point, previous_point, null, waypoint_type)
@@ -234,6 +258,16 @@ func add_to_end(new_global_point: Vector2, add_to_undo: bool = true, waypoint_ty
 		agent.waypoints.waypoints.append(new_wp)
 		, [undo_new_waypoint, undo_agent_ref], [undo_new_waypoint, undo_agent_ref]
 	)
+
+	# Add to reference waypoint if enter/exit type
+	if reference_waypoint:
+		undo_action.action_method(UndoRedoAction.DoType.Do, func(ref_wp, new_wp):
+			if waypoint_type == Waypoint.WaypointType.ENTER:
+				ref_wp.enter_nodes.append(new_wp)
+			elif waypoint_type == Waypoint.WaypointType.EXIT:
+				ref_wp.exit_nodes.append(new_wp)
+			, [undo_ref_wp, undo_new_waypoint], [undo_ref_wp, undo_new_waypoint]
+		)
 
 	# Queue line redraw
 	undo_action.action_method(UndoRedoAction.DoType.Do, func(agent):
@@ -250,6 +284,16 @@ func add_to_end(new_global_point: Vector2, add_to_undo: bool = true, waypoint_ty
 		agent.waypoints.waypoints.resize(len(agent.waypoints.waypoints) - 1)
 		, [undo_agent_ref], [undo_agent_ref]
 	)
+
+	# Remove from reference waypoint if enter/exit type
+	if reference_waypoint:
+		undo_action.action_method(UndoRedoAction.DoType.Undo, func(ref_wp, new_wp):
+			if waypoint_type == Waypoint.WaypointType.ENTER:
+				ref_wp.enter_nodes.erase(new_wp)
+			elif waypoint_type == Waypoint.WaypointType.EXIT:
+				ref_wp.exit_nodes.erase(new_wp)
+			, [undo_ref_wp, undo_new_waypoint], [undo_ref_wp, undo_new_waypoint]
+		)
 
 	# Reset the previous point
 	undo_action.action_property_ref(UndoRedoAction.DoType.Undo, undo_previous_point, "pt_next", null)
@@ -289,7 +333,7 @@ func _get_insert_pos(current_point: Waypoint) -> Array:
 
 	return [insert_pos, next_point]
 
-func insert_after(current_point: Waypoint, new_global_point: Vector2, waypoint_type: Waypoint.WaypointType = Waypoint.WaypointType.WAYPOINT) -> Waypoint:
+func insert_after(current_point: Waypoint, new_global_point: Vector2, waypoint_type: Waypoint.WaypointType = Waypoint.WaypointType.WAYPOINT, reference_waypoint: Waypoint = null) -> Waypoint:
 
 	var rv = _get_insert_pos(current_point)
 
@@ -300,12 +344,19 @@ func insert_after(current_point: Waypoint, new_global_point: Vector2, waypoint_t
 		return null
 
 	if next_point == null:
-		return add_to_end(new_global_point, true, waypoint_type)
+		return add_to_end(new_global_point, true, waypoint_type, reference_waypoint)
 
 	var new_waypoint: Waypoint = _instantiate_waypoint(new_global_point, current_point, next_point, waypoint_type)
 	new_waypoint.camera = camera
 
 	waypoints.insert(insert_pos, new_waypoint)
+
+	# Add to the reference waypoint if enter/exit type
+	if reference_waypoint:
+		if waypoint_type == Waypoint.WaypointType.ENTER:
+			reference_waypoint.enter_nodes.append(new_waypoint)
+		elif waypoint_type == Waypoint.WaypointType.EXIT:
+			reference_waypoint.exit_nodes.append(new_waypoint)
 
 	# Queue line redraw
 	waypoint_lines.queue_redraw()
@@ -332,6 +383,24 @@ func insert_after(current_point: Waypoint, new_global_point: Vector2, waypoint_t
 		, [undo_agent_ref], undo_agent_ref
 	)
 
+	# If reference waypoint, get the reference waypoint
+
+	var undo_ref_wp_agent = null
+	var undo_ref_wp = null
+
+	if reference_waypoint:
+		undo_ref_wp_agent = undo_action.action_store_method(UndoRedoAction.DoType.Do, TreeFuncs.get_agent_with_id, [reference_waypoint.parent_object.agent_id])
+		undo_action.manual_add_item_to_store(reference_waypoint.parent_object, undo_ref_wp_agent)
+
+		var reference_waypoint_index = reference_waypoint.parent_object.waypoints.get_waypoint_index(reference_waypoint)
+
+		undo_ref_wp = undo_action.action_store_method(UndoRedoAction.DoType.Do, func(x, ref_wp_index):
+			return x.waypoints.waypoints[ref_wp_index]
+			, [undo_ref_wp_agent, reference_waypoint_index], [undo_ref_wp_agent]
+		)
+
+		undo_action.manual_add_item_to_store(reference_waypoint, undo_ref_wp)
+
 	# Instantiate the new waypoint
 	var undo_new_waypoint = undo_action.action_store_method(UndoRedoAction.DoType.Do, func(x, current_point, next_point):
 		return x.waypoints._instantiate_waypoint(new_global_point, current_point, next_point, waypoint_type)
@@ -347,6 +416,16 @@ func insert_after(current_point: Waypoint, new_global_point: Vector2, waypoint_t
 		agent.waypoints.waypoints.insert(pos, new_wp)
 		, [insert_pos, undo_new_waypoint, undo_agent_ref], [undo_agent_ref, undo_new_waypoint]
 	)
+
+	# Add to reference waypoint if enter/exit type
+	if reference_waypoint:
+		undo_action.action_method(UndoRedoAction.DoType.Do, func(ref_wp, new_wp):
+			if waypoint_type == Waypoint.WaypointType.ENTER:
+				ref_wp.enter_nodes.append(new_wp)
+			elif waypoint_type == Waypoint.WaypointType.EXIT:
+				ref_wp.exit_nodes.append(new_wp)
+			, [undo_ref_wp, undo_new_waypoint], [undo_ref_wp, undo_new_waypoint]
+		)
 
 	# Queue line redraw
 	undo_action.action_method(UndoRedoAction.DoType.Do, func(agent):
@@ -370,6 +449,16 @@ func insert_after(current_point: Waypoint, new_global_point: Vector2, waypoint_t
 		next_point.pt_previous = current_point
 		, [undo_current_point, undo_next_point], [undo_current_point, undo_next_point]
 	)
+
+	# Erase from reference waypoint if enter/exit type
+	if reference_waypoint:
+		undo_action.action_method(UndoRedoAction.DoType.Undo, func(ref_wp, new_wp):
+			if waypoint_type == Waypoint.WaypointType.ENTER:
+				ref_wp.enter_nodes.erase(new_wp)
+			elif waypoint_type == Waypoint.WaypointType.EXIT:
+				ref_wp.exit_nodes.erase(new_wp)
+			, [undo_ref_wp, undo_new_waypoint], [undo_ref_wp, undo_new_waypoint]
+		)
 
 	# Delete the waypoint
 	undo_action.action_object_call_ref(UndoRedoAction.DoType.Undo, undo_new_waypoint, "queue_free")

@@ -44,6 +44,7 @@ func after_test():
 	wp_agent_two_2 = null
 
 	runner.set_property("_last_id", 0)
+	UndoSystem.clear_history()
 
 	if PlayTimer.play:
 		runner.invoke("_on_play_button_pressed")
@@ -138,6 +139,51 @@ func test_agent_enter_on_click():
 
 	# Check the last wp is disabled
 	assert_bool(last_wp.disabled).is_true()
+
+	# Check last_wp is in wp_agent_two_1's enter_nodes list
+	assert_bool(wp_agent_two_1.enter_nodes.has(last_wp)).is_true()
+
+func test_agent_enter_undo_redo():
+	assert_object(agent).is_not_null()
+	assert_object(agent_two).is_not_null()
+	assert_object(wp_agent_one_1).is_not_null()
+	assert_object(wp_agent_two_1).is_not_null()
+	assert_object(wp_agent_two_2).is_not_null()
+
+	agent_two.agent_type = Agent.AgentType.BoatTarget
+
+	wp_agent_one_1._selection_area.selected = true
+	await await_idle_frame()
+
+	wp_agent_two_1._on_enter_vehicle()
+
+	agent.waypoints.get_waypoint(agent.waypoints.waypoints.size() -1)
+
+	# Undo and check
+	assert_bool(UndoSystem.undo()).is_true()
+
+	# Check A1's last waypoint is NOT Enter Vehicle type
+	var last_wp: Waypoint = agent.waypoints.get_waypoint(agent.waypoints.waypoints.size() -1)
+	assert_that(last_wp.waypoint_type == Waypoint.WaypointType.WAYPOINT)
+
+	# Check wp_agent_two_1's enter_nodes list is empty
+	assert_bool(wp_agent_two_1.enter_nodes.is_empty()).is_true()
+
+	# Redo and check
+	assert_bool(UndoSystem.redo()).is_true()
+
+	# Check A1's last waypoint is an Enter Vehicle type
+	last_wp = agent.waypoints.get_waypoint(agent.waypoints.waypoints.size() -1)
+	assert_that(last_wp.waypoint_type == Waypoint.WaypointType.ENTER)
+
+	# Check wp_agent_two_1's enter_nodes list is NOT empty
+	assert_bool(wp_agent_two_1.enter_nodes.is_empty()).is_false()
+
+
+
+
+
+
 
 
 
