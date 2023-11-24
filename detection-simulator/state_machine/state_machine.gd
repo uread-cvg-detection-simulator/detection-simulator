@@ -62,6 +62,8 @@ func _physics_process(delta: float) -> void:
 	if state:
 		state.physics_update(delta)
 
+var _transitioning = false
+var _transition_queue = []
 
 ## This function calls the current state's exit() function, then changes the active state,
 ## and calls its enter function.
@@ -73,11 +75,19 @@ func transition_to(target_state_name: String, msg: Dictionary = {}) -> void:
 	if not target_state_name in all_states.keys():
 		return
 
+	if _transitioning:
+		_transition_queue.append([target_state_name, msg])
+		return
+
 	var old_state = state
 	var old_state_name = state.name
 
 	var new_state = all_states[target_state_name]
+	_transitioning = true
+
 	var state_ok = new_state.enter(msg, old_state_name)
+
+	_transitioning = false
 
 	if state_ok:
 		print_debug("SM [ %s ] : Transitioned [ %s ] -> [ %s ]" % [owner.name, old_state_name, target_state_name])
@@ -90,6 +100,11 @@ func transition_to(target_state_name: String, msg: Dictionary = {}) -> void:
 			label.text = state.name
 	else:
 		print_debug("SM [ %s ] : Transition failed [ %s ] -> [ %s ]" % [owner.name, old_state_name, target_state_name])
+
+	# If we have any transitions queued (i.e. enter called transition_to), process them now
+	if _transition_queue.size() > 0:
+		var next_transition = _transition_queue.pop_front()
+		transition_to(next_transition[0], next_transition[1])
 
 func _on_child_enter(node):
 	if node is StateMachineState:
