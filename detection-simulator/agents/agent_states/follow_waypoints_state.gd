@@ -27,6 +27,7 @@ func physics_update(delta: float) -> void:
 			if playing_waypoint.pt_next:
 				_update_target_information(playing_waypoint.pt_next)
 			elif playing_waypoint.waypoint_type == Waypoint.WaypointType.ENTER:
+				playing_waypoint.linked_ready = true
 				state_machine.transition_to("hidden_follow_vehicle", {"vehicle" : playing_waypoint.vehicle_wp.enter_vehicle})
 			else:
 				playing_waypoint.linked_ready = true

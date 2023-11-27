@@ -231,7 +231,7 @@ func test_entrant_wait_for_vehicle():
 	await await_signal_on(agent.state_machine, "transitioned", ["wait_waypoint_conditions"], 2000)
 	await await_signal_on(agent.state_machine, "transitioned", ["follow_waypoints"], 1000)
 
-func test_entrant_enters_hidden_state():
+func test_entrant_enters_hidden_state_vehicle_moving():
 	assert_object(agent).is_not_null()
 	assert_object(agent_two).is_not_null()
 	assert_object(wp_agent_one_1).is_not_null()
@@ -254,11 +254,16 @@ func test_entrant_enters_hidden_state():
 
 	await await_signal_on(agent_two.state_machine, "transitioned", ["wait_waypoint_conditions"], 2000)
 	await await_signal_on(agent.state_machine, "transitioned", ["hidden_follow_vehicle"], 2000)
-	
+
 	assert_str(String(agent.state_machine.state.name)).is_equal("hidden_follow_vehicle")
 
+	await await_millis(50)
 
+	assert_str(String(agent_two.state_machine.state.name)).is_equal("follow_waypoints")
 
+	await await_signal_on(agent_two.state_machine, "transitioned", ["idle"], 2000)
+	await await_millis(50)
+	assert_str(String(agent.state_machine.state.name)).is_equal("idle")
 
 
 func _find_string_in_context_menu(context_menu: PopupMenu, string: String):

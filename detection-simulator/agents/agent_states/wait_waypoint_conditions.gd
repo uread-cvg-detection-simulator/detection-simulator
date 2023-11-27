@@ -40,7 +40,7 @@ func _check_ready() -> bool:
 			# Check if we are a vehicle and we have enter/exit waypoints
 
 			# If it's an ENTER waypoint, we need to tell it who we are
-			if playing_last_waypoint.waypoint_type:
+			if playing_last_waypoint:
 				playing_last_waypoint.enter_vehicle = owner # TODO: Reset this when we leave the waypoint
 
 			# Check enter/exit nodes for linked_ready status
