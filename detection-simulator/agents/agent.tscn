@@ -1,4 +1,4 @@
-[gd_scene load_steps=21 format=3 uid="uid://p0wyr5cxelew"]
+[gd_scene load_steps=22 format=3 uid="uid://p0wyr5cxelew"]
 
 [ext_resource type="Texture2D" uid="uid://etufimgj43mn" path="res://agents/basic-target.png" id="1_25plv"]
 [ext_resource type="Script" path="res://agents/agent.gd" id="1_noa6a"]
@@ -12,6 +12,7 @@
 [ext_resource type="Script" path="res://agents/agent_states/idle_state.gd" id="5_owfar"]
 [ext_resource type="Script" path="res://agents/agent_states/wait_waypoint_conditions.gd" id="6_oles0"]
 [ext_resource type="Script" path="res://agents/agent_waypoint_handler.gd" id="7_26my1"]
+[ext_resource type="Script" path="res://agents/agent_states/hidden_follow_vehicle.gd" id="7_eab6p"]
 [ext_resource type="Texture2D" uid="uid://coo0j3yohgekm" path="res://agents/person.png" id="7_kdpau"]
 [ext_resource type="PackedScene" uid="uid://b50ox3rfhikx8" path="res://agents/waypoint.tscn" id="8_ado8l"]
 [ext_resource type="Texture2D" uid="uid://8n7q8rg7dyw2" path="res://agents/boat.png" id="8_jeg6q"]
@@ -55,6 +56,9 @@ script = ExtResource("5_owfar")
 
 [node name="wait_waypoint_conditions" type="Node2D" parent="state_machine"]
 script = ExtResource("6_oles0")
+
+[node name="hidden_follow_vehicle" type="Node2D" parent="state_machine"]
+script = ExtResource("7_eab6p")
 
 [node name="square_target" type="Sprite2D" parent="."]
 visible = false

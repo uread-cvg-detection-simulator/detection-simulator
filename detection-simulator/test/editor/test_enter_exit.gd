@@ -15,18 +15,18 @@ func before():
 
 func before_test():
 	agent = TestFuncs.spawn_and_get_agent(Vector2.ZERO, runner)
-	agent_two = TestFuncs.spawn_and_get_agent(Vector2(0, 5), runner)
+	agent_two = TestFuncs.spawn_and_get_agent(Vector2(0, 1), runner)
 
 	# Create two waypoints for each agent at X = 1 and X = 2
 	wp_agent_one_1 = TestFuncs.spawn_waypoint_from(agent, Vector2(1, 0), runner)
 	assert_object(wp_agent_one_1).is_not_null().override_failure_message("WP A1W1 is Null")
 	await await_idle_frame()
 
-	wp_agent_two_1 = TestFuncs.spawn_waypoint_from(agent_two, Vector2(1, 5), runner)
+	wp_agent_two_1 = TestFuncs.spawn_waypoint_from(agent_two, Vector2(1, 1), runner)
 	assert_object(wp_agent_one_1).is_not_null().override_failure_message("WP A2W1 is Null")
 	await await_idle_frame()
 
-	wp_agent_two_2 = TestFuncs.spawn_waypoint_from(wp_agent_two_1, Vector2(2, 5), runner)
+	wp_agent_two_2 = TestFuncs.spawn_waypoint_from(wp_agent_two_1, Vector2(2, 1), runner)
 	assert_object(wp_agent_one_1).is_not_null().override_failure_message("WP A2W1 is Null")
 	await await_idle_frame()
 
@@ -143,6 +143,9 @@ func test_agent_enter_on_click():
 	# Check last_wp is in wp_agent_two_1's enter_nodes list
 	assert_bool(wp_agent_two_1.enter_nodes.has(last_wp)).is_true()
 
+	# Check wp_agent_two_1 is the last_wp's vehicle
+	assert_object(last_wp.vehicle_wp).is_same(wp_agent_two_1)
+
 func test_agent_enter_undo_redo():
 	assert_object(agent).is_not_null()
 	assert_object(agent_two).is_not_null()
@@ -179,8 +182,26 @@ func test_agent_enter_undo_redo():
 	# Check wp_agent_two_1's enter_nodes list is NOT empty
 	assert_bool(wp_agent_two_1.enter_nodes.is_empty()).is_false()
 
+func test_vehicle_wait_for_entrant():
+	assert_object(agent).is_not_null()
+	assert_object(agent_two).is_not_null()
+	assert_object(wp_agent_one_1).is_not_null()
+	assert_object(wp_agent_two_1).is_not_null()
+	assert_object(wp_agent_two_2).is_not_null()
 
+	agent_two.agent_type = Agent.AgentType.BoatTarget
 
+	wp_agent_one_1._selection_area.selected = true
+	await await_idle_frame()
+
+	wp_agent_two_1._on_enter_vehicle()
+
+	# Start the simulation
+	runner.invoke("_on_play_button_pressed")
+	await await_idle_frame()
+
+	await await_signal_on(agent_two.state_machine, "transitioned", ["wait_waypoint_conditions"], 2000)
+	await await_signal_on(agent.state_machine, "transitioned", ["follow_waypoints"], 500)
 
 
 

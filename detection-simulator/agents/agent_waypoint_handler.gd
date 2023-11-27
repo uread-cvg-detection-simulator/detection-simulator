@@ -200,8 +200,10 @@ func add_to_end(new_global_point: Vector2, add_to_undo: bool = true, waypoint_ty
 	if reference_waypoint:
 		if waypoint_type == Waypoint.WaypointType.ENTER:
 			reference_waypoint.enter_nodes.append(new_waypoint)
+			new_waypoint.vehicle_wp = reference_waypoint
 		elif waypoint_type == Waypoint.WaypointType.EXIT:
 			reference_waypoint.exit_nodes.append(new_waypoint)
+			new_waypoint.vehicle_wp = reference_waypoint
 
 	# Queue line redraw
 	waypoint_lines.queue_redraw()
@@ -232,9 +234,11 @@ func add_to_end(new_global_point: Vector2, add_to_undo: bool = true, waypoint_ty
 	var undo_ref_wp = null
 
 	if reference_waypoint:
+		# Get the agent
 		undo_ref_wp_agent = undo_action.action_store_method(UndoRedoAction.DoType.Do, TreeFuncs.get_agent_with_id, [reference_waypoint.parent_object.agent_id])
 		undo_action.manual_add_item_to_store(reference_waypoint.parent_object, undo_ref_wp_agent)
 
+		# Get the reference waypoint
 		var reference_waypoint_index = reference_waypoint.parent_object.waypoints.get_waypoint_index(reference_waypoint)
 
 		undo_ref_wp = undo_action.action_store_method(UndoRedoAction.DoType.Do, func(x, ref_wp_index):
@@ -264,8 +268,10 @@ func add_to_end(new_global_point: Vector2, add_to_undo: bool = true, waypoint_ty
 		undo_action.action_method(UndoRedoAction.DoType.Do, func(ref_wp, new_wp):
 			if waypoint_type == Waypoint.WaypointType.ENTER:
 				ref_wp.enter_nodes.append(new_wp)
+				new_wp.vehicle_wp = ref_wp
 			elif waypoint_type == Waypoint.WaypointType.EXIT:
 				ref_wp.exit_nodes.append(new_wp)
+				new_wp.vehicle_wp = ref_wp
 			, [undo_ref_wp, undo_new_waypoint], [undo_ref_wp, undo_new_waypoint]
 		)
 
@@ -355,8 +361,10 @@ func insert_after(current_point: Waypoint, new_global_point: Vector2, waypoint_t
 	if reference_waypoint:
 		if waypoint_type == Waypoint.WaypointType.ENTER:
 			reference_waypoint.enter_nodes.append(new_waypoint)
+			new_waypoint.vehicle_wp = reference_waypoint
 		elif waypoint_type == Waypoint.WaypointType.EXIT:
 			reference_waypoint.exit_nodes.append(new_waypoint)
+			new_waypoint.vehicle_wp = reference_waypoint
 
 	# Queue line redraw
 	waypoint_lines.queue_redraw()
@@ -422,8 +430,10 @@ func insert_after(current_point: Waypoint, new_global_point: Vector2, waypoint_t
 		undo_action.action_method(UndoRedoAction.DoType.Do, func(ref_wp, new_wp):
 			if waypoint_type == Waypoint.WaypointType.ENTER:
 				ref_wp.enter_nodes.append(new_wp)
+				new_wp.vehicle_wp = ref_wp
 			elif waypoint_type == Waypoint.WaypointType.EXIT:
 				ref_wp.exit_nodes.append(new_wp)
+				new_wp.vehicle_wp = ref_wp
 			, [undo_ref_wp, undo_new_waypoint], [undo_ref_wp, undo_new_waypoint]
 		)
 

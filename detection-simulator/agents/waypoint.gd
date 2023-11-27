@@ -39,10 +39,14 @@ var initialised = false
 
 var attempting_link = false
 var linked_nodes: Array[Waypoint] = []
-var linked_ready: bool = false
+var linked_ready: bool = false : set = _linked_ready_changed
+signal linked_ready_changed(value: bool)
 
+# Vehicle enter/exit variables
 var enter_nodes: Array[Waypoint] = []
 var exit_nodes: Array[Waypoint] = []
+var vehicle_wp = null
+var enter_vehicle = null # TODO: Reset after play finished
 
 var load_linked_nodes: Array = []
 
@@ -455,3 +459,8 @@ func _disable(new_disable: bool):
 		_sprite.visible = not new_disable
 
 	disabled = new_disable
+
+
+func _linked_ready_changed(value: bool):
+	linked_ready = value
+	linked_ready_changed.emit(value)
