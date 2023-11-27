@@ -184,31 +184,39 @@ func _on_hold_stop():
 
 	if _moving_start_pos:
 		if _moving_start_pos != global_position:
-			var undo_action = UndoRedoAction.new()
-
-			undo_action.action_name = "Move Agent %d" % agent_id
-
-
-			var ref = undo_action.action_store_method(UndoRedoAction.DoType.Do, TreeFuncs.get_agent_with_id, [agent_id])
-			undo_action.action_property_ref(UndoRedoAction.DoType.Do, ref, "global_position", global_position)
-			undo_action.action_property_ref(UndoRedoAction.DoType.Undo, ref, "global_position", _moving_start_pos)
-
-			# Queue redraw of waypoint lines
-			undo_action.action_method(UndoRedoAction.DoType.Do, func(agent):
-				agent.waypoints.waypoint_lines.queue_redraw()
-				, [ref], ref)
-
-			# Queue redraw of waypoint lines
-			undo_action.action_method(UndoRedoAction.DoType.Undo, func(agent):
-				agent.waypoints.waypoint_lines.queue_redraw()
-				, [ref], ref)
-
-			undo_action.manual_add_item_to_store(self, ref)
-
-			UndoSystem.add_action(undo_action, false)
-
+			_move(_moving_start_pos, global_position)
 
 		_moving_start_pos = null
+
+func _move(last_position: Vector2, new_position: Vector2):
+
+	if new_position != global_position:
+		global_position = new_position
+		waypoints.starting_node.global_position = self.global_position
+		waypoints.waypoint_lines.queue_redraw()
+
+	var undo_action = UndoRedoAction.new()
+	undo_action.action_name = "Move Agent %d" % agent_id
+
+	var ref = undo_action.action_store_method(UndoRedoAction.DoType.Do, TreeFuncs.get_agent_with_id, [agent_id])
+	undo_action.action_property_ref(UndoRedoAction.DoType.Do, ref, "global_position", new_position)
+	undo_action.action_property_ref(UndoRedoAction.DoType.Undo, ref, "global_position", last_position)
+
+	# Queue redraw of waypoint lines
+	undo_action.action_method(UndoRedoAction.DoType.Do, func(agent):
+		agent.waypoints.waypoint_lines.queue_redraw()
+		, [ref], ref)
+
+	# Queue redraw of waypoint lines
+	undo_action.action_method(UndoRedoAction.DoType.Undo, func(agent):
+		agent.waypoints.waypoint_lines.queue_redraw()
+		, [ref], ref)
+
+	undo_action.manual_add_item_to_store(self, ref)
+
+	UndoSystem.add_action(undo_action, false)
+
+
 
 func _on_mouse(_mouse, event):
 	if event.is_action_pressed("mouse_menu") and camera != null and clickable:

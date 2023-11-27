@@ -191,6 +191,9 @@ func test_vehicle_wait_for_entrant():
 
 	agent_two.agent_type = Agent.AgentType.BoatTarget
 
+	agent_two._move(agent_two.global_position, TestFuncs.metres_to_pixels(Vector2(0.5, 1)))
+	await await_idle_frame()
+
 	wp_agent_one_1._selection_area.selected = true
 	await await_idle_frame()
 
@@ -201,8 +204,58 @@ func test_vehicle_wait_for_entrant():
 	await await_idle_frame()
 
 	await await_signal_on(agent_two.state_machine, "transitioned", ["wait_waypoint_conditions"], 2000)
-	await await_signal_on(agent.state_machine, "transitioned", ["follow_waypoints"], 500)
+	await await_signal_on(agent.state_machine, "transitioned", ["follow_waypoints"], 1000)
 
+func test_entrant_wait_for_vehicle():
+	assert_object(agent).is_not_null()
+	assert_object(agent_two).is_not_null()
+	assert_object(wp_agent_one_1).is_not_null()
+	assert_object(wp_agent_two_1).is_not_null()
+	assert_object(wp_agent_two_2).is_not_null()
+
+	agent_two.agent_type = Agent.AgentType.BoatTarget
+
+	agent._move(agent.global_position, TestFuncs.metres_to_pixels(Vector2(0.5, 0)))
+	await await_idle_frame()
+
+	wp_agent_one_1._selection_area.selected = true
+	await await_idle_frame()
+
+	wp_agent_two_1._on_enter_vehicle()
+
+	# Start the simulation
+
+	runner.invoke("_on_play_button_pressed")
+	await await_idle_frame()
+
+	await await_signal_on(agent.state_machine, "transitioned", ["wait_waypoint_conditions"], 2000)
+	await await_signal_on(agent.state_machine, "transitioned", ["follow_waypoints"], 1000)
+
+func test_entrant_enters_hidden_state():
+	assert_object(agent).is_not_null()
+	assert_object(agent_two).is_not_null()
+	assert_object(wp_agent_one_1).is_not_null()
+	assert_object(wp_agent_two_1).is_not_null()
+	assert_object(wp_agent_two_2).is_not_null()
+
+	agent_two.agent_type = Agent.AgentType.BoatTarget
+
+	await await_idle_frame()
+
+	wp_agent_one_1._selection_area.selected = true
+	await await_idle_frame()
+
+	wp_agent_two_1._on_enter_vehicle()
+
+	# Start the simulation
+
+	runner.invoke("_on_play_button_pressed")
+	await await_idle_frame()
+
+	await await_signal_on(agent_two.state_machine, "transitioned", ["wait_waypoint_conditions"], 2000)
+	await await_signal_on(agent.state_machine, "transitioned", ["hidden_follow_vehicle"], 2000)
+	
+	assert_str(String(agent.state_machine.state.name)).is_equal("hidden_follow_vehicle")
 
 
 

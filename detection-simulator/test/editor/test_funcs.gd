@@ -14,7 +14,7 @@ func spawn_waypoint_from(selected_object, position: Vector2, runner: GdUnitScene
 	assert_object(selection).is_not_null()
 	selection.selected = true
 
-	var position_mod: Vector2 = Vector2(position.x * 64.0, position.y * -64.0)
+	var position_mod: Vector2 = metres_to_pixels(position)
 
 	runner.set_property("_right_click_position", position_mod)
 	runner.invoke("_on_empty_menu_press", ScenarioEditor.empty_menu_enum.CREATE_WAYPOINT)
@@ -38,7 +38,7 @@ func spawn_waypoint_from(selected_object, position: Vector2, runner: GdUnitScene
 	return new_waypoint
 
 func spawn_and_get_agent(position: Vector2, runner: GdUnitSceneRunner) -> Agent:
-	var position_mod: Vector2 = Vector2(position.x * 64.0, position.y * -64.0)
+	var position_mod: Vector2 = metres_to_pixels(position)
 
 	runner.invoke("spawn_agent", position_mod)
 
@@ -46,3 +46,6 @@ func spawn_and_get_agent(position: Vector2, runner: GdUnitSceneRunner) -> Agent:
 	var agent: Agent = TreeFuncs.get_agent_with_id(id)
 
 	return agent
+
+func metres_to_pixels(metre_vector: Vector2) -> Vector2:
+	return Vector2(metre_vector.x * 64.0, metre_vector.y * -64.0)
