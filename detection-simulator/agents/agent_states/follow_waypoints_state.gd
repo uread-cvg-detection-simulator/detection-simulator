@@ -31,7 +31,6 @@ func physics_update(delta: float) -> void:
 				state_machine.transition_to("hidden_follow_vehicle", {"vehicle" : playing_waypoint.vehicle_wp.enter_vehicle})
 			else:
 				playing_waypoint.linked_ready = true
-				owner.playing_finished = true
 				state_machine.transition_to("idle")
 
 func _update_target_information(waypoint: Waypoint):

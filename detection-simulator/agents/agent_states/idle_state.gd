@@ -21,6 +21,8 @@ func enter(msg := {}, _old_state_name: String = "") -> bool:
 	if "hidden" in msg:
 		hidden_from_view = true
 
+	owner.playing_finished = true
+
 	return true
 
 # Virtual function. Called by the state machine before changing the active state. Use this function
