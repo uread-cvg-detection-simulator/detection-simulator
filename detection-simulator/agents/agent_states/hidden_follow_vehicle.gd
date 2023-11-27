@@ -17,7 +17,7 @@ func physics_update(_delta: float) -> void:
 
 func _vehicle_state_change(state: String):
 	if state == "idle":
-		state_machine.transition_to("idle")
+		state_machine.transition_to("idle", {"hidden": true})
 
 # Virtual function. Called by the state machine upon changing the active state. The `msg` parameter
 # is a dictionary with arbitrary data the state can use to initialize itself.
