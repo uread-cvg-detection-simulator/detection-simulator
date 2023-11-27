@@ -59,11 +59,10 @@ func _check_ready() -> bool:
 			# If all enter/exit nodes are ready, transition to follow_waypoints
 			if check_enter_ready:
 				state_machine.transition_to("follow_waypoints")
-				waiting_for_signal = true
 				return true
 			else:
-
 				comp_signal.finished.connect(self._transition_to_follow_waypoints)
+				waiting_for_signal = true
 				return false
 
 		elif not owner.is_vehicle and playing_waypoint.waypoint_type == Waypoint.WaypointType.ENTER:
@@ -96,7 +95,7 @@ func _check_ready() -> bool:
 	else:
 		return false
 
-func _transition_to_follow_waypoints(_num_connected) -> void:
+func _transition_to_follow_waypoints() -> void:
 	state_machine.transition_to("follow_waypoints")
 	comp_signal.finished.disconnect(self._transition_to_follow_waypoints)
 	waiting_for_signal = false
