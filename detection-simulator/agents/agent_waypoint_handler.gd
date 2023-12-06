@@ -4,6 +4,7 @@ extends Node
 @export var parent_object: Agent = null
 @onready var starting_node: Waypoint = $fake_start
 @onready var waypoint_lines: Node2D = $zzz_waypoint_lines
+@onready var undo_stored_nodes: Node2D = $zzz_undo_stored_nodes
 
 var waypoints: Array[Waypoint] = []
 var waypoint_scene = preload("res://agents/waypoint.tscn")
@@ -90,6 +91,23 @@ func delete_waypoint(del_point: Waypoint):
 		, [undo_agent_ref, next_point_index], undo_agent_ref
 	)
 
+	# If reference waypoint, get the reference waypoint
+	var undo_ref_wp_agent = null
+	var undo_ref_wp = null
+
+	if del_point.vehicle_wp:
+		undo_ref_wp_agent = undo_action.action_store_method(UndoRedoAction.DoType.Do, TreeFuncs.get_agent_with_id, [del_point.vehicle_wp.parent_object.agent_id])
+		undo_action.manual_add_item_to_store(del_point.vehicle_wp.parent_object, undo_ref_wp_agent)
+
+		var reference_waypoint_index = del_point.vehicle_wp.parent_object.waypoints.get_waypoint_index(del_point.vehicle_wp)
+
+		undo_ref_wp = undo_action.action_store_method(UndoRedoAction.DoType.Do, func(x, ref_wp_index):
+			return x.waypoints.waypoints[ref_wp_index]
+			, [undo_ref_wp_agent, reference_waypoint_index], [undo_ref_wp_agent]
+		)
+
+		undo_action.manual_add_item_to_store(del_point.vehicle_wp, undo_ref_wp)
+
 	# Update the links in the points
 	undo_action.action_method(UndoRedoAction.DoType.Do, func(previous_point, next_point):
 		if previous_point and next_point:
@@ -103,9 +121,21 @@ func delete_waypoint(del_point: Waypoint):
 		, [previous_point_ref, next_point_ref], [previous_point_ref, next_point_ref]
 	)
 
+	# Remove from reference waypoint if enter/exit type
+	if del_point.vehicle_wp:
+		undo_action.action_method(UndoRedoAction.DoType.Do, func(ref_wp, current_point):
+			if current_point.waypoint_type == Waypoint.WaypointType.ENTER:
+				ref_wp.enter_nodes.erase(current_point)
+			elif current_point.waypoint_type == Waypoint.WaypointType.EXIT:
+				ref_wp.exit_nodes.erase(current_point)
+			, [undo_ref_wp, current_point_ref], [undo_ref_wp, current_point_ref]
+		)
+
 	# Remove from array and scene tree
 	undo_action.action_method(UndoRedoAction.DoType.Do, func(agent, current_point):
 		agent.waypoints.waypoints.erase(current_point)
+		agent.waypoints.remove_child(current_point)
+		agent.waypoints.undo_stored_nodes.add_child(current_point)
 		, [undo_agent_ref, current_point_ref], [undo_agent_ref, current_point_ref]
 	)
 
@@ -122,6 +152,13 @@ func delete_waypoint(del_point: Waypoint):
 		, [undo_agent_ref], [undo_agent_ref]
 	)
 
+	# Redraw the reference agent's waypoints
+	if del_point.vehicle_wp:
+		undo_action.action_method(UndoRedoAction.DoType.Do, func(ref_agent):
+			ref_agent.waypoints.waypoint_lines.queue_redraw()
+			, [undo_ref_wp_agent], [undo_ref_wp_agent]
+		)
+
 	########
 	# UNDO
 	########
@@ -129,8 +166,22 @@ func delete_waypoint(del_point: Waypoint):
 	# Re-insert the point into the array
 	undo_action.action_method(UndoRedoAction.DoType.Undo, func(agent, current_point, current_point_index):
 		agent.waypoints.waypoints.insert(current_point_index, current_point)
+		agent.waypoints.undo_stored_nodes.remove_child(current_point)
+		agent.waypoints.add_child(current_point)
 		, [undo_agent_ref, current_point_ref, current_point_index], [undo_agent_ref, current_point_ref]
 	)
+
+	# Re-setup enter/exit nodes
+	if del_point.vehicle_wp:
+		undo_action.action_method(UndoRedoAction.DoType.Undo, func(ref_wp, current_point):
+			if current_point.waypoint_type == Waypoint.WaypointType.ENTER:
+				ref_wp.enter_nodes.append(current_point)
+				current_point.vehicle_wp = ref_wp
+			elif current_point.waypoint_type == Waypoint.WaypointType.EXIT:
+				ref_wp.exit_nodes.append(current_point)
+				current_point.vehicle_wp = ref_wp
+			, [undo_ref_wp, current_point_ref], [undo_ref_wp, current_point_ref]
+		)
 
 	# Re-link the points
 	undo_action.action_method(UndoRedoAction.DoType.Undo, func(previous_point, next_point, current_point):

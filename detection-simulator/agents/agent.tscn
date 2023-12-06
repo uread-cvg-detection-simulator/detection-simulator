@@ -143,3 +143,6 @@ disabled = true
 [node name="zzz_waypoint_lines" type="Node2D" parent="waypoints"]
 z_index = -1
 script = ExtResource("9_mdr2h")
+
+[node name="zzz_undo_stored_nodes" type="Node2D" parent="waypoints"]
+visible = false
