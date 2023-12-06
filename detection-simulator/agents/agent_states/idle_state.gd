@@ -19,7 +19,9 @@ func physics_update(_delta: float) -> void:
 # is a dictionary with arbitrary data the state can use to initialize itself.
 func enter(msg := {}, _old_state_name: String = "") -> bool:
 	if "hidden" in msg:
-		hidden_from_view = true
+		hidden_from_view = msg["hidden"]
+	else:
+		hidden_from_view = false
 
 	owner.playing_finished = true
 
