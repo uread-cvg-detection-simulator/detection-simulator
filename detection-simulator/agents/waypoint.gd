@@ -18,6 +18,7 @@ enum ContextMenuIDs {
 	PROPERTIES,
 	LINK_WAYPOINT,
 	ENTER_VEHICLE,
+	EXIT_VEHICLE = 100,
 }
 
 enum WaypointType {
@@ -92,6 +93,25 @@ func _prepare_menu():
 			context_menu.add_separator()
 			context_menu.add_item("Enter Vehicle", ContextMenuIDs.ENTER_VEHICLE)
 
+	# Check all previous waypoints for an unresolved enter/exit, and add items
+	# to the menu if found for each agent
+
+	var all_entered_agents_wp: Array[Waypoint] = []
+	var prev_wp = pt_previous
+
+	while prev_wp != null:
+		for enter_wps in prev_wp.enter_nodes:
+			all_entered_agents_wp.append(enter_wps)
+
+		prev_wp = prev_wp.pt_previous
+
+	if not all_entered_agents_wp.is_empty():
+		context_menu.add_separator()
+
+		for enter_wp in all_entered_agents_wp:
+			context_menu.add_item("Exit Vehicle A%d" % [enter_wp.parent_object.agent_id], ContextMenuIDs.EXIT_VEHICLE + enter_wp.parent_object.agent_id)
+
+	# Connect to the context menu's id_pressed signal
 	if not context_menu.is_connected("id_pressed", self._context_menu_id_pressed):
 		context_menu.connect("id_pressed", self._context_menu_id_pressed)
 
@@ -165,6 +185,54 @@ func _context_menu_id_pressed(id: ContextMenuIDs):
 			attempting_link = true
 		ContextMenuIDs.ENTER_VEHICLE:
 			_on_enter_vehicle()
+
+	if id >= ContextMenuIDs.EXIT_VEHICLE:
+		var agent_id = id - ContextMenuIDs.EXIT_VEHICLE
+		var agent: Agent = TreeFuncs.get_agent_with_id(agent_id)
+
+		# Find most recent ENTER waypoint for the agent
+		var prev_wp = pt_previous
+		var enter_wp = null
+
+		while prev_wp != null:
+			for wp in prev_wp.enter_nodes:
+				if wp.parent_object == agent:
+					enter_wp = wp
+					break
+
+			prev_wp = prev_wp.pt_previous
+
+		# Error if no ENTER waypoint found
+		if enter_wp == null:
+			print_debug("No ENTER waypoint found for agent %d" % agent_id)
+			return
+
+		# If after this waypoint is another EXIT before an ENTER, remove it
+		var next_wp = pt_next
+		var exit_wp = null
+
+		while next_wp != null:
+			for wp in next_wp.enter_nodes:
+				if wp.parent_object == agent:
+					break
+
+			for wp in next_wp.exit_nodes:
+				if wp.parent_object == agent:
+					exit_wp = wp
+					break
+
+			next_wp = next_wp.pt_next
+
+		if exit_wp != null:
+			agent.waypoints.delete_waypoint(exit_wp)
+
+		# Insert the EXIT waypoint after this waypoint
+		exit_wp = agent.waypoints.insert_after(enter_wp, global_position, WaypointType.EXIT, self)
+
+		# If exit_wp has no next waypoint, add one a short distance away
+		if exit_wp.pt_next == null:
+			agent.waypoints.insert_after(exit_wp, global_position + Vector2(64, 64), WaypointType.WAYPOINT, self)
+
 
 func _on_enter_vehicle():
 	var all_selected_objects = get_tree().get_nodes_in_group("selected")

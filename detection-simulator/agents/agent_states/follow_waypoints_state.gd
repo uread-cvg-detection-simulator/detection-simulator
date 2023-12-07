@@ -24,16 +24,35 @@ func physics_update(delta: float) -> void:
 
 		# If reached target, update target information with next waypoint if there is one
 		if owner.global_position == playing_target:
-			if playing_waypoint.pt_next:
-				_update_target_information(playing_waypoint.pt_next)
-			elif playing_waypoint.waypoint_type == Waypoint.WaypointType.ENTER:
+			# If previous node is an exit node, set it's linked_ready to true (so the vehicle can move on)
+			if playing_waypoint.pt_previous and playing_waypoint.pt_previous.waypoint_type == Waypoint.WaypointType.EXIT:
+				playing_waypoint.pt_previous.linked_ready = true
+
+			# If current node is an enter node, set it's linked_ready to true (so the vehicle can move on) and transition to hidden_follow_vehicle
+			if playing_waypoint.waypoint_type == Waypoint.WaypointType.ENTER:
 				playing_waypoint.linked_ready = true
-				state_machine.transition_to("hidden_follow_vehicle", {"vehicle" : playing_waypoint.vehicle_wp.enter_vehicle})
+
+				var transition_dict: Dictionary = {"vehicle" : playing_waypoint.vehicle_wp.enter_vehicle}
+
+				# Prepare for when we exit the vehicle
+				if playing_waypoint.pt_next and playing_waypoint.pt_next.waypoint_type == Waypoint.WaypointType.EXIT:
+					transition_dict["exit_waypoint"] = playing_waypoint.pt_next
+
+					# If the WP after the exit is a normal WP, update the target information to it
+					if playing_waypoint.pt_next.pt_next and playing_waypoint.pt_next.pt_next.waypoint_type == Waypoint.WaypointType.WAYPOINT:
+						_update_target_information(playing_waypoint.pt_next.pt_next, false)
+
+				state_machine.transition_to("hidden_follow_vehicle", transition_dict)
+
+			# Else if there is a next node, update target information to it
+			elif playing_waypoint.pt_next:
+				_update_target_information(playing_waypoint.pt_next)
+			# Else if there is no next node, set the current node's linked_ready to true and transition to idle
 			else:
 				playing_waypoint.linked_ready = true
 				state_machine.transition_to("idle")
 
-func _update_target_information(waypoint: Waypoint):
+func _update_target_information(waypoint: Waypoint, transition: bool = true):
 	var current_time = PlayTimer.current_time
 	var old_waypoint = playing_waypoint if playing_waypoint else owner.waypoints.starting_node
 
@@ -58,12 +77,13 @@ func _update_target_information(waypoint: Waypoint):
 
 	playing_last_waypoint = playing_waypoint
 	playing_waypoint = waypoint
-	
-	state_machine.transition_to("wait_waypoint_conditions", {
-		"playing_next_move_time": playing_next_move_time,
-		"playing_waypoint": playing_waypoint,
-		"playing_last_waypoint": playing_last_waypoint,
-	})
+
+	if transition:
+		state_machine.transition_to("wait_waypoint_conditions", {
+			"playing_next_move_time": playing_next_move_time,
+			"playing_waypoint": playing_waypoint,
+			"playing_last_waypoint": playing_last_waypoint,
+		})
 
 
 # Virtual function. Called by the state machine upon changing the active state. The `msg` parameter

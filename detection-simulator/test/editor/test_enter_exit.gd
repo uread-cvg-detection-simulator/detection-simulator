@@ -265,6 +265,58 @@ func test_entrant_enters_hidden_state_vehicle_moving():
 	await await_millis(50)
 	assert_str(String(agent.state_machine.state.name)).is_equal("idle")
 
+func test_exit_menu_button():
+	assert_object(agent).is_not_null()
+	assert_object(agent_two).is_not_null()
+	assert_object(wp_agent_one_1).is_not_null()
+	assert_object(wp_agent_two_1).is_not_null()
+	assert_object(wp_agent_two_2).is_not_null()
+
+	agent_two.agent_type = Agent.AgentType.BoatTarget
+
+	await await_idle_frame()
+
+	wp_agent_one_1._selection_area.selected = true
+	await await_idle_frame()
+
+	wp_agent_two_1._on_enter_vehicle()
+
+	wp_agent_two_1._prepare_menu()
+	wp_agent_two_2._prepare_menu()
+
+	assert_bool(_find_string_in_context_menu(wp_agent_two_1.context_menu, "Exit Vehicle A1")).is_false()
+	assert_bool(_find_string_in_context_menu(wp_agent_two_2.context_menu, "Exit Vehicle A1")).is_true()
+
+func test_exit_menu_button_on_click():
+	assert_object(agent).is_not_null()
+	assert_object(agent_two).is_not_null()
+	assert_object(wp_agent_one_1).is_not_null()
+	assert_object(wp_agent_two_1).is_not_null()
+	assert_object(wp_agent_two_2).is_not_null()
+
+	agent_two.agent_type = Agent.AgentType.BoatTarget
+
+	await await_idle_frame()
+
+	wp_agent_one_1._selection_area.selected = true
+	await await_idle_frame()
+
+	wp_agent_two_1._on_enter_vehicle()
+
+	wp_agent_two_1._prepare_menu()
+	wp_agent_two_2._prepare_menu()
+
+	var item_found = _find_string_in_context_menu(wp_agent_two_2.context_menu, "Exit Vehicle A1")
+	assert_bool(item_found).is_true()
+
+	if item_found:
+		wp_agent_two_2._context_menu_id_pressed(Waypoint.ContextMenuIDs.EXIT_VEHICLE + 1)
+		await await_idle_frame()
+
+		# Check A1's last waypoint is NOT Enter/Exit Waypoint Type
+		var last_wp: Waypoint = agent.waypoints.get_waypoint(agent.waypoints.waypoints.size() -1)
+		assert_that(last_wp.waypoint_type == Waypoint.WaypointType.WAYPOINT)
+
 
 func _find_string_in_context_menu(context_menu: PopupMenu, string: String):
 	var string_found: bool = false

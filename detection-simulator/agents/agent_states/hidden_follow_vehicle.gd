@@ -5,6 +5,7 @@ func handle_input(_event: InputEvent) -> void:
 	pass
 
 var vehicle: Agent = null
+var exit_waypoint: Waypoint = null
 
 # Virtual function. Corresponds to the `_process()` callback.
 func update(_delta: float) -> void:
@@ -18,6 +19,9 @@ func physics_update(_delta: float) -> void:
 func _vehicle_state_change(state: String):
 	if state == "idle":
 		state_machine.transition_to("idle", {"hidden": true})
+	elif state == "wait_waypoint_conditions":
+		if exit_waypoint and exit_waypoint.vehicle_wp.linked_ready:
+			state_machine.transition_to("follow_waypoints")
 
 # Virtual function. Called by the state machine upon changing the active state. The `msg` parameter
 # is a dictionary with arbitrary data the state can use to initialize itself.
@@ -33,6 +37,9 @@ func enter(msg := {}, _old_state_name: String = "") -> bool:
 		print_debug("ERROR: Null vehicle passed to state. Transitioning to IDLE")
 		state_machine.transition_to("idle")
 		return false
+
+	if "exit_waypoint" in msg:
+		exit_waypoint = msg["exit_waypoint"]
 
 	owner.visible = false
 	vehicle.state_machine.transitioned.connect(self._vehicle_state_change)
