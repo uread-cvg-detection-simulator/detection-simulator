@@ -50,6 +50,7 @@ var vehicle_wp = null
 var enter_vehicle = null # TODO: Reset after play finished
 
 var load_linked_nodes: Array = []
+var load_enter_exit_nodes: Array = []
 
 # Called when the node enters the scene tree for the first time.
 func _ready():
@@ -130,7 +131,7 @@ func _prepare_menu():
 
 func get_save_data() -> Dictionary:
 	var save_data = {
-		"waypoint_version": 2,
+		"waypoint_version": 3,
 		"global_position": {
 			"x": global_position.x,
 			"y": global_position.y,
@@ -139,6 +140,7 @@ func get_save_data() -> Dictionary:
 		"param_start_time": param_start_time,
 		"param_wait_time": param_wait_time,
 		"linked_nodes": [],
+		"waypoint_type": waypoint_type,
 	}
 
 	for node in linked_nodes:
@@ -149,11 +151,14 @@ func get_save_data() -> Dictionary:
 
 		save_data["linked_nodes"].append(node_data)
 
+	if vehicle_wp:
+		save_data["vehicle_wp"] = [vehicle_wp.parent_object.agent_id, vehicle_wp.parent_object.waypoints.get_waypoint_index(vehicle_wp)]
+
 	return save_data
 
 func load_save_data(data: Dictionary):
 	if data.has("waypoint_version"):
-		if data["waypoint_version"] <= 2:
+		if data["waypoint_version"] <= 3:
 			global_position = Vector2(data["global_position"]["x"], data["global_position"]["y"])
 			param_speed_mps = data["param_speed_mps"] if data["param_speed_mps"] != null else null
 			param_start_time = data["param_start_time"] if data["param_start_time"] != null else null
@@ -162,6 +167,13 @@ func load_save_data(data: Dictionary):
 			if data["waypoint_version"] >= 2:
 				if not data["linked_nodes"].is_empty():
 					load_linked_nodes = data["linked_nodes"]
+
+			if data["waypoint_version"] >= 3:
+				waypoint_type = data["waypoint_type"]
+
+				if "vehicle_wp" in data:
+					load_enter_exit_nodes = data["vehicle_wp"]
+
 		else:
 			print_debug("Unknown waypoint version: %s" % data["waypoint_version"])
 	else:
@@ -183,6 +195,24 @@ func _process(delta):
 		parent_object.waypoints.waypoint_lines.queue_redraw()
 
 		load_linked_nodes.clear()
+
+	if not load_enter_exit_nodes.is_empty():
+		var agent_id = load_enter_exit_nodes[0]
+		var wp_id = load_enter_exit_nodes[1]
+
+		var agent: Agent = TreeFuncs.get_agent_with_id(agent_id)
+		var waypoint = agent.waypoints.get_waypoint(wp_id)
+
+		if waypoint_type == WaypointType.ENTER:
+			waypoint.enter_nodes.append(self)
+		elif waypoint_type == WaypointType.EXIT:
+			waypoint.exit_nodes.append(self)
+		else:
+			printerr("No waypoint type on load enter/exit?")
+
+		vehicle_wp = waypoint
+		
+		load_enter_exit_nodes.clear()
 
 func _context_menu_id_pressed(id: ContextMenuIDs):
 	match id:
