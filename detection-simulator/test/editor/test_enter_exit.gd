@@ -23,11 +23,11 @@ func before_test():
 	await await_idle_frame()
 
 	wp_agent_two_1 = TestFuncs.spawn_waypoint_from(agent_two, Vector2(1, 1), runner)
-	assert_object(wp_agent_one_1).is_not_null().override_failure_message("WP A2W1 is Null")
+	assert_object(wp_agent_two_1).is_not_null().override_failure_message("WP A2W1 is Null")
 	await await_idle_frame()
 
 	wp_agent_two_2 = TestFuncs.spawn_waypoint_from(wp_agent_two_1, Vector2(2, 1), runner)
-	assert_object(wp_agent_one_1).is_not_null().override_failure_message("WP A2W1 is Null")
+	assert_object(wp_agent_two_2).is_not_null().override_failure_message("WP A2W1 is Null")
 	await await_idle_frame()
 
 
@@ -316,6 +316,40 @@ func test_exit_menu_button_on_click():
 		# Check A1's last waypoint is NOT Enter/Exit Waypoint Type
 		var last_wp: Waypoint = agent.waypoints.get_waypoint(agent.waypoints.waypoints.size() -1)
 		assert_that(last_wp.waypoint_type == Waypoint.WaypointType.WAYPOINT)
+
+func test_exit_menu_button_on_click_not_in_subsequent():
+	assert_object(agent).is_not_null()
+	assert_object(agent_two).is_not_null()
+	assert_object(wp_agent_one_1).is_not_null()
+	assert_object(wp_agent_two_1).is_not_null()
+	assert_object(wp_agent_two_2).is_not_null()
+
+	var wp_agent_two_3: Waypoint = TestFuncs.spawn_waypoint_from(wp_agent_two_2, Vector2(3, 1), runner)
+	assert_object(wp_agent_two_3).is_not_null().override_failure_message("WP A2W1 is Null")
+	await await_idle_frame()
+
+	agent_two.agent_type = Agent.AgentType.BoatTarget
+
+	await await_idle_frame()
+
+	wp_agent_one_1._selection_area.selected = true
+	await await_idle_frame()
+
+	wp_agent_two_1._on_enter_vehicle()
+
+	wp_agent_two_1._prepare_menu()
+	wp_agent_two_2._prepare_menu()
+
+	var item_found = _find_string_in_context_menu(wp_agent_two_2.context_menu, "Exit Vehicle A1")
+	assert_bool(item_found).is_true()
+
+	if item_found:
+		wp_agent_two_2._context_menu_id_pressed(Waypoint.ContextMenuIDs.EXIT_VEHICLE + 1)
+		await await_idle_frame()
+
+		wp_agent_two_3._prepare_menu()
+		var exit_in_subsequent = _find_string_in_context_menu(wp_agent_two_3.context_menu, "Exit Vehicle A1")
+		assert_bool(exit_in_subsequent).is_false()
 
 
 func _find_string_in_context_menu(context_menu: PopupMenu, string: String):

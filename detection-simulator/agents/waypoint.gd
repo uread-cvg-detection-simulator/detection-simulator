@@ -97,13 +97,26 @@ func _prepare_menu():
 	# to the menu if found for each agent
 
 	var all_entered_agents_wp: Array[Waypoint] = []
+	var all_exited_agents_wp: Array[Waypoint] = []
 	var prev_wp = pt_previous
 
 	while prev_wp != null:
 		for enter_wps in prev_wp.enter_nodes:
 			all_entered_agents_wp.append(enter_wps)
 
+		for exit_wps in prev_wp.exit_nodes:
+			all_exited_agents_wp.append(exit_wps)
+
 		prev_wp = prev_wp.pt_previous
+
+	# If we come across an exit, remove the corresponding enter
+	for exit_wp in all_exited_agents_wp:
+		var agent_id = exit_wp.parent_object.agent_id
+
+		for enter_wp in all_entered_agents_wp:
+			if enter_wp.parent_object.agent_id == agent_id:
+				all_entered_agents_wp.erase(enter_wp)
+
 
 	if not all_entered_agents_wp.is_empty():
 		context_menu.add_separator()
