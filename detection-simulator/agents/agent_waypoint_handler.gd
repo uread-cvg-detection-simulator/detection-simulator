@@ -53,19 +53,29 @@ func load_save_data(data: Dictionary):
 func is_empty():
 	return waypoints.is_empty()
 
-func delete_waypoint(del_point: Waypoint):
+func delete_waypoint(del_point: Waypoint, undo_action_in: UndoRedoAction = null):
 
 	var current_point_index = get_waypoint_index(del_point)
 	var previous_point_index = current_point_index - 1 if current_point_index > 0 else -1
 	var next_point_index = current_point_index + 1 if current_point_index < len(waypoints) - 1 else null
+
+	# If the next point is EXIT node, then skip it (as it will be deleted too)
+	if next_point_index != null and next_point_index != -1:
+		var next_point = waypoints[next_point_index]
+
+		if next_point.waypoint_type == Waypoint.WaypointType.EXIT:
+			next_point_index += 1 if next_point_index < len(waypoints) - 1 else null
 
 	if previous_point_index == null and next_point_index == null:
 		print_debug("Error: Could not find previous or next point")
 		return
 
 	# Create undo action
-	var undo_action = UndoRedoAction.new()
-	undo_action.action_name = "Delete Waypoint %d" % current_point_index
+	var undo_action = undo_action_in
+
+	if undo_action == null:
+		undo_action = UndoRedoAction.new()
+		undo_action.action_name = "Delete Waypoint %d" % current_point_index
 
 	########
 	# DO
@@ -91,7 +101,6 @@ func delete_waypoint(del_point: Waypoint):
 		, [undo_agent_ref, next_point_index], undo_agent_ref
 	)
 
-	# If reference waypoint, get the reference waypoint
 	var undo_ref_wp_agent = null
 	var undo_ref_wp = null
 
@@ -219,7 +228,16 @@ func delete_waypoint(del_point: Waypoint):
 		, [current_point_ref], current_point_ref
 	)
 
-	UndoSystem.add_action(undo_action)
+	# If previous node is EXIT node, delete it too
+	if previous_point_index != null and previous_point_index != -1:
+		var previous_point = waypoints[previous_point_index]
+
+		if previous_point.waypoint_type == Waypoint.WaypointType.EXIT:
+			delete_waypoint(previous_point, undo_action)
+
+	# If
+	if undo_action_in == null:
+		UndoSystem.add_action(undo_action)
 
 func get_waypoint_index(waypoint: Waypoint):
 	for i in len(waypoints):
