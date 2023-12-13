@@ -116,6 +116,7 @@ func play_export() -> Dictionary:
 		"type" : _type_string[agent_type],
 		"x": global_position.x / 64.0,
 		"y": - global_position.y / 64.0,
+		"visible": visible,
 	}
 
 	return data

@@ -155,19 +155,20 @@ func _physics_process(delta):
 				# Get the data for the agent
 				var data = agent.play_export()
 
-				# Write the data to the file
-				if not file_access_agents.has(agent.agent_id):
-					file_access_agents[agent.agent_id] = FileAccess.open(file_access_base_path + "_sensor_%03d_detection_%03d.json" % [sensor_id, agent.agent_id], FileAccess.WRITE)
-					file_access_agents[agent.agent_id].store_string("[")
-				else:
-					# Write a comma to seperate the json objects
-					file_access_agents[agent.agent_id].store_string(",")
+				if data["visible"]:
+					# Write the data to the file
+					if not file_access_agents.has(agent.agent_id):
+						file_access_agents[agent.agent_id] = FileAccess.open(file_access_base_path + "_sensor_%03d_detection_%03d.json" % [sensor_id, agent.agent_id], FileAccess.WRITE)
+						file_access_agents[agent.agent_id].store_string("[")
+					else:
+						# Write a comma to seperate the json objects
+						file_access_agents[agent.agent_id].store_string(",")
 
-				# Add timestamp to the data
-				data["timestamp_ms"] = int(export_last_time * 1000)
+					# Add timestamp to the data
+					data["timestamp_ms"] = int(export_last_time * 1000)
 
-				# Write the data to the file
-				file_access_agents[agent.agent_id].store_string(JSON.stringify(data))
+					# Write the data to the file
+					file_access_agents[agent.agent_id].store_string(JSON.stringify(data))
 
 func _context_menu(id: ContextMenuIDs):
 	match id:
