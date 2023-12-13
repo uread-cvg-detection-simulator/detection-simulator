@@ -9,7 +9,7 @@ extends Node2D
 @onready var _collision_shape = $SelectionArea2D/CollisionPolygon2D
 
 @export var disabled: bool = false : set = _disable
-@export var clickable: bool = true
+@export var clickable: bool = true : set = _clickable
 
 @onready var context_menu = $ContextMenu
 
@@ -61,8 +61,7 @@ func _ready():
 
 	# Connect to the selection area's mouse events
 	_selection_area.connect("selection_toggled", self._on_selected)
-	_selection_area.connect("mouse_hold_start", self._on_hold)
-	_selection_area.connect("mouse_hold_end", self._on_hold_stop)
+
 	_selection_area.connect("mouse_click", self._on_mouse)
 
 
@@ -171,6 +170,9 @@ func load_save_data(data: Dictionary):
 			if data["waypoint_version"] >= 3:
 				waypoint_type = data["waypoint_type"]
 
+				if waypoint_type == WaypointType.ENTER or waypoint_type == WaypointType.EXIT:
+					disabled = true
+
 				if "vehicle_wp" in data:
 					load_enter_exit_nodes = data["vehicle_wp"]
 
@@ -203,16 +205,17 @@ func _process(delta):
 		var agent: Agent = TreeFuncs.get_agent_with_id(agent_id)
 		var waypoint = agent.waypoints.get_waypoint(wp_id)
 
-		if waypoint_type == WaypointType.ENTER:
-			waypoint.enter_nodes.append(self)
-		elif waypoint_type == WaypointType.EXIT:
-			waypoint.exit_nodes.append(self)
-		else:
-			printerr("No waypoint type on load enter/exit?")
+		if waypoint:
+			if waypoint_type == WaypointType.ENTER:
+				waypoint.enter_nodes.append(self)
+			elif waypoint_type == WaypointType.EXIT:
+				waypoint.exit_nodes.append(self)
+			else:
+				printerr("No waypoint type on load enter/exit?")
 
-		vehicle_wp = waypoint
-		
-		load_enter_exit_nodes.clear()
+			vehicle_wp = waypoint
+
+			load_enter_exit_nodes.clear()
 
 func _context_menu_id_pressed(id: ContextMenuIDs):
 	match id:
@@ -292,10 +295,10 @@ func _on_enter_vehicle():
 		if selected_object is Agent:
 			waypoint_handler = selected_object.waypoints
 			curr_wp = waypoint_handler.starting_node
-		
+
 		if waypoint_handler == null:
 			print_debug("Unknown object type on Enter Vehicle")
-		
+
 		waypoint_handler.insert_after(curr_wp, global_position, WaypointType.ENTER, self)
 
 func _on_link_grouped(group: String, node: Node):
@@ -488,74 +491,86 @@ func _on_selected(selected: bool):
 		var shader: ShaderMaterial = _sprite.material
 		shader.set_shader_parameter("selected", selected)
 
-var _moving = false ## defines whether the agent is being dragged
-var _moving_start_pos = null
+func _on_dragging(start_pos, current_pos):
+	for enter in enter_nodes:
+		enter.global_position = global_position
+		enter.parent_object.waypoints.waypoint_lines.queue_redraw()
 
-## Handles when mouse is being held
-func _on_hold():
-	if clickable:
-		_moving = true
-		_moving_start_pos = global_position
+	for exit in exit_nodes:
+		exit.global_position = global_position
+		exit.parent_object.waypoints.waypoint_lines.queue_redraw()
+
+	parent_object.waypoints.waypoint_lines.queue_redraw()
+
 
 ## Handles when mouse has stopped being held
-func _on_hold_stop():
-	_moving = false
+func _on_hold_stop(start_pos, end_pos):
+	if start_pos != end_pos:
+		var undo_action = UndoRedoAction.new()
+		var agent_id = parent_object.agent_id
+		var waypoint_index = parent_object.waypoints.get_waypoint_index(self)
 
-	if _moving_start_pos:
-		if _moving_start_pos != global_position:
-			var undo_action = UndoRedoAction.new()
-			var agent_id = parent_object.agent_id
-			var waypoint_index = parent_object.waypoints.get_waypoint_index(self)
+		undo_action.action_name = "Move Waypoint"
 
-			undo_action.action_name = "Move Waypoint"
+		#######
+		# DO
+		#######
 
-			#######
-			# DO
-			#######
+		# Get the agent and waypoint references
+		var agent_ref = undo_action.action_store_method(UndoRedoAction.DoType.Do, TreeFuncs.get_agent_with_id, [agent_id])
+		var waypoint_ref = undo_action.action_store_method(UndoRedoAction.DoType.Do, func(agent, index):
+			return agent.waypoints.waypoints[index]
+			, [agent_ref, waypoint_index], agent_ref)
 
-			# Get the agent and waypoint references
-			var agent_ref = undo_action.action_store_method(UndoRedoAction.DoType.Do, TreeFuncs.get_agent_with_id, [agent_id])
-			var waypoint_ref = undo_action.action_store_method(UndoRedoAction.DoType.Do, func(agent, index):
-				return agent.waypoints.waypoints[index]
-				, [agent_ref, waypoint_index], agent_ref)
+		# Set the waypoint's global position
+		undo_action.action_property_ref(UndoRedoAction.DoType.Do, waypoint_ref, "global_position", global_position)
 
-			# Set the waypoint's global position
-			undo_action.action_property_ref(UndoRedoAction.DoType.Do, waypoint_ref, "global_position", global_position)
+		undo_action.action_method(UndoRedoAction.DoType.Do, func(waypoint):
+			for enter in waypoint.enter_nodes:
+				enter.global_position = waypoint.global_position
+				enter.parent_object.waypoints.waypoint_lines.queue_redraw()
 
-			# Queue redraw of waypoint lines
-			undo_action.action_method(UndoRedoAction.DoType.Do, func(agent):
-				agent.waypoints.waypoint_lines.queue_redraw()
-				, [agent_ref], agent_ref)
+			for exit in waypoint.exit_nodes:
+				exit.global_position = waypoint.global_position
+				exit.parent_object.waypoints.waypoint_lines.queue_redraw()
+			, [waypoint_ref], waypoint_ref)
 
-			#######
-			# UNDO
-			#######
+		# Queue redraw of waypoint lines
+		undo_action.action_method(UndoRedoAction.DoType.Do, func(agent):
+			agent.waypoints.waypoint_lines.queue_redraw()
+			, [agent_ref], agent_ref)
 
-			# Undo the waypoint's global position
-			undo_action.action_property_ref(UndoRedoAction.DoType.Undo, waypoint_ref, "global_position", _moving_start_pos)
+		#######
+		# UNDO
+		#######
 
+		# Undo the waypoint's global position
+		undo_action.action_property_ref(UndoRedoAction.DoType.Undo, waypoint_ref, "global_position", start_pos)
 
-			# Queue redraw of waypoint lines
-			undo_action.action_method(UndoRedoAction.DoType.Undo, func(agent):
-				agent.waypoints.waypoint_lines.queue_redraw()
-				, [agent_ref], agent_ref)
+		undo_action.action_method(UndoRedoAction.DoType.Undo, func(waypoint):
+			for enter in waypoint.enter_nodes:
+				enter.global_position = start_pos
+				enter.parent_object.waypoints.waypoint_lines.queue_redraw()
 
-			# Manually add the agent and waypoint to the store
-			undo_action.manual_add_item_to_store(parent_object, agent_ref)
-			undo_action.manual_add_item_to_store(self, waypoint_ref)
+			for exit in waypoint.exit_nodes:
+				exit.global_position = start_pos
+				exit.parent_object.waypoints.waypoint_lines.queue_redraw()
+			, [waypoint_ref], waypoint_ref)
 
-			UndoSystem.add_action(undo_action, false)
+		# Queue redraw of waypoint lines
+		undo_action.action_method(UndoRedoAction.DoType.Undo, func(agent):
+			agent.waypoints.waypoint_lines.queue_redraw()
+			, [agent_ref], agent_ref)
 
+		# Manually add the agent and waypoint to the store
+		undo_action.manual_add_item_to_store(parent_object, agent_ref)
+		undo_action.manual_add_item_to_store(self, waypoint_ref)
 
-		_moving_start_pos = null
+		UndoSystem.add_action(undo_action, false)
+
 
 
 func _unhandled_input(event):
-	if event is InputEventMouseMotion and _moving and clickable:
-		self.global_position = get_global_mouse_position()
-
-		if parent_object:
-			parent_object.waypoints.waypoint_lines.queue_redraw()
 
 	# Stop linking if ui_cancel is pressed
 	if event.is_action_pressed("ui_cancel") and attempting_link:
@@ -575,3 +590,9 @@ func _disable(new_disable: bool):
 func _linked_ready_changed(value: bool):
 	linked_ready = value
 	linked_ready_changed.emit(value)
+
+
+func _clickable(new_value:bool):
+	clickable = new_value
+	$DragableObject.clickable = new_value
+

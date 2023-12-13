@@ -90,17 +90,17 @@ func get_save_data() -> Dictionary:
 
 	for sensor in sensors:
 		save_data["sensors"].append(sensor.get_save_data())
-	
+
 	if root_scene:
 		if root_scene.bg_image:
 			var image_buffer = root_scene.bg_image_buffer
-			
+
 			save_data["bg_image"] = image_buffer
 			save_data["bg_offset"] = {
 				"x" : -root_scene.bg_image.global_position.x,
 				"y" : -root_scene.bg_image.global_position.y
 			}
-			
+
 			save_data["bg_scale_marker"] = {
 				"x" : root_scene.bg_scale_marker.x,
 				"y" : root_scene.bg_scale_marker.y
@@ -118,13 +118,14 @@ func load_save_data(data: Dictionary):
 
 	UndoSystem.clear_history()
 
+	_last_id = 1000
+
 	# Load agents
 	if data.has("version"):
 		if data["version"] <= 3:
 
 			for agent_data in data["agents"]:
-				spawn_agent(Vector2.ZERO)
-				var current_agent = TreeFuncs.get_agent_with_id(_last_id)
+				var current_agent = spawn_agent(Vector2.ZERO)
 				current_agent.load_save_data(agent_data)
 				current_agent._current_agent._selection_area.selected = false
 
@@ -136,16 +137,16 @@ func load_save_data(data: Dictionary):
 					current_sensor.selection_area.selected = false
 
 				_last_sensor_id = data["last_sensor_id"]
-				
+
 			if data["version"] >= 3:
 				export_scale = data["export_scale"]
-				
+
 				if data.has("bg_image") and root_scene != null:
 					var image = Image.new()
 					var bg_data = Marshalls.base64_to_raw(data["bg_image"])
 					image.load_jpg_from_buffer(bg_data)
 					var texture = ImageTexture.create_from_image(image)
-					
+
 					if root_scene.bg_image != null:
 						root_scene.bg_image.texture = texture
 					else:
@@ -153,16 +154,16 @@ func load_save_data(data: Dictionary):
 						root_scene.bg_image.texture = texture
 						root_scene.bg_image.z_index = -10
 						root_scene.add_child(root_scene.bg_image)
-					
-					
-					
+
+
+
 					root_scene.bg_image.global_position = -Vector2(data["bg_offset"]["x"], data["bg_offset"]["y"])
 					root_scene.bg_offset = -root_scene.bg_image.global_position
 					root_scene.bg_scale_marker = Vector2(data["bg_scale_marker"]["x"], data["bg_scale_marker"]["y"])
-					
+
 					root_scene.bg_image.visible = true
 					root_scene.bg_image_buffer = data["bg_image"]
-				
+
 
 			_last_id = data["last_id"]
 			UndoSystem.clear_history()
@@ -366,9 +367,18 @@ func _on_empty_menu_press(id: int):
 
 
 ## Spawn a new agent at the provided position
-func spawn_agent(position: Vector2):
+func spawn_agent(position: Vector2) -> Agent:
 	var undo_action = UndoRedoAction.new()
 	undo_action.action_name = "Spawn Agent %d" % [_last_id + 1]
+
+	var new_agent: Agent = _agent_base.instantiate()
+	new_agent.global_position = position
+	new_agent.agent_id = _last_id + 1
+	_last_id += 1
+
+	_agent_root.add_child(new_agent)
+	GroupHelpers.add_node_to_group(new_agent, "agent")
+	new_agent.camera = $Camera2D
 
 	############
 	# DO ACTIONS
@@ -376,6 +386,7 @@ func spawn_agent(position: Vector2):
 
 	# Create the new agent at the provided location
 	var newinstance_ref = undo_action.action_store_method(UndoRedoAction.DoType.Do, _agent_base.instantiate)
+	undo_action.manual_add_item_to_store(new_agent, newinstance_ref)
 	var duplicate_ref = newinstance_ref
 
 	# Set position and agent id
@@ -410,9 +421,11 @@ func spawn_agent(position: Vector2):
 	# COMMIT
 	########
 
-	UndoSystem.add_action(undo_action)
+	UndoSystem.add_action(undo_action, false)
 
 	TreeFuncs.get_agent_with_id(_last_id)._current_agent._selection_area.selected = true
+
+	return new_agent
 
 func spawn_sensor(position: Vector2):
 	var undo_action = UndoRedoAction.new()
@@ -564,7 +577,7 @@ func _on_fd_reader_file_selected(path: String):
 			var error = load_file.get_error()
 			printerr(error)
 			return
-		
+
 		var load_data = JSON.parse_string(load_data_json)
 
 		load_save_data(load_data)

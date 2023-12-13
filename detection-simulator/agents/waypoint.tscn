@@ -1,9 +1,10 @@
-[gd_scene load_steps=6 format=3 uid="uid://b50ox3rfhikx8"]
+[gd_scene load_steps=7 format=3 uid="uid://b50ox3rfhikx8"]
 
 [ext_resource type="Script" path="res://agents/waypoint.gd" id="1_30dly"]
 [ext_resource type="Texture2D" uid="uid://fylxeh8wul6h" path="res://agents/waypoints.png" id="1_xxqei"]
 [ext_resource type="PackedScene" uid="uid://c5r11cmhlqudb" path="res://agents/SelectionArea2D.tscn" id="2_0g68e"]
 [ext_resource type="Shader" path="res://agents/agent-colour.gdshader" id="2_jehr5"]
+[ext_resource type="PackedScene" uid="uid://bb8wkdpqvw6iq" path="res://dragable_object.tscn" id="5_wc1yh"]
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_klwl4"]
 resource_local_to_scene = true
@@ -26,3 +27,11 @@ polygon = PackedVector2Array(0, -5, 10, -15, 15, -15, 15, -10, 5, 0, 15, 10, 15,
 
 [node name="ContextMenu" type="PopupMenu" parent="."]
 size = Vector2i(28, 8)
+
+[node name="DragableObject" parent="." node_paths=PackedStringArray("parent_object") instance=ExtResource("5_wc1yh")]
+parent_object = NodePath("..")
+
+[connection signal="mouse_hold_end" from="SelectionArea2D" to="DragableObject" method="_on_hold_stop"]
+[connection signal="mouse_hold_start" from="SelectionArea2D" to="DragableObject" method="_on_hold"]
+[connection signal="finished_moving" from="DragableObject" to="." method="_on_hold_stop"]
+[connection signal="while_moving" from="DragableObject" to="." method="_on_dragging"]
