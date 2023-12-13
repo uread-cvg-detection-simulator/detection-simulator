@@ -1,6 +1,8 @@
 extends Node2D
 class_name ScenarioEditor
 
+@export var root_scene: SimRoot = null
+
 @export_group("Entity Groups")
 @export var _agent_root: Node2D = null
 @export var _sensor_root: Node2D = null
@@ -18,6 +20,7 @@ class_name ScenarioEditor
 @export var _load_button : Button = null
 @export var _export_button : Button = null
 @export var _autosave_check : CheckButton = null
+@export var _bg_button : Button = null
 
 @export_group("Scenes")
 @export var _agent_base: PackedScene = null
@@ -46,6 +49,7 @@ var _data_to_save = false
 
 signal play_agents_finished
 
+var export_scale: float = 1.0
 
 enum empty_menu_enum {
 	SPAWN_AGENT,
@@ -67,11 +71,12 @@ func _ready():
 
 func get_save_data() -> Dictionary:
 	var save_data = {
-		"version": 2,
+		"version": 3,
 		"agents": [],
 		"sensors": [],
 		"last_id": _last_id,
 		"last_sensor_id": _last_sensor_id,
+		"export_scale": export_scale,
 	}
 
 	# Load Agents
@@ -85,6 +90,21 @@ func get_save_data() -> Dictionary:
 
 	for sensor in sensors:
 		save_data["sensors"].append(sensor.get_save_data())
+	
+	if root_scene:
+		if root_scene.bg_image:
+			var image_buffer = root_scene.bg_image_buffer
+			
+			save_data["bg_image"] = image_buffer
+			save_data["bg_offset"] = {
+				"x" : -root_scene.bg_image.global_position.x,
+				"y" : -root_scene.bg_image.global_position.y
+			}
+			
+			save_data["bg_scale_marker"] = {
+				"x" : root_scene.bg_scale_marker.x,
+				"y" : root_scene.bg_scale_marker.y
+			}
 
 	return save_data
 
@@ -100,7 +120,7 @@ func load_save_data(data: Dictionary):
 
 	# Load agents
 	if data.has("version"):
-		if data["version"] <= 2:
+		if data["version"] <= 3:
 
 			for agent_data in data["agents"]:
 				spawn_agent(Vector2.ZERO)
@@ -116,7 +136,33 @@ func load_save_data(data: Dictionary):
 					current_sensor.selection_area.selected = false
 
 				_last_sensor_id = data["last_sensor_id"]
-
+				
+			if data["version"] >= 3:
+				export_scale = data["export_scale"]
+				
+				if data.has("bg_image") and root_scene != null:
+					var image = Image.new()
+					var bg_data = Marshalls.base64_to_raw(data["bg_image"])
+					image.load_jpg_from_buffer(bg_data)
+					var texture = ImageTexture.create_from_image(image)
+					
+					if root_scene.bg_image != null:
+						root_scene.bg_image.texture = texture
+					else:
+						root_scene.bg_image = Sprite2D.new()
+						root_scene.bg_image.texture = texture
+						root_scene.bg_image.z_index = -10
+						root_scene.add_child(root_scene.bg_image)
+					
+					
+					
+					root_scene.bg_image.global_position = -Vector2(data["bg_offset"]["x"], data["bg_offset"]["y"])
+					root_scene.bg_offset = -root_scene.bg_image.global_position
+					root_scene.bg_scale_marker = Vector2(data["bg_scale_marker"]["x"], data["bg_scale_marker"]["y"])
+					
+					root_scene.bg_image.visible = true
+					root_scene.bg_image_buffer = data["bg_image"]
+				
 
 			_last_id = data["last_id"]
 			UndoSystem.clear_history()
@@ -513,10 +559,20 @@ func _on_fd_reader_file_selected(path: String):
 	var load_file = FileAccess.open(path, FileAccess.READ)
 
 	if load_file.file_exists(path):
-		var load_data_json = load_file.get_line()
+		var load_data_json = load_file.get_file_as_string(path)
+		if load_data_json == null:
+			var error = load_file.get_error()
+			printerr(error)
+			return
+		
 		var load_data = JSON.parse_string(load_data_json)
 
 		load_save_data(load_data)
 		save_path = path
 		_autosave_check.button_pressed = false
 
+
+
+func _on_bg_image_button_pressed():
+	if root_scene:
+		root_scene.switch_to_loader()

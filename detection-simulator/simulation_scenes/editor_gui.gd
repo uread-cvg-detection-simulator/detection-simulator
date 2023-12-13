@@ -54,14 +54,15 @@ func resize_spacer():
 	play_bar_container_spacer.custom_minimum_size.x = viewport_size.x - play_bar_previous_size - play_bar_next_size - 20
 
 func _properties_open_changed(value):
-	properties_open = value
+	if get_viewport():
+		properties_open = value
 
-	var viewport_size = get_viewport().size
+		var viewport_size = get_viewport().size
 
-	if properties_open:
-		properties.position.x = viewport_size.x - properties.size.x
-	else:
-		properties.position.x = viewport_size.x + 1
+		if properties_open:
+			properties.position.x = viewport_size.x - properties.size.x
+		else:
+			properties.position.x = viewport_size.x + 1
 
 
 func _on_propeties_button_pressed():

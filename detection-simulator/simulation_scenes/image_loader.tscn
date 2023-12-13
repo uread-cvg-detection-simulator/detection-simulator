@@ -1,0 +1,149 @@
+[gd_scene load_steps=10 format=3 uid="uid://dumnmqb8xs4m2"]
+
+[ext_resource type="Script" path="res://simulation_scenes/image_loader.gd" id="1_h6c8y"]
+[ext_resource type="Script" path="res://simulation_scenes/image_loader_gui.gd" id="2_3a71a"]
+[ext_resource type="Script" path="res://simulation_scenes/image_loader_camera.gd" id="2_dxqak"]
+[ext_resource type="Shader" path="res://agents/agent-colour.gdshader" id="4_bkmu7"]
+[ext_resource type="Texture2D" uid="uid://fylxeh8wul6h" path="res://agents/waypoints.png" id="5_p8rw8"]
+[ext_resource type="PackedScene" uid="uid://c5r11cmhlqudb" path="res://agents/SelectionArea2D.tscn" id="6_6f23m"]
+[ext_resource type="PackedScene" uid="uid://bb8wkdpqvw6iq" path="res://dragable_object.tscn" id="7_5lmxm"]
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_rrwjj"]
+resource_local_to_scene = true
+shader = ExtResource("4_bkmu7")
+shader_parameter/new_colour = Vector4(0, 0, 1, 1)
+shader_parameter/selected = false
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_v6mke"]
+resource_local_to_scene = true
+shader = ExtResource("4_bkmu7")
+shader_parameter/new_colour = Vector4(1, 0, 0, 1)
+shader_parameter/selected = false
+
+[node name="ImageLoader" type="Node2D" node_paths=PackedStringArray("file_dialogue", "sprite", "camera", "main_gui", "button_centre", "button_scale", "button_cancel", "button_finished", "button_load", "label_status", "edit_scale", "marker_centre", "marker_scale", "label_size")]
+script = ExtResource("1_h6c8y")
+file_dialogue = NodePath("FileDialog")
+sprite = NodePath("LoadedImage")
+camera = NodePath("Camera2D")
+main_gui = NodePath("CanvasLayer")
+button_centre = NodePath("CanvasLayer/PanelContainer/HBoxContainer/ButtonCentre")
+button_scale = NodePath("CanvasLayer/PanelContainer/HBoxContainer/ButtonScale")
+button_cancel = NodePath("CanvasLayer/PanelContainer/HBoxContainer/ButtonCancel")
+button_finished = NodePath("CanvasLayer/PanelContainer/HBoxContainer/ButtonFinished")
+button_load = NodePath("CanvasLayer/PanelContainer/HBoxContainer/ButtonLoad")
+label_status = NodePath("CanvasLayer/PanelContainer/HBoxContainer/Label")
+edit_scale = NodePath("CanvasLayer/PanelContainer/HBoxContainer/TextEditScaleValue")
+marker_centre = NodePath("MarkerCentre")
+marker_scale = NodePath("MarkerScale")
+label_size = NodePath("Size")
+
+[node name="FileDialog" type="FileDialog" parent="."]
+title = "Open a File"
+ok_button_text = "Open"
+file_mode = 0
+access = 2
+filters = PackedStringArray("*.jpg,*.png,*.bmp,*.jpeg", "*")
+use_native_dialog = true
+
+[node name="LoadedImage" type="Sprite2D" parent="."]
+z_index = -10
+
+[node name="Camera2D" type="Camera2D" parent="."]
+script = ExtResource("2_dxqak")
+
+[node name="CanvasLayer" type="CanvasLayer" parent="." node_paths=PackedStringArray("play_bar_container", "play_bar_container_spacer", "status_label")]
+script = ExtResource("2_3a71a")
+play_bar_container = NodePath("PanelContainer/HBoxContainer")
+play_bar_container_spacer = NodePath("PanelContainer/HBoxContainer/Label")
+status_label = NodePath("PanelContainer/HBoxContainer/Label")
+
+[node name="PanelContainer" type="PanelContainer" parent="CanvasLayer"]
+anchors_preset = 12
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 0
+
+[node name="HBoxContainer" type="HBoxContainer" parent="CanvasLayer/PanelContainer"]
+layout_mode = 2
+
+[node name="ButtonCentre" type="Button" parent="CanvasLayer/PanelContainer/HBoxContainer"]
+layout_mode = 2
+text = "Set Centre"
+
+[node name="ButtonScale" type="Button" parent="CanvasLayer/PanelContainer/HBoxContainer"]
+layout_mode = 2
+text = "Set Scale Marker"
+
+[node name="Label" type="Label" parent="CanvasLayer/PanelContainer/HBoxContainer"]
+layout_mode = 2
+text = "Need to Set Centre and Set Scale Marker"
+horizontal_alignment = 1
+
+[node name="Label_ScaleValue" type="Label" parent="CanvasLayer/PanelContainer/HBoxContainer"]
+layout_mode = 2
+text = "Export Scale 1.0 = "
+
+[node name="TextEditScaleValue" type="TextEdit" parent="CanvasLayer/PanelContainer/HBoxContainer"]
+custom_minimum_size = Vector2(200, 30)
+layout_mode = 2
+text = "1.0"
+scroll_fit_content_height = true
+
+[node name="ButtonCancel" type="Button" parent="CanvasLayer/PanelContainer/HBoxContainer"]
+layout_mode = 2
+text = "Cancel"
+
+[node name="ButtonFinished" type="Button" parent="CanvasLayer/PanelContainer/HBoxContainer"]
+layout_mode = 2
+disabled = true
+text = "Finished"
+
+[node name="ButtonLoad" type="Button" parent="CanvasLayer/PanelContainer/HBoxContainer"]
+layout_mode = 2
+text = "Load Image"
+
+[node name="MarkerCentre" type="Sprite2D" parent="."]
+visible = false
+material = SubResource("ShaderMaterial_rrwjj")
+texture = ExtResource("5_p8rw8")
+
+[node name="SelectionArea2D" parent="MarkerCentre" node_paths=PackedStringArray("parent_object") instance=ExtResource("6_6f23m")]
+parent_object = NodePath("..")
+
+[node name="CollisionPolygon2D" type="CollisionPolygon2D" parent="MarkerCentre/SelectionArea2D"]
+polygon = PackedVector2Array(0, -5, 10, -15, 15, -15, 15, -10, 5, 0, 15, 10, 15, 15, 10, 15, 0, 5, -10, 15, -15, 15, -15, 10, -5, 0, -15, -10, -15, -15, -10, -15)
+
+[node name="DragableObject" parent="MarkerCentre" node_paths=PackedStringArray("parent_object") instance=ExtResource("7_5lmxm")]
+parent_object = NodePath("..")
+
+[node name="MarkerScale" type="Sprite2D" parent="."]
+visible = false
+material = SubResource("ShaderMaterial_v6mke")
+texture = ExtResource("5_p8rw8")
+
+[node name="SelectionArea2D" parent="MarkerScale" node_paths=PackedStringArray("parent_object") instance=ExtResource("6_6f23m")]
+parent_object = NodePath("..")
+
+[node name="CollisionPolygon2D" type="CollisionPolygon2D" parent="MarkerScale/SelectionArea2D"]
+polygon = PackedVector2Array(0, -5, 10, -15, 15, -15, 15, -10, 5, 0, 15, 10, 15, 15, 10, 15, 0, 5, -10, 15, -15, 15, -15, 10, -5, 0, -15, -10, -15, -15, -10, -15)
+
+[node name="DragableObject" parent="MarkerScale" node_paths=PackedStringArray("parent_object") instance=ExtResource("7_5lmxm")]
+parent_object = NodePath("..")
+
+[node name="Size" type="Label" parent="."]
+visible = false
+offset_right = 40.0
+offset_bottom = 23.0
+
+[connection signal="file_selected" from="FileDialog" to="." method="_on_file_dialog_file_selected"]
+[connection signal="pressed" from="CanvasLayer/PanelContainer/HBoxContainer/ButtonCentre" to="." method="_on_button_centre_pressed"]
+[connection signal="pressed" from="CanvasLayer/PanelContainer/HBoxContainer/ButtonScale" to="." method="_on_button_scale_pressed"]
+[connection signal="text_changed" from="CanvasLayer/PanelContainer/HBoxContainer/TextEditScaleValue" to="." method="_on_text_edit_scale_value_text_changed"]
+[connection signal="pressed" from="CanvasLayer/PanelContainer/HBoxContainer/ButtonFinished" to="." method="_on_button_finished_pressed"]
+[connection signal="pressed" from="CanvasLayer/PanelContainer/HBoxContainer/ButtonLoad" to="." method="_start"]
+[connection signal="mouse_hold_end" from="MarkerCentre/SelectionArea2D" to="MarkerCentre/DragableObject" method="_on_hold_stop"]
+[connection signal="mouse_hold_start" from="MarkerCentre/SelectionArea2D" to="MarkerCentre/DragableObject" method="_on_hold"]
+[connection signal="mouse_hold_end" from="MarkerScale/SelectionArea2D" to="MarkerScale/DragableObject" method="_on_hold_stop"]
+[connection signal="mouse_hold_start" from="MarkerScale/SelectionArea2D" to="MarkerScale/DragableObject" method="_on_hold"]
