@@ -39,4 +39,4 @@ func test_agent_id():
 
 func test_agent_position():
 	# Check position is 0,0
-	assert_vector2(agent.position).is_equal(Vector2.ZERO)
+	assert_vector(agent.position).is_equal(Vector2.ZERO)

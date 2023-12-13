@@ -23,6 +23,7 @@ class_name ScenarioEditor
 @export var _agent_base: PackedScene = null
 @export var _waypoint_base: PackedScene = null
 @export var _sensor_base: PackedScene = null
+@export var _camera: EditorCamera = null
 
 @export_group("File Handling")
 @export var fd_writer: FileDialog = null

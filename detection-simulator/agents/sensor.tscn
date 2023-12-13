@@ -22,7 +22,6 @@ context_menu = NodePath("ContextMenu")
 sprite = NodePath("Sprite2D")
 
 [node name="VisionCone2D" parent="." instance=ExtResource("1_fkk1c")]
-collision_layer_mask = 3
 
 [node name="VisionConeArea" parent="VisionCone2D" index="1"]
 collision_layer = 1

@@ -170,7 +170,7 @@ func _clear_properties():
 	properties_editable_dict.clear()
 
 	for child in properties_grid_container.get_children():
-		child.free()
+		child.queue_free()
 
 func _process(delta):
 	if properties_current_node != null:
@@ -546,10 +546,92 @@ func _on_grouped(group: String, node: Node):
 					properties_grid_container.add_child(label)
 					properties_grid_container.add_child(delete_button)
 
-
-
 			else:
 				_add_property("Linked Nodes", "None")
+
+			# Enter nodes
+			var enter_nodes = waypoint.enter_nodes
+
+			if enter_nodes.size() > 0:
+				_add_property("Enter Nodes", "")
+
+				var current_node_id = agent.waypoints.get_waypoint_index(waypoint)
+				var current_node_str = "A%dW%d" % [agent.agent_id, current_node_id]
+
+				for enter_node in enter_nodes:
+					var enter_node_id = enter_node.parent_object.waypoints.get_waypoint_index(enter_node)
+					var enter_node_str = "A%dW%d" % [enter_node.parent_object.agent_id, enter_node_id]
+
+					# Add combined string, and delete button
+					var combined_str = "%s -> %s" % [current_node_str, enter_node_str]
+
+					var label = Label.new()
+					label.text = combined_str
+					label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+
+					var delete_button = Button.new()
+					delete_button.text = "X"
+					delete_button.connect("pressed", func():
+						var agent_: Agent = TreeFuncs.get_agent_with_id(agent.agent_id)
+						var other_agent: Agent = TreeFuncs.get_agent_with_id(enter_node.parent_object.agent_id)
+
+						# Delete the node from the other agent
+						other_agent.waypoints.delete_waypoint(enter_node)
+
+						# Delete the button and label
+						properties_grid_container.remove_child(label)
+						label.queue_free()
+						properties_grid_container.remove_child(delete_button)
+						delete_button.queue_free()
+					)
+
+					properties_grid_container.add_child(label)
+					properties_grid_container.add_child(delete_button)
+
+			else:
+				_add_property("Enter Nodes", "None")
+
+			# Exit nodes
+			var exit_nodes = waypoint.exit_nodes
+
+			if exit_nodes.size() > 0:
+				_add_property("Exit Nodes", "")
+
+				var current_node_id = agent.waypoints.get_waypoint_index(waypoint)
+				var current_node_str = "A%dW%d" % [agent.agent_id, current_node_id]
+
+				for exit_node in exit_nodes:
+					var exit_node_id = exit_node.parent_object.waypoints.get_waypoint_index(exit_node)
+					var exit_node_str = "A%dW%d" % [exit_node.parent_object.agent_id, exit_node_id]
+
+					# Add combined string, and delete button
+					var combined_str = "%s -> %s" % [current_node_str, exit_node_str]
+
+					var label = Label.new()
+					label.text = combined_str
+					label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+
+					var delete_button = Button.new()
+					delete_button.text = "X"
+					delete_button.connect("pressed", func():
+						var agent_: Agent = TreeFuncs.get_agent_with_id(agent.agent_id)
+						var other_agent: Agent = TreeFuncs.get_agent_with_id(exit_node.parent_object.agent_id)
+
+						# Delete the node from the other agent
+						other_agent.waypoints.delete_waypoint(exit_node)
+
+						# Delete the button and label
+						properties_grid_container.remove_child(label)
+						label.queue_free()
+						properties_grid_container.remove_child(delete_button)
+						delete_button.queue_free()
+					)
+
+					properties_grid_container.add_child(label)
+					properties_grid_container.add_child(delete_button)
+
+			else:
+				_add_property("Exit Nodes", "None")
 
 		if node.parent_object is Sensor:
 			var sensor: Sensor = node.parent_object

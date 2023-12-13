@@ -17,7 +17,17 @@ enum ContextMenuIDs {
 	DELETE,
 	PROPERTIES,
 	LINK_WAYPOINT,
+	ENTER_VEHICLE,
+	EXIT_VEHICLE = 100,
 }
+
+enum WaypointType {
+	WAYPOINT,
+	ENTER,
+	EXIT,
+}
+
+var waypoint_type = WaypointType.WAYPOINT
 
 var param_speed_mps = 1.42
 var param_start_time = null
@@ -30,9 +40,17 @@ var initialised = false
 
 var attempting_link = false
 var linked_nodes: Array[Waypoint] = []
-var linked_ready: bool = false
+var linked_ready: bool = false : set = _linked_ready_changed
+signal linked_ready_changed(value: bool)
+
+# Vehicle enter/exit variables
+var enter_nodes: Array[Waypoint] = []
+var exit_nodes: Array[Waypoint] = []
+var vehicle_wp = null
+var enter_vehicle = null # TODO: Reset after play finished
 
 var load_linked_nodes: Array = []
+var load_enter_exit_nodes: Array = []
 
 # Called when the node enters the scene tree for the first time.
 func _ready():
@@ -47,14 +65,73 @@ func _ready():
 	_selection_area.connect("mouse_hold_end", self._on_hold_stop)
 	_selection_area.connect("mouse_click", self._on_mouse)
 
+
+func _prepare_menu():
+	context_menu.clear()
+
 	context_menu.add_item("Delete Waypoint", ContextMenuIDs.DELETE)
 	context_menu.add_item("Properties", ContextMenuIDs.PROPERTIES)
+
+	context_menu.add_separator()
 	context_menu.add_item("Start Linking...", ContextMenuIDs.LINK_WAYPOINT)
-	context_menu.connect("id_pressed", self._context_menu_id_pressed)
+
+	# If waypoint of another agent is selected, add "Enter Vehicle" to the menu
+	var all_selected_objects = get_tree().get_nodes_in_group("selected")
+
+	if not all_selected_objects.is_empty():
+		var selected_object = all_selected_objects[0].parent_object
+		var valid_enter_exit = false
+
+		if selected_object is Waypoint:
+			if selected_object.parent_object != parent_object and parent_object.is_vehicle:
+				valid_enter_exit = true
+
+		if selected_object is Agent:
+			if selected_object != parent_object and parent_object.is_vehicle:
+				valid_enter_exit = true
+
+		if valid_enter_exit:
+			context_menu.add_separator()
+			context_menu.add_item("Enter Vehicle", ContextMenuIDs.ENTER_VEHICLE)
+
+	# Check all previous waypoints for an unresolved enter/exit, and add items
+	# to the menu if found for each agent
+
+	var all_entered_agents_wp: Array[Waypoint] = []
+	var all_exited_agents_wp: Array[Waypoint] = []
+	var prev_wp = pt_previous
+
+	while prev_wp != null:
+		for enter_wps in prev_wp.enter_nodes:
+			all_entered_agents_wp.append(enter_wps)
+
+		for exit_wps in prev_wp.exit_nodes:
+			all_exited_agents_wp.append(exit_wps)
+
+		prev_wp = prev_wp.pt_previous
+
+	# If we come across an exit, remove the corresponding enter
+	for exit_wp in all_exited_agents_wp:
+		var agent_id = exit_wp.parent_object.agent_id
+
+		for enter_wp in all_entered_agents_wp:
+			if enter_wp.parent_object.agent_id == agent_id:
+				all_entered_agents_wp.erase(enter_wp)
+
+
+	if not all_entered_agents_wp.is_empty():
+		context_menu.add_separator()
+
+		for enter_wp in all_entered_agents_wp:
+			context_menu.add_item("Exit Vehicle A%d" % [enter_wp.parent_object.agent_id], ContextMenuIDs.EXIT_VEHICLE + enter_wp.parent_object.agent_id)
+
+	# Connect to the context menu's id_pressed signal
+	if not context_menu.is_connected("id_pressed", self._context_menu_id_pressed):
+		context_menu.connect("id_pressed", self._context_menu_id_pressed)
 
 func get_save_data() -> Dictionary:
 	var save_data = {
-		"waypoint_version": 2,
+		"waypoint_version": 3,
 		"global_position": {
 			"x": global_position.x,
 			"y": global_position.y,
@@ -63,6 +140,7 @@ func get_save_data() -> Dictionary:
 		"param_start_time": param_start_time,
 		"param_wait_time": param_wait_time,
 		"linked_nodes": [],
+		"waypoint_type": waypoint_type,
 	}
 
 	for node in linked_nodes:
@@ -73,11 +151,14 @@ func get_save_data() -> Dictionary:
 
 		save_data["linked_nodes"].append(node_data)
 
+	if vehicle_wp:
+		save_data["vehicle_wp"] = [vehicle_wp.parent_object.agent_id, vehicle_wp.parent_object.waypoints.get_waypoint_index(vehicle_wp)]
+
 	return save_data
 
 func load_save_data(data: Dictionary):
 	if data.has("waypoint_version"):
-		if data["waypoint_version"] <= 2:
+		if data["waypoint_version"] <= 3:
 			global_position = Vector2(data["global_position"]["x"], data["global_position"]["y"])
 			param_speed_mps = data["param_speed_mps"] if data["param_speed_mps"] != null else null
 			param_start_time = data["param_start_time"] if data["param_start_time"] != null else null
@@ -86,6 +167,13 @@ func load_save_data(data: Dictionary):
 			if data["waypoint_version"] >= 2:
 				if not data["linked_nodes"].is_empty():
 					load_linked_nodes = data["linked_nodes"]
+
+			if data["waypoint_version"] >= 3:
+				waypoint_type = data["waypoint_type"]
+
+				if "vehicle_wp" in data:
+					load_enter_exit_nodes = data["vehicle_wp"]
+
 		else:
 			print_debug("Unknown waypoint version: %s" % data["waypoint_version"])
 	else:
@@ -108,6 +196,24 @@ func _process(delta):
 
 		load_linked_nodes.clear()
 
+	if not load_enter_exit_nodes.is_empty():
+		var agent_id = load_enter_exit_nodes[0]
+		var wp_id = load_enter_exit_nodes[1]
+
+		var agent: Agent = TreeFuncs.get_agent_with_id(agent_id)
+		var waypoint = agent.waypoints.get_waypoint(wp_id)
+
+		if waypoint_type == WaypointType.ENTER:
+			waypoint.enter_nodes.append(self)
+		elif waypoint_type == WaypointType.EXIT:
+			waypoint.exit_nodes.append(self)
+		else:
+			printerr("No waypoint type on load enter/exit?")
+
+		vehicle_wp = waypoint
+		
+		load_enter_exit_nodes.clear()
+
 func _context_menu_id_pressed(id: ContextMenuIDs):
 	match id:
 		ContextMenuIDs.DELETE:
@@ -120,6 +226,77 @@ func _context_menu_id_pressed(id: ContextMenuIDs):
 			GroupHelpers.connect("node_grouped", self._on_link_grouped)
 			print_debug("Start linking waypoint")
 			attempting_link = true
+		ContextMenuIDs.ENTER_VEHICLE:
+			_on_enter_vehicle()
+
+	if id >= ContextMenuIDs.EXIT_VEHICLE:
+		var agent_id = id - ContextMenuIDs.EXIT_VEHICLE
+		var agent: Agent = TreeFuncs.get_agent_with_id(agent_id)
+
+		# Find most recent ENTER waypoint for the agent
+		var prev_wp = pt_previous
+		var enter_wp = null
+
+		while prev_wp != null:
+			for wp in prev_wp.enter_nodes:
+				if wp.parent_object == agent:
+					enter_wp = wp
+					break
+
+			prev_wp = prev_wp.pt_previous
+
+		# Error if no ENTER waypoint found
+		if enter_wp == null:
+			print_debug("No ENTER waypoint found for agent %d" % agent_id)
+			return
+
+		# If after this waypoint is another EXIT before an ENTER, remove it
+		var next_wp = pt_next
+		var exit_wp = null
+
+		while next_wp != null:
+			for wp in next_wp.enter_nodes:
+				if wp.parent_object == agent:
+					break
+
+			for wp in next_wp.exit_nodes:
+				if wp.parent_object == agent:
+					exit_wp = wp
+					break
+
+			next_wp = next_wp.pt_next
+
+		if exit_wp != null:
+			agent.waypoints.delete_waypoint(exit_wp)
+
+		# Insert the EXIT waypoint after this waypoint
+		exit_wp = agent.waypoints.insert_after(enter_wp, global_position, WaypointType.EXIT, self)
+
+		# If exit_wp has no next waypoint, add one a short distance away
+		if exit_wp.pt_next == null:
+			agent.waypoints.insert_after(exit_wp, global_position + Vector2(64, 64), WaypointType.WAYPOINT, self)
+
+
+func _on_enter_vehicle():
+	var all_selected_objects = get_tree().get_nodes_in_group("selected")
+
+	if not all_selected_objects.is_empty():
+		var selected_object = all_selected_objects[0].parent_object
+		var waypoint_handler: AgentWaypointHandler = null
+		var curr_wp: Waypoint = null
+
+		if selected_object is Waypoint:
+			waypoint_handler = selected_object.parent_object.waypoints
+			curr_wp = selected_object
+
+		if selected_object is Agent:
+			waypoint_handler = selected_object.waypoints
+			curr_wp = waypoint_handler.starting_node
+		
+		if waypoint_handler == null:
+			print_debug("Unknown object type on Enter Vehicle")
+		
+		waypoint_handler.insert_after(curr_wp, global_position, WaypointType.ENTER, self)
 
 func _on_link_grouped(group: String, node: Node):
 
@@ -292,15 +469,19 @@ func unlink_waypoint(node: Waypoint):
 		UndoSystem.add_action(undo_action)
 
 func _on_mouse(_mouse, event):
-	print_debug("Waypoint mouse event: %s" % event)
 	if event.is_action_pressed("mouse_menu") and camera != null and clickable:
-		var mouse_pos = MousePosition.mouse_global_position
-		var mouse_rel_pos = MousePosition.mouse_relative_position
+		_popup_menu_at_mouse()
 
-		# Popup the window
-		context_menu.popup(Rect2i(mouse_rel_pos.x, mouse_rel_pos.y, context_menu.size.x, context_menu.size.y))
 
-		print_debug("Right click on waypoint at (%.2f, %.2f)" % [float(mouse_pos.x) / 64, - float(mouse_pos.y) / 64])
+func _popup_menu_at_mouse():
+	var mouse_pos = MousePosition.mouse_global_position
+	var mouse_rel_pos = MousePosition.mouse_relative_position
+
+	_prepare_menu()
+
+	# Popup the window
+	context_menu.popup(Rect2i(mouse_rel_pos.x, mouse_rel_pos.y, context_menu.size.x, context_menu.size.y))
+
 
 func _on_selected(selected: bool):
 	if initialised:
@@ -389,3 +570,8 @@ func _disable(new_disable: bool):
 		_sprite.visible = not new_disable
 
 	disabled = new_disable
+
+
+func _linked_ready_changed(value: bool):
+	linked_ready = value
+	linked_ready_changed.emit(value)

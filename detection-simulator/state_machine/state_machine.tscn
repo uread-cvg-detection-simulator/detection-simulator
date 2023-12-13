@@ -1,0 +1,11 @@
+[gd_scene load_steps=2 format=3 uid="uid://dxshsakxa3y53"]
+
+[ext_resource type="Script" path="res://state_machine/state_machine.gd" id="1_n8jc4"]
+
+[node name="state_machine" type="Node2D" node_paths=PackedStringArray("label")]
+script = ExtResource("1_n8jc4")
+label = NodePath("Label")
+
+[node name="Label" type="Label" parent="."]
+offset_right = 40.0
+offset_bottom = 23.0

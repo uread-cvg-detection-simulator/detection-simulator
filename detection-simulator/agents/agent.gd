@@ -29,17 +29,27 @@ var _type_string = {
 	AgentType.Invisible: "Invisible"
 }
 
+@export var type_is_vehicle = { AgentType.Circle : false,
+								AgentType.SquareTarget: false,
+								AgentType.PersonTarget: false,
+								AgentType.BoatTarget: true}
+
 @export var type_default_colours = { AgentType.Circle : Color.GREEN,
 									 AgentType.SquareTarget : Color.WHITE,
 									 AgentType.PersonTarget : Color.GREEN,
 									 AgentType.BoatTarget: Color.GREEN }
 
+@export_group("Scene References")
+@export var state_machine: StateMachine = null
+
+
 @onready var _current_agent: AgentTarget = null
 var agent_type: AgentType = AgentType.PersonTarget : set = _set_agent_type
+var is_vehicle: bool = false
 var collision_shape = null
 
 @onready var context_menu: PopupMenu = $ContextMenu
-@onready var waypoints = $waypoints
+@onready var waypoints: AgentWaypointHandler = $waypoints
 
 enum ContextMenuIDs {
 	DELETE,
@@ -50,14 +60,7 @@ enum ContextMenuIDs {
 
 var initialised: bool = false ## Specifies whether the module is initialised
 var disabled: bool = false : set = _set_disabled ## Disables everything internally
-
-var playing_next_move_time: float = 0.0 ## The time at which the next move will be played
-var playing_waypoint: Waypoint = null ## The waypoint that the agent is currently moving towards
-var playing_last_waypoint: Waypoint = null ## The last waypoint
-var playing_target: Vector2 = Vector2.INF ## The target position of the next move
-var playing_speed: float = 1.0 ## The speed at which the agent will move
 var playing_finished: bool = false ## Specifies whether the agent has finished playing
-var playing = false
 
 var exporting_path = null
 var exporting_file_access: FileAccess = null
@@ -113,125 +116,31 @@ func play_export() -> Dictionary:
 		"type" : _type_string[agent_type],
 		"x": global_position.x / 64.0,
 		"y": - global_position.y / 64.0,
+		"visible": visible,
 	}
 
 	return data
 
 
-func _update_target_information(waypoint: Waypoint):
-	var current_time = PlayTimer.current_time
-	var old_waypoint = playing_waypoint if playing_waypoint else waypoints.starting_node
-
-	if old_waypoint.param_start_time:
-		# If waypoint has a start time parameter, set the playing_next_move_time to that
-		playing_next_move_time = old_waypoint.param_start_time
-	elif old_waypoint.param_wait_time:
-		# Calculate the time at which the next move will be played
-		playing_next_move_time = current_time + old_waypoint.param_wait_time
-
-	# Set the speed from the current waypoint
-	playing_speed = old_waypoint.param_speed_mps * 64.0 # TODO: get this from grid-lines
-
-	# Set the target position
-	playing_target = waypoint.global_position
-
-	# Update the current waypoint
-	if playing_last_waypoint:
-		playing_last_waypoint.linked_ready = false
-
-	playing_last_waypoint = playing_waypoint
-	playing_waypoint = waypoint
-
-	linked_check = true
-
-
 ## Start pathing through the waypoints
 func _start_playing():
 	if not disabled:
-		_update_target_information(waypoints.starting_node)
-		playing = true
-		clickable = false
-		waypoints.clickable = false
+
+		state_machine.transition_to("follow_waypoints")
 
 		#if PlayTimer.exporting and exporting_path != null:
 		#	exporting_file_access = FileAccess.open(exporting_path, FileAccess.WRITE)
 
 ## Resets agent's playing parameters and position
 func _stop_playing():
-	playing_next_move_time = 0.0
-	playing_target = Vector2.INF
-	playing_speed = 1.0
 	playing_finished = false
-	playing = false
-	clickable = true
-	playing_waypoint = null
-	playing_last_waypoint = null
-
-	waypoints.starting_node.linked_ready = false
-
-	for waypoint in waypoints.waypoints:
-		waypoint.linked_ready = false
-
-	global_position = waypoints.starting_node.global_position
-	waypoints.clickable = true
 
 	if exporting_file_access != null:
 		exporting_file_access.close()
 		exporting_file_access = null
 
-var ignore_linked_nodes: Array[Waypoint] = []
-var linked_check = true
+	state_machine.transition_to("editor_state")
 
-func _physics_process(delta):
-	if not disabled:
-		if playing and playing_next_move_time < PlayTimer.current_time:
-
-			var ready = true
-
-			if linked_check and playing_last_waypoint and not playing_last_waypoint.linked_nodes.is_empty():
-				playing_last_waypoint.linked_ready = true
-
-				var max_wait_time = 0
-
-				# Wait until all linked nodes are ready
-				for node in playing_last_waypoint.linked_nodes:
-					if node in ignore_linked_nodes:
-						continue
-
-					if not node.linked_ready:
-						ready = false
-					else:
-						if node.pt_next == null:
-							if node.param_wait_time:
-								if playing_last_waypoint.param_wait_time and node.param_wait_time < playing_last_waypoint.param_wait_time:
-									continue
-
-								max_wait_time = max(node.param_wait_time, max_wait_time)
-								ignore_linked_nodes.append(node)
-								ready = false
-							else:
-								continue
-
-				if max_wait_time != 0 and not ready:
-					var diff = (max_wait_time - (playing_last_waypoint.param_wait_time if playing_last_waypoint.param_wait_time else 0))
-					playing_next_move_time = PlayTimer.current_time + diff
-
-			if ready:
-				linked_check = false
-
-				ignore_linked_nodes.clear()
-				# Update position
-				# TODO: use navigation system
-				global_position = global_position.move_toward(playing_target, playing_speed * delta)
-
-				# If reached target, update target information with next waypoint if there is one
-				if global_position == playing_target:
-					if playing_waypoint.pt_next:
-						_update_target_information(playing_waypoint.pt_next)
-					else:
-						playing_waypoint.linked_ready = true
-						playing_finished = true
-						playing = false
 
 
 # Called every frame. 'delta' is the elapsed time since the previous frame.
@@ -276,31 +185,39 @@ func _on_hold_stop():
 
 	if _moving_start_pos:
 		if _moving_start_pos != global_position:
-			var undo_action = UndoRedoAction.new()
-
-			undo_action.action_name = "Move Agent %d" % agent_id
-
-
-			var ref = undo_action.action_store_method(UndoRedoAction.DoType.Do, TreeFuncs.get_agent_with_id, [agent_id])
-			undo_action.action_property_ref(UndoRedoAction.DoType.Do, ref, "global_position", global_position)
-			undo_action.action_property_ref(UndoRedoAction.DoType.Undo, ref, "global_position", _moving_start_pos)
-
-			# Queue redraw of waypoint lines
-			undo_action.action_method(UndoRedoAction.DoType.Do, func(agent):
-				agent.waypoints.waypoint_lines.queue_redraw()
-				, [ref], ref)
-
-			# Queue redraw of waypoint lines
-			undo_action.action_method(UndoRedoAction.DoType.Undo, func(agent):
-				agent.waypoints.waypoint_lines.queue_redraw()
-				, [ref], ref)
-
-			undo_action.manual_add_item_to_store(self, ref)
-
-			UndoSystem.add_action(undo_action, false)
-
+			_move(_moving_start_pos, global_position)
 
 		_moving_start_pos = null
+
+func _move(last_position: Vector2, new_position: Vector2):
+
+	if new_position != global_position:
+		global_position = new_position
+		waypoints.starting_node.global_position = self.global_position
+		waypoints.waypoint_lines.queue_redraw()
+
+	var undo_action = UndoRedoAction.new()
+	undo_action.action_name = "Move Agent %d" % agent_id
+
+	var ref = undo_action.action_store_method(UndoRedoAction.DoType.Do, TreeFuncs.get_agent_with_id, [agent_id])
+	undo_action.action_property_ref(UndoRedoAction.DoType.Do, ref, "global_position", new_position)
+	undo_action.action_property_ref(UndoRedoAction.DoType.Undo, ref, "global_position", last_position)
+
+	# Queue redraw of waypoint lines
+	undo_action.action_method(UndoRedoAction.DoType.Do, func(agent):
+		agent.waypoints.waypoint_lines.queue_redraw()
+		, [ref], ref)
+
+	# Queue redraw of waypoint lines
+	undo_action.action_method(UndoRedoAction.DoType.Undo, func(agent):
+		agent.waypoints.waypoint_lines.queue_redraw()
+		, [ref], ref)
+
+	undo_action.manual_add_item_to_store(self, ref)
+
+	UndoSystem.add_action(undo_action, false)
+
+
 
 func _on_mouse(_mouse, event):
 	if event.is_action_pressed("mouse_menu") and camera != null and clickable:
@@ -339,7 +256,6 @@ func _set_agent_type(new_agent_type: AgentType):
 			_current_agent.add_child(collision_shape)
 			collision_shape = null
 
-
 		# Enable new
 		if new_agent_type != AgentType.Invisible:
 			_current_agent = _type_map[new_agent_type]
@@ -355,6 +271,8 @@ func _set_agent_type(new_agent_type: AgentType):
 			add_child(collision_shape)
 
 			_set_sprite_colour(type_default_colours[new_agent_type])
+
+			is_vehicle = type_is_vehicle[new_agent_type]
 		else:
 			_current_agent = null
 
