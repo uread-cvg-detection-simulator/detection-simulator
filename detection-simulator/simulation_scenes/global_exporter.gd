@@ -45,7 +45,9 @@ func global_agent_export(timestamp: float):
 	var all_agent_data: Array[Dictionary] = []
 
 	for agent in all_agents:
-		all_agent_data.append(agent.play_export())
+		var a_data = agent.play_export()
+		a_data["sensor_id"] = -1
+		all_agent_data.append(a_data)
 
 	if not all_agent_data.is_empty():
 		# Export to all file
@@ -91,14 +93,18 @@ func global_sensor_export(timestamp: float):
 	for sensor in all_sensors:
 		for agent in sensor.current_detections:
 			if not all_agent_data.has(agent.agent_id):
-				all_agent_data[agent.agent_id] = agent.play_export()
+				var a_data = agent.play_export()
+				if a_data["visible"] == true:
+					all_agent_data[agent.agent_id] = a_data
+					all_agent_data[agent.agent_id]["sensor_id"] = -1
+
 
 	if not all_agent_data.is_empty():
 		# Export to all file
 		var export_data = {
 			"sensor_id": -1,
 			"timestamp_ms": int(timestamp * 1000),
-			"detections": all_agent_data
+			"detections": all_agent_data.values()
 		}
 
 		# Open the file and handle the separators

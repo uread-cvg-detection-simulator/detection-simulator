@@ -166,6 +166,7 @@ func _physics_process(delta):
 
 					# Add timestamp to the data
 					data["timestamp_ms"] = int(export_last_time * 1000)
+					data["sensor_id"] = sensor_id
 
 					# Write the data to the file
 					file_access_agents[agent.agent_id].store_string(JSON.stringify(data))

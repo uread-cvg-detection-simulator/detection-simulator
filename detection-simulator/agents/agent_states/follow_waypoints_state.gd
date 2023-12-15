@@ -40,7 +40,8 @@ func physics_update(delta: float) -> void:
 
 					# If the WP after the exit is a normal WP, update the target information to it
 					if playing_waypoint.pt_next.pt_next and playing_waypoint.pt_next.pt_next.waypoint_type == Waypoint.WaypointType.WAYPOINT:
-						_update_target_information(playing_waypoint.pt_next.pt_next, false)
+						playing_waypoint = playing_waypoint.pt_next
+						_update_target_information(playing_waypoint.pt_next, false)
 
 				state_machine.transition_to("hidden_follow_vehicle", transition_dict)
 
@@ -66,7 +67,10 @@ func _update_target_information(waypoint: Waypoint, transition: bool = true):
 		playing_next_move_time = current_time + old_waypoint.param_wait_time
 
 	# Set the speed from the current waypoint
-	playing_speed = old_waypoint.param_speed_mps * 64.0 # TODO: get this from grid-lines
+	if old_waypoint.waypoint_type == Waypoint.WaypointType.EXIT:
+		playing_speed = waypoint.param_speed_mps * 64.0
+	else:
+		playing_speed = old_waypoint.param_speed_mps * 64.0 # TODO: get this from grid-lines
 
 	# Set the target position
 	playing_target = waypoint.global_position

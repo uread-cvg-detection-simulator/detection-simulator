@@ -544,6 +544,7 @@ func _on_export_button_pressed():
 		for sensor in sensors:
 			sensor.file_access_base_path = save_path_export_base
 
+		PlayTimer.export_scale = export_scale
 		PlayTimer.exporting = true
 		PlayTimer.play = true
 
@@ -552,6 +553,7 @@ func _on_export_button_pressed():
 		_load_button.disabled = true
 		_export_button.text = "Exporting..."
 		_export_button.disabled = true
+		_bg_button.disabled = true
 	else:
 		print_debug("No save path set")
 
@@ -565,6 +567,7 @@ func _on_export_finished():
 		_save_button.disabled = false
 	_play_button.disabled = false
 	_load_button.disabled = false
+	_bg_button.disabled = false
 	_check_enable_export()
 
 
