@@ -1,4 +1,4 @@
-[gd_scene load_steps=22 format=3 uid="uid://p0wyr5cxelew"]
+[gd_scene load_steps=23 format=3 uid="uid://p0wyr5cxelew"]
 
 [ext_resource type="Texture2D" uid="uid://etufimgj43mn" path="res://agents/basic-target.png" id="1_25plv"]
 [ext_resource type="Script" path="res://agents/agent.gd" id="1_noa6a"]
@@ -17,6 +17,7 @@
 [ext_resource type="PackedScene" uid="uid://b50ox3rfhikx8" path="res://agents/waypoint.tscn" id="8_ado8l"]
 [ext_resource type="Texture2D" uid="uid://8n7q8rg7dyw2" path="res://agents/boat.png" id="8_jeg6q"]
 [ext_resource type="Script" path="res://agents/waypoint_lines.gd" id="9_mdr2h"]
+[ext_resource type="PackedScene" uid="uid://bb8wkdpqvw6iq" path="res://dragable_object.tscn" id="18_cvhab"]
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_y5pv7"]
 resource_local_to_scene = true
@@ -36,10 +37,11 @@ shader_parameter/selected = false
 [sub_resource type="CircleShape2D" id="CircleShape2D_n5v4q"]
 radius = 16.0
 
-[node name="agent" type="CharacterBody2D" node_paths=PackedStringArray("state_machine")]
+[node name="agent" type="CharacterBody2D" node_paths=PackedStringArray("state_machine", "dragable_object")]
 collision_mask = 3
 script = ExtResource("1_noa6a")
 state_machine = NodePath("state_machine")
+dragable_object = NodePath("DragableObject")
 
 [node name="state_machine" parent="." node_paths=PackedStringArray("initial_state") instance=ExtResource("2_j52yj")]
 initial_state = NodePath("editor_state")
@@ -146,3 +148,7 @@ script = ExtResource("9_mdr2h")
 
 [node name="zzz_undo_stored_nodes" type="Node2D" parent="waypoints"]
 visible = false
+
+[node name="DragableObject" parent="." instance=ExtResource("18_cvhab")]
+
+[connection signal="hold_end" from="DragableObject" to="." method="_on_hold_stop"]

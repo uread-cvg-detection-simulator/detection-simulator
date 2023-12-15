@@ -3,7 +3,7 @@ extends CharacterBody2D
 
 @onready var camera: Camera2D = null : set = _set_camera ## The camera to use for the mouse position
 @export var colour: Color = Color.WHITE : set = _set_sprite_colour ## The colour of the target
-@export var clickable: bool = true
+@export var clickable: bool = true : set = _set_clickable
 
 var agent_id: int = 0 : set = _set_agent_id ## The agent target id
 signal agent_id_set(old_id, new_id) ## Signals whenever the agent id is set
@@ -41,6 +41,7 @@ var _type_string = {
 
 @export_group("Scene References")
 @export var state_machine: StateMachine = null
+@export var dragable_object: DragableObjectComponent = null
 
 
 @onready var _current_agent: AgentTarget = null
@@ -114,8 +115,8 @@ func play_export() -> Dictionary:
 	var data = {
 		"id" : agent_id,
 		"type" : _type_string[agent_type],
-		"x": global_position.x / 64.0,
-		"y": - global_position.y / 64.0,
+		"x": (global_position.x / 64.0) * PlayTimer.export_scale,
+		"y": (-global_position.y / 64.0) * PlayTimer.export_scale,
 		"visible": visible,
 	}
 
@@ -170,24 +171,12 @@ func _on_selected(selected: bool):
 
 		_current_agent.material.set_shader_parameter("selected", selected)
 
-var _moving = false ## defines whether the agent is being dragged
-var _moving_start_pos = null
-
-## Handles when mouse is being held
-func _on_hold():
-	if clickable:
-		_moving = true
-		_moving_start_pos = global_position
 
 ## Handles when mouse has stopped being held
-func _on_hold_stop():
-	_moving = false
+func _on_hold_stop(start_pos, end_pos):
+	if start_pos != end_pos:
+		_move(start_pos, end_pos)
 
-	if _moving_start_pos:
-		if _moving_start_pos != global_position:
-			_move(_moving_start_pos, global_position)
-
-		_moving_start_pos = null
 
 func _move(last_position: Vector2, new_position: Vector2):
 
@@ -229,13 +218,6 @@ func _on_mouse(_mouse, event):
 
 		print_debug("Right click at (%.2f, %.2f)" % [float(mouse_pos.x) / 64, - float(mouse_pos.y) / 64])
 
-func _unhandled_input(event):
-	if event is InputEventMouseMotion and _moving and clickable:
-		self.global_position = get_global_mouse_position()
-
-		waypoints.starting_node.global_position = self.global_position
-		waypoints.waypoint_lines.queue_redraw()
-
 ## Sets the agent id, and calls the relevant signal
 func _set_agent_id(new_agent_id):
 	emit_signal("agent_id_set", agent_id, new_agent_id)
@@ -247,8 +229,8 @@ func _set_agent_type(new_agent_type: AgentType):
 		if _current_agent != null:
 			_current_agent.disabled = true
 			_current_agent._selection_area.disconnect("selection_toggled", self._on_selected)
-			_current_agent._selection_area.disconnect("mouse_hold_start", self._on_hold)
-			_current_agent._selection_area.disconnect("mouse_hold_end", self._on_hold_stop)
+			_current_agent._selection_area.disconnect("mouse_hold_start", self.dragable_object._on_hold)
+			_current_agent._selection_area.disconnect("mouse_hold_end", self.dragable_object._on_hold_stop)
 			_current_agent._selection_area.disconnect("mouse_click", self._on_mouse)
 			_current_agent._selection_area.parent_object = null
 
@@ -261,8 +243,8 @@ func _set_agent_type(new_agent_type: AgentType):
 			_current_agent = _type_map[new_agent_type]
 			_current_agent.disabled = false
 			_current_agent._selection_area.connect("selection_toggled", self._on_selected)
-			_current_agent._selection_area.connect("mouse_hold_start", self._on_hold)
-			_current_agent._selection_area.connect("mouse_hold_end", self._on_hold_stop)
+			_current_agent._selection_area.connect("mouse_hold_start", self.dragable_object._on_hold)
+			_current_agent._selection_area.connect("mouse_hold_end", self.dragable_object._on_hold_stop)
 			_current_agent._selection_area.connect("mouse_click", self._on_mouse)
 			_current_agent._selection_area.parent_object = self
 
@@ -318,3 +300,7 @@ func _context_menu(id: ContextMenuIDs):
 
 func reset_position():
 	global_position = waypoints.starting_node.global_position
+
+func _set_clickable(new_value: bool):
+	clickable = new_value
+	dragable_object.clickable = new_value

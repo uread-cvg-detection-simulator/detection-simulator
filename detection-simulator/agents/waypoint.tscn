@@ -33,5 +33,5 @@ parent_object = NodePath("..")
 
 [connection signal="mouse_hold_end" from="SelectionArea2D" to="DragableObject" method="_on_hold_stop"]
 [connection signal="mouse_hold_start" from="SelectionArea2D" to="DragableObject" method="_on_hold"]
-[connection signal="finished_moving" from="DragableObject" to="." method="_on_hold_stop"]
-[connection signal="while_moving" from="DragableObject" to="." method="_on_dragging"]
+[connection signal="hold_end" from="DragableObject" to="." method="_on_hold_stop"]
+[connection signal="while_hold" from="DragableObject" to="." method="_on_dragging"]
