@@ -49,3 +49,14 @@ func spawn_and_get_agent(position: Vector2, runner: GdUnitSceneRunner) -> Agent:
 
 func metres_to_pixels(metre_vector: Vector2) -> Vector2:
 	return Vector2(metre_vector.x * 64.0, metre_vector.y * -64.0)
+
+func find_string_in_context_menu(context_menu: PopupMenu, string: String):
+	var string_found: bool = false
+
+	for i in range(context_menu.item_count):
+		var item = context_menu.get_item_text(i)
+		if item == string:
+			string_found = true
+			break
+
+	return string_found
