@@ -32,6 +32,7 @@ var waypoint_type = WaypointType.WAYPOINT
 var param_speed_mps = 1.42
 var param_start_time = null
 var param_wait_time = null
+var param_accel: float = -1.0
 
 var parent_object: Agent = null
 
@@ -130,7 +131,7 @@ func _prepare_menu():
 
 func get_save_data() -> Dictionary:
 	var save_data = {
-		"waypoint_version": 3,
+		"waypoint_version": 4,
 		"global_position": {
 			"x": global_position.x,
 			"y": global_position.y,
@@ -138,6 +139,7 @@ func get_save_data() -> Dictionary:
 		"param_speed_mps": param_speed_mps,
 		"param_start_time": param_start_time,
 		"param_wait_time": param_wait_time,
+		"param_accel": param_accel,
 		"linked_nodes": [],
 		"waypoint_type": waypoint_type,
 	}
@@ -157,7 +159,7 @@ func get_save_data() -> Dictionary:
 
 func load_save_data(data: Dictionary):
 	if data.has("waypoint_version"):
-		if data["waypoint_version"] <= 3:
+		if data["waypoint_version"] <= 4:
 			global_position = Vector2(data["global_position"]["x"], data["global_position"]["y"])
 			param_speed_mps = data["param_speed_mps"] if data["param_speed_mps"] != null else null
 			param_start_time = data["param_start_time"] if data["param_start_time"] != null else null
@@ -175,6 +177,11 @@ func load_save_data(data: Dictionary):
 
 				if "vehicle_wp" in data:
 					load_enter_exit_nodes = data["vehicle_wp"]
+
+			param_accel = -1.0
+
+			if data["waypoint_version"] >= 4:
+				param_accel = data["param_accel"]
 
 		else:
 			print_debug("Unknown waypoint version: %s" % data["waypoint_version"])

@@ -151,7 +151,6 @@ initial_position = 4
 size = Vector2i(632, 500)
 access = 2
 filters = PackedStringArray("*.ds-json")
-use_native_dialog = true
 
 [node name="fd_reader" type="FileDialog" parent="."]
 title = "Open a File"
@@ -161,7 +160,6 @@ ok_button_text = "Open"
 file_mode = 0
 access = 2
 filters = PackedStringArray("*.ds-json")
-use_native_dialog = true
 
 [node name="global_exporter" type="Node" parent="." node_paths=PackedStringArray("editor_base")]
 script = ExtResource("8_1i7iy")

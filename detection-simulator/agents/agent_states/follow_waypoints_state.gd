@@ -13,6 +13,11 @@ var playing_last_waypoint: Waypoint = null ## The last waypoint
 var playing_target: Vector2 = Vector2.INF ## The target position of the next move
 var playing_speed: float = 1.0 ## The speed at which the agent will move
 
+var playing_accel_time_factor: float = 0.0
+var playing_start_speed: float = 1.0
+var playing_target_speed: float = 1.0 ## Target speed
+var playing_accelerate_state = 0.0
+
 @export var base_agent: Agent = null
 
 # Virtual function. Corresponds to the `_physics_process()` callback.
@@ -20,6 +25,10 @@ func physics_update(delta: float) -> void:
 	if not owner.disabled:
 		# Update position
 		# TODO: use navigation system
+		if playing_accelerate_state < 1.0:
+			playing_accelerate_state += delta * playing_accel_time_factor
+
+		playing_speed = lerpf(playing_start_speed, playing_target_speed, playing_accelerate_state)
 		owner.global_position = owner.global_position.move_toward(playing_target, playing_speed * delta)
 
 		# If reached target, update target information with next waypoint if there is one
@@ -58,7 +67,7 @@ func _update_target_information(waypoint: Waypoint, transition: bool = true):
 	var old_waypoint = playing_waypoint if playing_waypoint else owner.waypoints.starting_node
 
 	var playing_next_move_time : float = 0.0
-	
+
 	if old_waypoint.param_start_time:
 		# If waypoint has a start time parameter, set the playing_next_move_time to that
 		playing_next_move_time = old_waypoint.param_start_time
@@ -68,9 +77,9 @@ func _update_target_information(waypoint: Waypoint, transition: bool = true):
 
 	# Set the speed from the current waypoint
 	if old_waypoint.waypoint_type == Waypoint.WaypointType.EXIT:
-		playing_speed = waypoint.param_speed_mps * 64.0
+		playing_target_speed = waypoint.param_speed_mps * 64.0
 	else:
-		playing_speed = old_waypoint.param_speed_mps * 64.0 # TODO: get this from grid-lines
+		playing_target_speed = old_waypoint.param_speed_mps * 64.0 # TODO: get this from grid-lines
 
 	# Set the target position
 	playing_target = waypoint.global_position
@@ -79,8 +88,10 @@ func _update_target_information(waypoint: Waypoint, transition: bool = true):
 	if playing_last_waypoint:
 		playing_last_waypoint.linked_ready = false
 
-	playing_last_waypoint = playing_waypoint
+	playing_last_waypoint = old_waypoint
 	playing_waypoint = waypoint
+
+	_calculate_accel_factors()
 
 	if transition:
 		state_machine.transition_to("wait_waypoint_conditions", {
@@ -89,17 +100,37 @@ func _update_target_information(waypoint: Waypoint, transition: bool = true):
 			"playing_last_waypoint": playing_last_waypoint,
 		})
 
+func _calculate_accel_factors():
+	# TODO: If next point has link, or enter, or exit, then slow to 1.0
+	#       prior to the waypoint somehow
+	var accel = playing_last_waypoint.param_accel * 64.0
+	playing_accelerate_state = 0.0
+
+	if accel < 0:
+		playing_accelerate_state = 1.0
+
+	playing_accel_time_factor = 1.0 / (absf(playing_target_speed - playing_speed) / accel )
+	playing_start_speed = playing_speed
+
+	if playing_start_speed == 0.0:
+		playing_start_speed = 1.0
 
 # Virtual function. Called by the state machine upon changing the active state. The `msg` parameter
 # is a dictionary with arbitrary data the state can use to initialize itself.
 func enter(_msg := {}, old_state_name: String = "") -> bool:
 	if old_state_name == "editor_state":
 		playing_target = Vector2.INF
-		playing_speed = 1.0
+		playing_speed = 0.0
 		playing_waypoint = null
 		playing_last_waypoint = null
 
 		_update_target_information(owner.waypoints.starting_node)
+
+	if old_state_name == "wait_waypoint_conditions":
+		playing_speed = 0.0
+		playing_start_speed = 1.0
+
+	_calculate_accel_factors()
 
 	return true
 

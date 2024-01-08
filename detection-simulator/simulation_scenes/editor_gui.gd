@@ -297,9 +297,9 @@ func _on_grouped(group: String, node: Node):
 					UndoSystem.add_action(new_action, false)
 			)
 
-			_add_editable_property("Speed", str(agent.waypoints.starting_node.param_speed_mps),
+			_add_editable_property("Target Speed", str(agent.waypoints.starting_node.param_speed_mps),
 				func(new_value: String):
-					var value = _on_editable_change("Speed", EditablePropertyType.TYPE_FLOAT, new_value)
+					var value = _on_editable_change("Target Speed", EditablePropertyType.TYPE_FLOAT, new_value)
 					var old_value = agent.waypoints.starting_node.param_speed_mps
 
 					if value != null and old_value != value:
@@ -327,17 +327,61 @@ func _on_grouped(group: String, node: Node):
 
 						# Update the label
 						new_action.action_method(UndoRedoAction.DoType.Do, func(agent_id, new_value):
-							if "Speed" in properties_editable_dict and "Agent ID" in properties_dict:
+							if "Target Speed" in properties_editable_dict and "Agent ID" in properties_dict:
 								if properties_dict["Agent ID"].text == str(agent_id):
-									properties_editable_dict["Speed"].text = str(new_value)
+									properties_editable_dict["Target Speed"].text = str(new_value)
 							, [agent.agent_id, value])
 
 						new_action.action_method(UndoRedoAction.DoType.Undo, func(agent_id, old_value):
-							if "Speed" in properties_editable_dict and "Agent ID" in properties_dict:
+							if "Target Speed" in properties_editable_dict and "Agent ID" in properties_dict:
 								if properties_dict["Agent ID"].text == str(agent_id):
-									properties_editable_dict["Speed"].text = str(old_value)
+									properties_editable_dict["Target Speed"].text = str(old_value)
 							, [agent.agent_id, old_value])
 
+
+						# Add the action to the undo system
+						UndoSystem.add_action(new_action, false)
+			)
+
+			_add_editable_property("Acceleration", str(agent.waypoints.starting_node.param_accel),
+				func(new_value: String):
+					var value = _on_editable_change("Acceleration", EditablePropertyType.TYPE_FLOAT, new_value)
+					var old_value = agent.waypoints.starting_node.param_accel
+
+					if value != null and old_value != value:
+						agent.waypoints.starting_node.param_accel = value
+
+						#######
+						# Add undo/redo action for agent.waypoints.starting_node.param_accel
+						#######
+
+						var new_action = UndoRedoAction.new()
+						new_action.action_name = "Change A%d Acceleration %f -> %f" % [agent.agent_id, old_value, new_value]
+
+						# Add a reference to the starting node
+						var waypoint_ref = new_action.action_store_method(UndoRedoAction.DoType.Do, func(agent_id: int):
+							var agent_ = TreeFuncs.get_agent_with_id(agent_id)
+							return agent_.waypoints.starting_node
+						, [agent.agent_id])
+
+						new_action.manual_add_item_to_store(agent.waypoints.starting_node, waypoint_ref)
+
+						# Update/restore the value
+						new_action.action_property_ref(UndoRedoAction.DoType.Do, waypoint_ref, "param_accel", value)
+						new_action.action_property_ref(UndoRedoAction.DoType.Undo, waypoint_ref, "param_accel", old_value)
+
+						# Update the label
+						new_action.action_method(UndoRedoAction.DoType.Do, func(agent_id, new_value):
+							if "Acceleration" in properties_editable_dict and "Agent ID" in properties_dict:
+								if properties_dict["Agent ID"].text == str(agent_id):
+									properties_editable_dict["Acceleration"].text = str(new_value)
+							, [agent.agent_id, value])
+
+						new_action.action_method(UndoRedoAction.DoType.Undo, func(agent_id, old_value):
+							if "Acceleration" in properties_editable_dict and "Agent ID" in properties_dict:
+								if properties_dict["Agent ID"].text == str(agent_id):
+									properties_editable_dict["Acceleration"].text = str(old_value)
+							, [agent.agent_id, old_value])
 
 						# Add the action to the undo system
 						UndoSystem.add_action(new_action, false)
@@ -407,9 +451,9 @@ func _on_grouped(group: String, node: Node):
 			_add_property("Agent ID", str(agent.agent_id))
 			_add_property("Waypoint Index", str(waypoint_index))
 			_add_property("Location", "(%.2f, %.2f)" % [waypoint.global_position.x / 64.0, -waypoint.global_position.y / 64.0])
-			_add_editable_property("Speed", str(waypoint.param_speed_mps),
+			_add_editable_property("Target Speed", str(waypoint.param_speed_mps),
 				func(new_value: String):
-					var value = _on_editable_change("Speed", EditablePropertyType.TYPE_FLOAT, new_value)
+					var value = _on_editable_change("Target Speed", EditablePropertyType.TYPE_FLOAT, new_value)
 					var old_value = waypoint.param_speed_mps
 
 					# If value is null (unparseable) or the same as the old value, ignore
@@ -438,15 +482,61 @@ func _on_grouped(group: String, node: Node):
 
 						# Update the label
 						new_action.action_method(UndoRedoAction.DoType.Do, func(agent_id, new_value):
-							if "Speed" in properties_editable_dict and "Agent ID" in properties_dict and "Waypoint Index" in properties_dict:
+							if "Target Speed" in properties_editable_dict and "Agent ID" in properties_dict and "Waypoint Index" in properties_dict:
 								if properties_dict["Agent ID"].text == str(agent_id) and properties_dict["Waypoint Index"].text == str(waypoint_index):
-									properties_editable_dict["Speed"].text = str(new_value)
+									properties_editable_dict["Target Speed"].text = str(new_value)
 							, [agent.agent_id, value])
 
 						new_action.action_method(UndoRedoAction.DoType.Undo, func(agent_id, old_value):
-							if "Speed" in properties_editable_dict and "Agent ID" in properties_dict and "Waypoint Index" in properties_dict:
+							if "Target Speed" in properties_editable_dict and "Agent ID" in properties_dict and "Waypoint Index" in properties_dict:
 								if properties_dict["Agent ID"].text == str(agent_id) and properties_dict["Waypoint Index"].text == str(waypoint_index):
-									properties_editable_dict["Speed"].text = str(old_value)
+									properties_editable_dict["Target Speed"].text = str(old_value)
+							, [agent.agent_id, old_value])
+
+						# Add the action to the undo system
+						UndoSystem.add_action(new_action, false)
+			)
+
+			_add_editable_property("Acceleration", str(waypoint.param_accel),
+				func(new_value: String):
+					var value = _on_editable_change("Acceleration", EditablePropertyType.TYPE_FLOAT, new_value)
+					var old_value = waypoint.param_accel
+
+					# If value is null (unparseable) or the same as the old value, ignore
+					if value != null and old_value != value:
+						# Update the value
+						waypoint.param_accel = value
+
+						######
+						# Add undo/redo action for waypoint.param_accel
+						######
+
+						var new_action = UndoRedoAction.new()
+						new_action.action_name = "Change Acceleration"
+
+						# Add a reference to the waypoint
+						var waypoint_ref = new_action.action_store_method(UndoRedoAction.DoType.Do, func(agent_id: int):
+							var agent_ = TreeFuncs.get_agent_with_id(agent_id)
+							return agent_.waypoints.waypoints[waypoint_index]
+						, [agent.agent_id])
+
+						new_action.manual_add_item_to_store(waypoint, waypoint_ref)
+
+						# Update/restore the value
+						new_action.action_property_ref(UndoRedoAction.DoType.Do, waypoint_ref, "param_accel", value)
+						new_action.action_property_ref(UndoRedoAction.DoType.Undo, waypoint_ref, "param_accel", old_value)
+
+						# Update the label
+						new_action.action_method(UndoRedoAction.DoType.Do, func(agent_id, new_value):
+							if "Acceleration" in properties_editable_dict and "Agent ID" in properties_dict and "Waypoint Index" in properties_dict:
+								if properties_dict["Agent ID"].text == str(agent_id) and properties_dict["Waypoint Index"].text == str(waypoint_index):
+									properties_editable_dict["Acceleration"].text = str(new_value)
+							, [agent.agent_id, value])
+
+						new_action.action_method(UndoRedoAction.DoType.Undo, func(agent_id, old_value):
+							if "Acceleration" in properties_editable_dict and "Agent ID" in properties_dict and "Waypoint Index" in properties_dict:
+								if properties_dict["Agent ID"].text == str(agent_id) and properties_dict["Waypoint Index"].text == str(waypoint_index):
+									properties_editable_dict["Acceleration"].text = str(old_value)
 							, [agent.agent_id, old_value])
 
 						# Add the action to the undo system
