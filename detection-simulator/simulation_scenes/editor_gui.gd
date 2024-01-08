@@ -23,35 +23,37 @@ func _ready():
 	GroupHelpers.connect("node_ungrouped", self._on_ungrouped)
 
 func _on_size_changed():
-	# Modify Properties size to
-	var viewport_size = get_viewport().size
+	if get_viewport():
+		# Modify Properties size to
+		var viewport_size = get_viewport().size
 
-	properties.size.y = viewport_size.y - play_bar.size.y
-	_properties_open_changed(properties_open)
+		properties.size.y = viewport_size.y - play_bar.size.y
+		_properties_open_changed(properties_open)
 
-	resize_spacer()
+		resize_spacer()
 
 
 func resize_spacer():
-	# Modify Properties size to
-	var viewport_size = get_viewport().size
+	if get_viewport():
+		# Modify Properties size to
+		var viewport_size = get_viewport().size
 
-	# Expand "Spacer" (child node of play_bar_container) to fill the remaining space between previous and subsequent nodes
-	var play_bar_previous_size = 0
-	var play_bar_next_size = 0
-	var spacer_found = false
+		# Expand "Spacer" (child node of play_bar_container) to fill the remaining space between previous and subsequent nodes
+		var play_bar_previous_size = 0
+		var play_bar_next_size = 0
+		var spacer_found = false
 
-	for child in play_bar_container.get_children():
-		if child == play_bar_container_spacer:
-			spacer_found = true
-			continue
+		for child in play_bar_container.get_children():
+			if child == play_bar_container_spacer:
+				spacer_found = true
+				continue
 
-		if not spacer_found:
-			play_bar_previous_size += child.size.x
-		else:
-			play_bar_next_size += child.size.x
+			if not spacer_found:
+				play_bar_previous_size += child.size.x
+			else:
+				play_bar_next_size += child.size.x
 
-	play_bar_container_spacer.custom_minimum_size.x = viewport_size.x - play_bar_previous_size - play_bar_next_size - 20
+		play_bar_container_spacer.custom_minimum_size.x = viewport_size.x - play_bar_previous_size - play_bar_next_size - 20
 
 func _properties_open_changed(value):
 	if get_viewport():
