@@ -182,8 +182,9 @@ func _move(last_position: Vector2, new_position: Vector2):
 
 	if new_position != global_position:
 		global_position = new_position
-		waypoints.starting_node.global_position = self.global_position
-		waypoints.waypoint_lines.queue_redraw()
+
+	waypoints.starting_node.global_position = self.global_position
+	waypoints.waypoint_lines.queue_redraw()
 
 	var undo_action = UndoRedoAction.new()
 	undo_action.action_name = "Move Agent %d" % agent_id

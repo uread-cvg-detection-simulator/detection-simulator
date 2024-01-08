@@ -26,6 +26,7 @@ func _on_hold():
 	if clickable:
 		_moving = true
 		_moving_start_pos = parent_object.global_position
+		hold_start.emit(parent_object.global_position)
 
 ## Handles when mouse has stopped being held
 func _on_hold_stop():
