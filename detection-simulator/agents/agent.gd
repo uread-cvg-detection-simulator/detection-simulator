@@ -13,31 +13,36 @@ enum AgentType {
 	SquareTarget,
 	PersonTarget,
 	BoatTarget,
+	CarTarget,
 	Invisible,
 }
 
 @onready var _type_map = { AgentType.Circle : $circle_target,
 						   AgentType.SquareTarget : $square_target,
 						   AgentType.PersonTarget : $person_target,
-						   AgentType.BoatTarget : $boat_target }
+						   AgentType.BoatTarget : $boat_target,
+						   AgentType.CarTarget: $car_target }
 
 var _type_string = {
 	AgentType.Circle : "Circle",
 	AgentType.SquareTarget: "Square",
 	AgentType.PersonTarget: "Person",
 	AgentType.BoatTarget: "Ship",
+	AgentType.CarTarget: "Car",
 	AgentType.Invisible: "Invisible"
 }
 
 @export var type_is_vehicle = { AgentType.Circle : false,
 								AgentType.SquareTarget: false,
 								AgentType.PersonTarget: false,
-								AgentType.BoatTarget: true}
+								AgentType.BoatTarget: true,
+								AgentType.CarTarget: true}
 
 @export var type_default_colours = { AgentType.Circle : Color.GREEN,
 									 AgentType.SquareTarget : Color.WHITE,
 									 AgentType.PersonTarget : Color.GREEN,
-									 AgentType.BoatTarget: Color.GREEN }
+									 AgentType.BoatTarget: Color.GREEN,
+									 AgentType.CarTarget: Color.GREEN }
 
 @export_group("Scene References")
 @export var state_machine: StateMachine = null

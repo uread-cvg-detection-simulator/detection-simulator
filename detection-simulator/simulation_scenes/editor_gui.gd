@@ -245,8 +245,10 @@ func _on_grouped(group: String, node: Node):
 					agent_type_index = 0
 				Agent.AgentType.BoatTarget:
 					agent_type_index = 1
+				Agent.AgentType.CarTarget:
+					agent_type_index = 2
 
-			_add_dropdown("Agent Type", ["Person", "Ship"], agent_type_index,
+			_add_dropdown("Agent Type", ["Person", "Ship", "Car"], agent_type_index,
 				func(selected_index: int):
 					var new_target = null
 					match selected_index:
@@ -254,6 +256,8 @@ func _on_grouped(group: String, node: Node):
 							new_target = Agent.AgentType.PersonTarget
 						1:
 							new_target = Agent.AgentType.BoatTarget
+						2:
+							new_target = Agent.AgentType.CarTarget
 
 					var old_target = agent.agent_type
 
