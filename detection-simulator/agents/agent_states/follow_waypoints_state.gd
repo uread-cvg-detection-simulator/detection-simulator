@@ -10,7 +10,6 @@ func update(_delta: float) -> void:
 
 var playing_waypoint: Waypoint = null ## The waypoint that the agent is currently moving towards
 var playing_last_waypoint: Waypoint = null ## The last waypoint
-var playing_target: Vector2 = Vector2.INF ## The target position of the next move
 var playing_speed: float = 1.0 ## The speed at which the agent will move
 
 var playing_accel_time_factor: float = 0.0
@@ -29,10 +28,10 @@ func physics_update(delta: float) -> void:
 			playing_accelerate_state += delta * playing_accel_time_factor
 
 		playing_speed = lerpf(playing_start_speed, playing_target_speed, playing_accelerate_state)
-		owner.global_position = owner.global_position.move_toward(playing_target, playing_speed * delta)
+		owner.global_position = owner.global_position.move_toward(playing_waypoint.global_position, playing_speed * delta * PlayTimer.ui_scale)
 
 		# If reached target, update target information with next waypoint if there is one
-		if owner.global_position == playing_target:
+		if owner.global_position == playing_waypoint.global_position:
 			# If previous node is an exit node, set it's linked_ready to true (so the vehicle can move on)
 			if playing_waypoint.pt_previous and playing_waypoint.pt_previous.waypoint_type == Waypoint.WaypointType.EXIT:
 				playing_waypoint.pt_previous.linked_ready = true
@@ -81,9 +80,6 @@ func _update_target_information(waypoint: Waypoint, transition: bool = true):
 	else:
 		playing_target_speed = old_waypoint.param_speed_mps * 64.0 # TODO: get this from grid-lines
 
-	# Set the target position
-	playing_target = waypoint.global_position
-
 	# Update the current waypoint
 	if playing_last_waypoint:
 		playing_last_waypoint.linked_ready = false
@@ -119,7 +115,6 @@ func _calculate_accel_factors():
 # is a dictionary with arbitrary data the state can use to initialize itself.
 func enter(_msg := {}, old_state_name: String = "") -> bool:
 	if old_state_name == "editor_state":
-		playing_target = Vector2.INF
 		playing_speed = 0.0
 		playing_waypoint = null
 		playing_last_waypoint = null

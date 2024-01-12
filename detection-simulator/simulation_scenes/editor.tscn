@@ -9,13 +9,14 @@
 [ext_resource type="PackedScene" uid="uid://pxotaj1n83vy" path="res://agents/sensor.tscn" id="5_iwj3y"]
 [ext_resource type="Script" path="res://simulation_scenes/global_exporter.gd" id="8_1i7iy"]
 
-[node name="editor" type="Node2D" node_paths=PackedStringArray("_agent_root", "_sensor_root", "_gui", "_rightclick_empty", "_status_label", "_play_button", "_save_button", "_load_button", "_export_button", "_autosave_check", "_bg_button", "_camera", "fd_writer", "fd_reader")]
+[node name="editor" type="Node2D" node_paths=PackedStringArray("_agent_root", "_sensor_root", "_gui", "_rightclick_empty", "_status_label", "_ui_scale", "_play_button", "_save_button", "_load_button", "_export_button", "_autosave_check", "_bg_button", "_camera", "fd_writer", "fd_reader")]
 script = ExtResource("1_o3h7t")
 _agent_root = NodePath("agents")
 _sensor_root = NodePath("sensors")
 _gui = NodePath("CanvasLayer")
 _rightclick_empty = NodePath("empty_right_click_menu")
 _status_label = NodePath("CanvasLayer/PlayBar/HBoxContainer/StatusInfo")
+_ui_scale = NodePath("CanvasLayer/PlayBar/HBoxContainer/UIScale")
 _play_button = NodePath("CanvasLayer/PlayBar/HBoxContainer/PlayButton")
 _save_button = NodePath("CanvasLayer/PlayBar/HBoxContainer/SaveButton")
 _load_button = NodePath("CanvasLayer/PlayBar/HBoxContainer/LoadButton")
@@ -71,6 +72,10 @@ vertical_alignment = 1
 
 [node name="Spacer" type="Label" parent="CanvasLayer/PlayBar/HBoxContainer"]
 layout_mode = 2
+
+[node name="UIScale" type="Label" parent="CanvasLayer/PlayBar/HBoxContainer"]
+layout_mode = 2
+text = "UI Scale: 1.0"
 
 [node name="AutoSaveCheck" type="CheckButton" parent="CanvasLayer/PlayBar/HBoxContainer"]
 layout_mode = 2

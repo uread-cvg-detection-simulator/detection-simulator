@@ -5,6 +5,7 @@ var previous_time: float = 0.00
 var play: bool = false : set = _set_play
 var exporting: bool = false
 var export_scale: float = 1.0
+var ui_scale: float = 1.0
 
 signal start_playing()
 signal stop_playing()

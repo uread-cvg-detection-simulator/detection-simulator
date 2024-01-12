@@ -53,7 +53,7 @@ var _type_string = {
 var agent_type: AgentType = AgentType.PersonTarget : set = _set_agent_type
 var is_vehicle: bool = false
 var collision_shape = null
-
+var ui_scale = 1.0
 @onready var context_menu: PopupMenu = $ContextMenu
 @onready var waypoints: AgentWaypointHandler = $waypoints
 
@@ -70,6 +70,8 @@ var playing_finished: bool = false ## Specifies whether the agent has finished p
 
 var exporting_path = null
 var exporting_file_access: FileAccess = null
+
+var base_editor: ScenarioEditor = null : set = _set_editor
 
 # Called when the node enters the scene tree for the first time.
 func _ready():
@@ -120,8 +122,8 @@ func play_export() -> Dictionary:
 	var data = {
 		"id" : agent_id,
 		"type" : _type_string[agent_type],
-		"x": (global_position.x / 64.0) * PlayTimer.export_scale,
-		"y": (-global_position.y / 64.0) * PlayTimer.export_scale,
+		"x": ((global_position.x / 64.0) / PlayTimer.ui_scale) * PlayTimer.export_scale,
+		"y": ((-global_position.y / 64.0) / PlayTimer.ui_scale) * PlayTimer.export_scale,
 		"visible": visible,
 	}
 
@@ -195,8 +197,18 @@ func _move(last_position: Vector2, new_position: Vector2):
 	undo_action.action_name = "Move Agent %d" % agent_id
 
 	var ref = undo_action.action_store_method(UndoRedoAction.DoType.Do, TreeFuncs.get_agent_with_id, [agent_id])
-	undo_action.action_property_ref(UndoRedoAction.DoType.Do, ref, "global_position", new_position)
-	undo_action.action_property_ref(UndoRedoAction.DoType.Undo, ref, "global_position", last_position)
+	undo_action.action_property_ref(UndoRedoAction.DoType.Do, ref, "global_position", new_position / PlayTimer.ui_scale)
+	undo_action.action_method(UndoRedoAction.DoType.Do, func(agent):
+		agent.global_position = agent.global_position * PlayTimer.ui_scale
+		agent.waypoints.starting_node.global_position = agent.global_position
+	, [ref], ref)
+
+	undo_action.action_property_ref(UndoRedoAction.DoType.Undo, ref, "global_position", last_position / PlayTimer.ui_scale)
+	undo_action.action_method(UndoRedoAction.DoType.Undo, func(agent):
+		agent.global_position = agent.global_position * PlayTimer.ui_scale
+		agent.waypoints.starting_node.global_position = agent.global_position
+	, [ref], ref)
+
 
 	# Queue redraw of waypoint lines
 	undo_action.action_method(UndoRedoAction.DoType.Do, func(agent):
@@ -310,3 +322,13 @@ func reset_position():
 func _set_clickable(new_value: bool):
 	clickable = new_value
 	dragable_object.clickable = new_value
+
+func ui_scale_update(new_scale: float, old_scale: float):
+	ui_scale = new_scale
+	global_position = (global_position / old_scale) * new_scale
+	waypoints.starting_node.global_position = (waypoints.starting_node.global_position / old_scale) * new_scale
+	waypoints.waypoint_lines.queue_redraw()
+
+func _set_editor(editor: ScenarioEditor):
+	base_editor = editor
+	waypoints.base_editor = editor

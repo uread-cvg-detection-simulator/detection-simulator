@@ -13,6 +13,8 @@ extends Node2D
 
 @onready var context_menu = $ContextMenu
 
+var ui_scale: float = 1.0
+
 enum ContextMenuIDs {
 	DELETE,
 	PROPERTIES,
@@ -133,8 +135,8 @@ func get_save_data() -> Dictionary:
 	var save_data = {
 		"waypoint_version": 4,
 		"global_position": {
-			"x": global_position.x,
-			"y": global_position.y,
+			"x": global_position.x / PlayTimer.ui_scale,
+			"y": global_position.y / PlayTimer.ui_scale,
 		},
 		"param_speed_mps": param_speed_mps,
 		"param_start_time": param_start_time,
@@ -603,3 +605,6 @@ func _clickable(new_value:bool):
 	clickable = new_value
 	$DragableObject.clickable = new_value
 
+func ui_scale_update(new_scale: float, old_scale: float):
+	ui_scale = new_scale
+	global_position = (global_position / old_scale) * new_scale

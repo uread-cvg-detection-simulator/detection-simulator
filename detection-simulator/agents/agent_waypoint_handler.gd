@@ -17,6 +17,7 @@ var waypoint_scene = preload("res://agents/waypoint.tscn")
 
 var initialised = false
 var clickable = true : set = _set_clickable
+var base_editor: ScenarioEditor = null : set = _set_editor
 
 func _ready():
 	initialised = true
@@ -553,13 +554,16 @@ func insert_after(current_point: Waypoint, new_global_point: Vector2, waypoint_t
 	return new_waypoint
 
 func _instantiate_waypoint(new_global_point: Vector2, previous_point: Waypoint, next_point: Waypoint, waypoint_type: Waypoint.WaypointType = Waypoint.WaypointType.WAYPOINT) -> Waypoint:
+
 	print_debug("Instantiating waypoint at %s [%s -> %s]" % [new_global_point, previous_point, next_point])
-	var new_waypoint: Node2D = waypoint_scene.instantiate()
+	var new_waypoint: Waypoint = waypoint_scene.instantiate()
 	new_waypoint.global_position = new_global_point
 	new_waypoint.camera = camera
 
 	if parent_object:
 		new_waypoint.parent_object = parent_object
+
+	base_editor.ui_scale_set.connect(new_waypoint.ui_scale_update)
 
 	add_child(new_waypoint)
 
@@ -597,3 +601,6 @@ func _set_disabled(value):
 
 	for waypoint in waypoints:
 		waypoint.disabled = disabled
+
+func _set_editor(editor: ScenarioEditor):
+	base_editor = editor

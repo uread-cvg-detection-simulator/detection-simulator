@@ -24,7 +24,8 @@ func switch_to_editor(image: Sprite2D, centre_marker: Vector2, scale_marker: Vec
 
 		add_child(bg_image)
 		bg_image.visible = true
-		bg_image.global_position = -centre_marker
+		bg_image.scale = Vector2(editor.ui_scale, editor.ui_scale)
+		bg_image.global_position = -centre_marker * editor.ui_scale
 
 		bg_image_buffer = Marshalls.raw_to_base64(bg_image.texture.get_image().save_jpg_to_buffer(1.0))
 
@@ -45,6 +46,7 @@ func switch_to_loader():
 		remove_child(bg_image)
 
 		bg_image.global_position = Vector2.ZERO
+		bg_image.scale = Vector2.ONE
 
 		image_loader._start_with_sprite(bg_image, bg_offset, bg_scale_marker, editor.export_scale)
 		bg_image = null

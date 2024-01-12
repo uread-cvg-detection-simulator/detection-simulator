@@ -13,6 +13,7 @@ class_name ScenarioEditor
 
 @export_subgroup("Labels")
 @export var _status_label : Label = null
+@export var _ui_scale: Label = null
 
 @export_subgroup("Buttons")
 @export var _play_button : Button = null
@@ -50,6 +51,7 @@ var _data_to_save = false
 signal play_agents_finished
 
 var export_scale: float = 1.0
+var ui_scale: float = 1.0 : set = _set_ui_scale
 
 enum empty_menu_enum {
 	SPAWN_AGENT,
@@ -97,8 +99,8 @@ func get_save_data() -> Dictionary:
 
 			save_data["bg_image"] = image_buffer
 			save_data["bg_offset"] = {
-				"x" : -root_scene.bg_image.global_position.x,
-				"y" : -root_scene.bg_image.global_position.y
+				"x" : root_scene.bg_offset.x,
+				"y" : root_scene.bg_offset.y
 			}
 
 			save_data["bg_scale_marker"] = {
@@ -119,6 +121,7 @@ func load_save_data(data: Dictionary):
 	UndoSystem.clear_history()
 
 	_last_id = 1000
+	ui_scale = 1.0
 
 	# Load agents
 	if data.has("version"):
@@ -320,6 +323,12 @@ func _unhandled_input(event):
 		current_zoom.y -= 0.1
 
 		$Camera2D.zoom = current_zoom
+	
+	if event.is_action_pressed("scale_up"):
+		ui_scale += 1.0
+	
+	if event.is_action_pressed("scale_down"):
+		ui_scale -= 1.0
 
 func _right_click(event: InputEventMouseButton):
 	# Calculate the mouse relative position to place the
@@ -379,6 +388,8 @@ func spawn_agent(position: Vector2) -> Agent:
 	_agent_root.add_child(new_agent)
 	GroupHelpers.add_node_to_group(new_agent, "agent")
 	new_agent.camera = $Camera2D
+	ui_scale_set.connect(new_agent.ui_scale_update)
+	new_agent.base_editor = self
 
 	############
 	# DO ACTIONS
@@ -390,7 +401,13 @@ func spawn_agent(position: Vector2) -> Agent:
 	var duplicate_ref = newinstance_ref
 
 	# Set position and agent id
-	undo_action.action_property_ref(UndoRedoAction.DoType.Do, duplicate_ref, "global_position", position)
+	undo_action.action_property_ref(UndoRedoAction.DoType.Do, duplicate_ref, "global_position", position / ui_scale)
+	undo_action.action_property_ref(UndoRedoAction.DoType.Do, duplicate_ref, "base_editor", self)
+	undo_action.action_method(UndoRedoAction.DoType.Do, func(ref):
+		ref.global_position = ref.global_position * ui_scale
+		ui_scale_set.connect(ref.ui_scale_update)
+		, [duplicate_ref], [duplicate_ref])
+
 	undo_action.action_property_ref(UndoRedoAction.DoType.Do, duplicate_ref, "agent_id", _last_id + 1)
 	undo_action.action_property(UndoRedoAction.DoType.Do, self, "_last_id", _last_id + 1)
 
@@ -435,11 +452,16 @@ func spawn_sensor(position: Vector2):
 	# DO ACTIONS
 	############
 
+	# TODO - Handle ui_scale
 	# Create the new sensor at the provided location
 	var newinstance_ref = undo_action.action_store_method(UndoRedoAction.DoType.Do, _sensor_base.instantiate)
 
 	# Set position and sensor id
-	undo_action.action_property_ref(UndoRedoAction.DoType.Do, newinstance_ref, "global_position", position)
+	undo_action.action_property_ref(UndoRedoAction.DoType.Do, newinstance_ref, "global_position", position / ui_scale)
+	undo_action.action_method(UndoRedoAction.DoType.Do, func(ref):
+		ref.global_position = ref.global_position * ui_scale
+		ui_scale_set.connect(ref.ui_scale_update)
+		, [newinstance_ref], newinstance_ref)
 	undo_action.action_property_ref(UndoRedoAction.DoType.Do, newinstance_ref, "sensor_id", _last_sensor_id + 1)
 	undo_action.action_property(UndoRedoAction.DoType.Do, self, "_last_sensor_id", _last_sensor_id + 1)
 
@@ -592,3 +614,32 @@ func _on_fd_reader_file_selected(path: String):
 func _on_bg_image_button_pressed():
 	if root_scene:
 		root_scene.switch_to_loader()
+
+signal ui_scale_set(new_scale: float, old_scale: float)
+
+func _set_ui_scale(scale: float):
+	var old_scale = ui_scale
+	
+	ui_scale = scale
+	
+	if ui_scale < 1.0:
+		ui_scale = 1.0
+	
+	PlayTimer.ui_scale = ui_scale
+	
+	# Update entities
+	ui_scale_set.emit(ui_scale, old_scale)
+	
+	# Rescale/position bg image
+	if root_scene.bg_image != null:
+		root_scene.bg_image.scale = Vector2(ui_scale, ui_scale)
+		root_scene.bg_image.global_position = -(root_scene.bg_offset) * ui_scale
+	
+	# Position camera at same relative location from centre
+	# Camera global location is top_left
+	var old_camera_center = $Camera2D.global_position
+	var new_camera_center = (old_camera_center / old_scale) * ui_scale
+	$Camera2D.global_position = new_camera_center
+	
+	# Update UI
+	_ui_scale.text = "UI Scale: %.1f" % [ui_scale]

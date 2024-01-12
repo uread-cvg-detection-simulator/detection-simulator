@@ -27,6 +27,7 @@ var export_last_data: Dictionary = {}
 
 var sensor_id: int = -1
 var current_detections: Array[Agent] = []
+var ui_scale: float = 1.0
 
 enum ContextMenuIDs {
 	DELETE,
@@ -54,10 +55,10 @@ func get_save_data() -> Dictionary:
 		"sensor_id": sensor_id,
 		"sensor_fov_degrees": sensor_fov_degrees,
 		"rotation_degrees": vision_cone.rotation_degrees,
-		"sensor_distance" : sensor_distance,
+		"sensor_distance" : sensor_distance / ui_scale,
 		"global_position": {
-			"x": global_position.x,
-			"y": global_position.y
+			"x": global_position.x / ui_scale,
+			"y": global_position.y / ui_scale
 		}
 	}
 
@@ -262,7 +263,10 @@ func _on_mouse_hold_end():
 
 
 			var ref = undo_action.action_store_method(UndoRedoAction.DoType.Do, TreeFuncs.get_sensor_with_id, [sensor_id])
-			undo_action.action_property_ref(UndoRedoAction.DoType.Do, ref, "global_position", global_position)
+			undo_action.action_property_ref(UndoRedoAction.DoType.Do, ref, "global_position", global_position / ui_scale)
+			undo_action.action_method(UndoRedoAction.DoType.Do, func(ref):
+				ref.global_position = ref.global_position * ui_scale
+				, [ref], ref)
 			undo_action.action_property_ref(UndoRedoAction.DoType.Undo, ref, "global_position", _drag_start_pos)
 
 			undo_action.manual_add_item_to_store(self, ref)
@@ -282,3 +286,8 @@ func _on_selection_toggled(selection):
 func _set_framerate(value):
 	export_framerate = value
 	export_timestep = 1.0 / float(value)
+
+func ui_scale_update(new_scale: float, old_scale: float):
+	ui_scale = new_scale
+	global_position = (global_position / old_scale) * new_scale
+	sensor_distance = (sensor_distance / old_scale) * new_scale
