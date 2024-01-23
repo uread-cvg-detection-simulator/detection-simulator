@@ -323,12 +323,18 @@ func _unhandled_input(event):
 		current_zoom.y -= 0.1
 
 		$Camera2D.zoom = current_zoom
-	
+
 	if event.is_action_pressed("scale_up"):
 		ui_scale += 1.0
-	
+
 	if event.is_action_pressed("scale_down"):
 		ui_scale -= 1.0
+
+	if event.is_action_pressed("ui_cancel") or event.is_action_pressed("ui_accept"):
+		var current = get_viewport().gui_get_focus_owner()
+
+		if current:
+			current.release_focus()
 
 func _right_click(event: InputEventMouseButton):
 	# Calculate the mouse relative position to place the
@@ -619,27 +625,27 @@ signal ui_scale_set(new_scale: float, old_scale: float)
 
 func _set_ui_scale(scale: float):
 	var old_scale = ui_scale
-	
+
 	ui_scale = scale
-	
+
 	if ui_scale < 1.0:
 		ui_scale = 1.0
-	
+
 	PlayTimer.ui_scale = ui_scale
-	
+
 	# Update entities
 	ui_scale_set.emit(ui_scale, old_scale)
-	
+
 	# Rescale/position bg image
 	if root_scene.bg_image != null:
 		root_scene.bg_image.scale = Vector2(ui_scale, ui_scale)
 		root_scene.bg_image.global_position = -(root_scene.bg_offset) * ui_scale
-	
+
 	# Position camera at same relative location from centre
 	# Camera global location is top_left
 	var old_camera_center = $Camera2D.global_position
 	var new_camera_center = (old_camera_center / old_scale) * ui_scale
 	$Camera2D.global_position = new_camera_center
-	
+
 	# Update UI
 	_ui_scale.text = "UI Scale: %.1f" % [ui_scale]
