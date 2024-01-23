@@ -16,7 +16,7 @@ _sensor_root = NodePath("sensors")
 _gui = NodePath("CanvasLayer")
 _rightclick_empty = NodePath("empty_right_click_menu")
 _status_label = NodePath("CanvasLayer/PlayBar/HBoxContainer/StatusInfo")
-_ui_scale = NodePath("CanvasLayer/PlayBar/HBoxContainer/UIScale")
+_ui_scale = NodePath("CanvasLayer/PlayBar/HBoxContainer/UiScaleEdit")
 _play_button = NodePath("CanvasLayer/PlayBar/HBoxContainer/PlayButton")
 _save_button = NodePath("CanvasLayer/PlayBar/HBoxContainer/SaveButton")
 _load_button = NodePath("CanvasLayer/PlayBar/HBoxContainer/LoadButton")
@@ -75,7 +75,13 @@ layout_mode = 2
 
 [node name="UIScale" type="Label" parent="CanvasLayer/PlayBar/HBoxContainer"]
 layout_mode = 2
-text = "UI Scale: 1.0"
+text = "Ui Scale: "
+
+[node name="UiScaleEdit" type="TextEdit" parent="CanvasLayer/PlayBar/HBoxContainer"]
+custom_minimum_size = Vector2(60, 35)
+layout_mode = 2
+text = "1.0"
+scroll_fit_content_height = true
 
 [node name="AutoSaveCheck" type="CheckButton" parent="CanvasLayer/PlayBar/HBoxContainer"]
 layout_mode = 2
@@ -171,6 +177,8 @@ script = ExtResource("8_1i7iy")
 editor_base = NodePath("..")
 
 [connection signal="pressed" from="CanvasLayer/PlayBar/HBoxContainer/PlayButton" to="." method="_on_play_button_pressed"]
+[connection signal="focus_exited" from="CanvasLayer/PlayBar/HBoxContainer/UiScaleEdit" to="." method="_on_ui_scale_edit_focus_exited"]
+[connection signal="text_changed" from="CanvasLayer/PlayBar/HBoxContainer/UiScaleEdit" to="." method="_on_ui_scale_edit_text_changed"]
 [connection signal="pressed" from="CanvasLayer/PlayBar/HBoxContainer/SaveButton" to="." method="_on_save_button_pressed"]
 [connection signal="pressed" from="CanvasLayer/PlayBar/HBoxContainer/ExportButton" to="." method="_on_export_button_pressed"]
 [connection signal="pressed" from="CanvasLayer/PlayBar/HBoxContainer/LoadButton" to="." method="_on_load_button_pressed"]
