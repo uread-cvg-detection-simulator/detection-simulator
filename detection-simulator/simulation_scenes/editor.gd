@@ -13,7 +13,7 @@ class_name ScenarioEditor
 
 @export_subgroup("Labels")
 @export var _status_label : Label = null
-@export var _ui_scale: Label = null
+@export var _ui_scale: TextEdit = null
 
 @export_subgroup("Buttons")
 @export var _play_button : Button = null
@@ -648,4 +648,20 @@ func _set_ui_scale(scale: float):
 	$Camera2D.global_position = new_camera_center
 
 	# Update UI
-	_ui_scale.text = "UI Scale: %.1f" % [ui_scale]
+	_ui_scale.text = "%.1f" % [ui_scale]
+
+
+func _on_ui_scale_edit_text_changed():
+	var value: String = _ui_scale.text
+
+	if value.is_valid_float():
+		_ui_scale.set("theme_override_colors/font_color", null)
+	else:
+		_ui_scale.set("theme_override_colors/font_color", Color(1, 0, 0))
+
+
+func _on_ui_scale_edit_focus_exited():
+	var value: String = _ui_scale.text
+
+	if value.is_valid_float():
+		ui_scale = value.to_float()
