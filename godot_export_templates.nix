@@ -26,6 +26,7 @@ let
 	godot_export_templates = pkgs.stdenv.mkDerivation {
 		name = "godot_export_templates-${godot_version}";
 		src = godot_export_templates_src;
+		version = godot_version_mod;
 		phases = [ "unpackPhase" ];
 
 		buildInputs = [ pkgs.unzip ];

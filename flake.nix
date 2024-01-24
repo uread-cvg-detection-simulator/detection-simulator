@@ -83,12 +83,12 @@
 							set -a; source .env; set +a;
 
 							# Link export templates if not already done ~/.local/share/godot/export_templates/VERSION.stable (update if symlink is to incorrect location)
-							if [ ! -d ~/.local/share/godot/export_templates/${pkgs.godot_4.version}.stable ]; then
+							if [ ! -d ~/.local/share/godot/export_templates/${godot_export_templates.version}.stable ]; then
 								mkdir -p ~/.local/share/godot/export_templates
-								ln -s ${godot_export_templates}/templates ~/.local/share/godot/export_templates/${pkgs.godot_4.version}.stable
-							elif [ "$(readlink ~/.local/share/godot/export_templates/${pkgs.godot_4.version}.stable)" != "${godot_export_templates}/templates" ]; then
-								rm -r ~/.local/share/godot/export_templates/${pkgs.godot_4.version}.stable
-								ln -s ${godot_export_templates}/templates ~/.local/share/godot/export_templates/${pkgs.godot_4.version}.stable
+								ln -s ${godot_export_templates}/templates ~/.local/share/godot/export_templates/${godot_export_templates.version}.stable
+							elif [ "$(readlink ~/.local/share/godot/export_templates/${godot_export_templates.version}.stable)" != "${godot_export_templates}/templates" ]; then
+								rm -r ~/.local/share/godot/export_templates/${godot_export_templates.version}.stable
+								ln -s ${godot_export_templates}/templates ~/.local/share/godot/export_templates/${godot_export_templates.version}.stable
 							fi
 						'';
 					};
@@ -100,12 +100,12 @@
 							set -a; source .env; set +a;
 
 							# Link export templates if not already done ~/.local/share/godot/export_templates/VERSION.stable (update if symlink is to incorrect location)
-							if [ ! -d ~/.local/share/godot/export_templates/${pkgs.godot_4.version}.stable ]; then
+							if [ ! -d ~/.local/share/godot/export_templates/${godot_export_templates.version}.stable ]; then
 								mkdir -p ~/.local/share/godot/export_templates
-								ln -s ${godot_export_templates}/templates ~/.local/share/godot/export_templates/${pkgs.godot_4.version}.stable
-							elif [ "$(readlink ~/.local/share/godot/export_templates/${pkgs.godot_4.version}.stable)" != "${godot_export_templates}/templates" ]; then
-								rm -r ~/.local/share/godot/export_templates/${pkgs.godot_4.version}.stable
-								ln -s ${godot_export_templates}/templates ~/.local/share/godot/export_templates/${pkgs.godot_4.version}.stable
+								ln -s ${godot_export_templates}/templates ~/.local/share/godot/export_templates/${godot_export_templates.version}.stable
+							elif [ "$(readlink ~/.local/share/godot/export_templates/${godot_export_templates.version}.stable)" != "${godot_export_templates}/templates" ]; then
+								rm -r ~/.local/share/godot/export_templates/${godot_export_templates.version}.stable
+								ln -s ${godot_export_templates}/templates ~/.local/share/godot/export_templates/${godot_export_templates.version}.stable
 							fi
 						'';
 					};
