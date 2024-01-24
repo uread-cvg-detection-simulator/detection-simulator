@@ -664,4 +664,6 @@ func _on_ui_scale_edit_focus_exited():
 	var value: String = _ui_scale.text
 
 	if value.is_valid_float():
-		ui_scale = value.to_float()
+		var temp_value = value.to_float()
+
+		ui_scale = maxf(temp_value, 1.0)
