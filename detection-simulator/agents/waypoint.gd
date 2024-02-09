@@ -197,6 +197,11 @@ func _process(delta):
 			var waypoint_index = node_data["waypoint_index"]
 
 			var agent: Agent = TreeFuncs.get_agent_with_id(agent_id)
+
+			if not agent:
+				printerr("Agent [ %d ] not found for waypoint link" % agent_id)
+				continue
+
 			var waypoint = agent.waypoints.get_waypoint(waypoint_index)
 
 			if waypoint not in linked_nodes:
@@ -212,19 +217,24 @@ func _process(delta):
 		var wp_id = load_enter_exit_nodes[1]
 
 		var agent: Agent = TreeFuncs.get_agent_with_id(agent_id)
-		var waypoint = agent.waypoints.get_waypoint(wp_id)
 
-		if waypoint:
-			if waypoint_type == WaypointType.ENTER:
-				waypoint.enter_nodes.append(self)
-			elif waypoint_type == WaypointType.EXIT:
-				waypoint.exit_nodes.append(self)
-			else:
-				printerr("No waypoint type on load enter/exit?")
+		if agent:
+			var waypoint = agent.waypoints.get_waypoint(wp_id)
 
-			vehicle_wp = waypoint
+			if waypoint:
+				if waypoint_type == WaypointType.ENTER:
+					waypoint.enter_nodes.append(self)
+				elif waypoint_type == WaypointType.EXIT:
+					waypoint.exit_nodes.append(self)
+				else:
+					printerr("No waypoint type on load enter/exit?")
 
-			load_enter_exit_nodes.clear()
+				vehicle_wp = waypoint
+
+				load_enter_exit_nodes.clear()
+		else:
+			printerr("Agent [ %d ] not found for enter/exit waypoint" % agent_id)
+
 
 func _context_menu_id_pressed(id: ContextMenuIDs):
 	match id:

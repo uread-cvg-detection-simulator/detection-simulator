@@ -47,11 +47,20 @@ func _check_ready() -> bool:
 			var check_enter_ready = true
 
 			for node in playing_last_waypoint.enter_nodes:
+
+				if TreeFuncs.get_agent_with_id(node.parent_object.agent_id) == null:
+					printerr("Agent with id [ %d ] not found in tree when checking enter nodes" % node.parent_object.agent_id)
+					continue
+
 				if not node.linked_ready:
 					check_enter_ready = false
 					comp_signal.add_signal(node.linked_ready_changed)
 
 			for node in playing_last_waypoint.exit_nodes:
+				if TreeFuncs.get_agent_with_id(node.parent_object.agent_id) == null:
+					printerr("Agent with id [ %d ] not found in tree when checking exit nodes" % node.parent_object.agent_id)
+					continue
+
 				if not node.linked_ready:
 					check_enter_ready = false
 					comp_signal.add_signal(node.linked_ready_changed)
@@ -108,7 +117,13 @@ func _determine_wait_time() -> bool:
 	if playing_last_waypoint:
 		# Wait until all linked nodes are ready
 		for node in playing_last_waypoint.linked_nodes:
+
 			if node in ignore_linked_nodes:
+				continue
+
+			if TreeFuncs.get_agent_with_id(node.parent_object.agent_id) == null:
+				printerr("Agent with id [ %d ] not found in tree when checking linked nodes" % node.parent_object.agent_id)
+				ignore_linked_nodes.append(node)
 				continue
 
 			if not node.linked_ready:
