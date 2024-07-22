@@ -41,7 +41,6 @@ var parent_object: Agent = null
 var initialised = false
 @export var camera: Camera2D = null
 
-var attempting_link = false
 var linked_nodes: Array[Waypoint] = []
 var linked_ready: bool = false : set = _linked_ready_changed
 signal linked_ready_changed(value: bool)
@@ -74,26 +73,33 @@ func _prepare_menu():
 	context_menu.add_item("Delete Waypoint", ContextMenuIDs.DELETE)
 	context_menu.add_item("Properties", ContextMenuIDs.PROPERTIES)
 
-	context_menu.add_separator()
-	context_menu.add_item("Start Linking...", ContextMenuIDs.LINK_WAYPOINT)
-
 	# If waypoint of another agent is selected, add "Enter Vehicle" to the menu
 	var all_selected_objects = get_tree().get_nodes_in_group("selected")
 
 	if not all_selected_objects.is_empty():
 		var selected_object = all_selected_objects[0].parent_object
 		var valid_enter_exit = false
+		var link = false
 
 		if selected_object is Waypoint:
-			if selected_object.parent_object != parent_object and parent_object.is_vehicle:
-				valid_enter_exit = true
+			if selected_object.parent_object != parent_object:
+				link = true
+				if parent_object.is_vehicle:
+					valid_enter_exit = true
 
 		if selected_object is Agent:
 			if selected_object != parent_object and parent_object.is_vehicle:
-				valid_enter_exit = true
+				link = true
+				if parent_object.is_vehicle:
+					valid_enter_exit = true
+
+		if link or valid_enter_exit:
+			context_menu.add_separator()
+
+		if link:
+			context_menu.add_item("Link to Target", ContextMenuIDs.LINK_WAYPOINT)
 
 		if valid_enter_exit:
-			context_menu.add_separator()
 			context_menu.add_item("Enter Vehicle", ContextMenuIDs.ENTER_VEHICLE)
 
 	# Check all previous waypoints for an unresolved enter/exit, and add items
@@ -244,10 +250,7 @@ func _context_menu_id_pressed(id: ContextMenuIDs):
 			# HACK: Select the waypoint, then the properties dialog will be opened
 			_selection_area.selected = true
 		ContextMenuIDs.LINK_WAYPOINT:
-			# Start selection for another waypoint
-			GroupHelpers.connect("node_grouped", self._on_link_grouped)
-			print_debug("Start linking waypoint")
-			attempting_link = true
+			_on_link()
 		ContextMenuIDs.ENTER_VEHICLE:
 			_on_enter_vehicle()
 
@@ -298,6 +301,33 @@ func _context_menu_id_pressed(id: ContextMenuIDs):
 		if exit_wp.pt_next == null:
 			agent.waypoints.insert_after(exit_wp, global_position + Vector2(64, 64), WaypointType.WAYPOINT, self)
 
+func _on_link():
+	var all_selected_objects = get_tree().get_nodes_in_group("selected")
+
+	if not all_selected_objects.is_empty():
+		var selected_object = all_selected_objects[0].parent_object
+		var waypoint_handler: AgentWaypointHandler = null
+		var curr_wp: Waypoint = null
+
+		if selected_object is Waypoint:
+			waypoint_handler = selected_object.parent_object.waypoints
+			curr_wp = selected_object
+
+		if selected_object is Agent:
+			waypoint_handler = selected_object.waypoints
+			curr_wp = waypoint_handler.starting_node
+
+		# Check if waypoint is already linked
+		if curr_wp in linked_nodes:
+			print_debug("Waypoint already linked")
+			return
+
+		# Check if waypoint is from the same agent
+		if curr_wp.parent_object == parent_object:
+			print_debug("Waypoint from same agent")
+			return
+
+		link_waypoint(curr_wp)
 
 func _on_enter_vehicle():
 	var all_selected_objects = get_tree().get_nodes_in_group("selected")
@@ -319,38 +349,6 @@ func _on_enter_vehicle():
 			print_debug("Unknown object type on Enter Vehicle")
 
 		waypoint_handler.insert_after(curr_wp, global_position, WaypointType.ENTER, self)
-
-func _on_link_grouped(group: String, node: Node):
-
-	if group == "selected":
-
-		var waypoint_node = null;
-
-		if node.parent_object is Waypoint:
-			waypoint_node = node.parent_object
-		elif node.parent_object is Agent:
-			waypoint_node = node.parent_object.waypoints.starting_node
-		else:
-			print_debug("Node is not a waypoint or agent")
-			return
-
-		# Check if waypoint is already linked
-		if waypoint_node in linked_nodes:
-			print_debug("Waypoint already linked")
-			return
-
-		# Check if waypoint is from the same agent
-		if waypoint_node.parent_object == parent_object:
-			print_debug("Waypoint from same agent")
-			return
-
-		#linked_nodes.append(node)
-		#node.linked_nodes.append(self)
-
-		GroupHelpers.disconnect("node_grouped", self._on_link_grouped)
-		attempting_link = false
-
-		link_waypoint(waypoint_node)
 
 
 func link_waypoint(waypoint_node: Waypoint):
@@ -587,15 +585,6 @@ func _on_hold_stop(start_pos, end_pos):
 
 		UndoSystem.add_action(undo_action, false)
 
-
-
-func _unhandled_input(event):
-
-	# Stop linking if ui_cancel is pressed
-	if event.is_action_pressed("ui_cancel") and attempting_link:
-		GroupHelpers.disconnect("node_grouped", self._on_link_grouped)
-		attempting_link = false
-		print_debug("Stop linking waypoint")
 
 
 func _disable(new_disable: bool):
