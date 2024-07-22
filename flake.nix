@@ -78,8 +78,10 @@
 				devShells = {
 					default = pkgs.mkShell {
 						packages = dev-package-list ++ all-scripts ++ [ godot_export_templates ];
+						GODOT_RAW_BIN = "${pkgs.godot_4}/bin/godot4";
+						GODOT_BIN = "${pkgs.godot_4}/bin/godot4";
+
 						shellHook = ''
-							export GODOT_BIN="${pkgs.godot_4}/bin/godot4"
 							set -a; source .env; set +a;
 
 							# Link export templates if not already done ~/.local/share/godot/export_templates/VERSION.stable (update if symlink is to incorrect location)
@@ -95,8 +97,10 @@
 
 					nonnix = pkgs.mkShell {
 						packages = dev-package-list ++ [ pkgs.nixgl.auto.nixGLDefault ] ++ all-scripts;
+						GODOT_RAW_BIN = "${pkgs.godot_4}/bin/godot4";
+						GODOT_BIN = "nixGL ${pkgs.godot_4}/bin/godot4";
+
 						shellHook = ''
-							export GODOT_BIN="nixGL ${pkgs.godot_4}/bin/godot4"
 							set -a; source .env; set +a;
 
 							# Link export templates if not already done ~/.local/share/godot/export_templates/VERSION.stable (update if symlink is to incorrect location)
