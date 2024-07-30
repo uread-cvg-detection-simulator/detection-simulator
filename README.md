@@ -10,7 +10,7 @@ A script will be available called `godot` that will launch godot with the projec
 
 ### Using Nix on non NixOS hosts
 
-Godot requires OpenGL which has issues running on non NixOS hosts. If using the Nix package manager on such a system, use the `.#nonnix` devshell with the `--impure` flag.
+Godot requires OpenGL which has issues running on non NixOS Linux hosts. If using the Nix package manager on such a system, use the `.#nonnix` devshell with the `--impure` flag.
 
 ```bash
 nix develop --impure .#nonnix
