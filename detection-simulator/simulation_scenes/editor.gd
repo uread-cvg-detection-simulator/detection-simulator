@@ -373,8 +373,10 @@ func _on_empty_menu_press(id: int):
 
 				if selected_node is Agent:
 					new_waypoint = selected_node.waypoints.insert_after(selected_node.waypoints.starting_node, _right_click_position)
+					new_waypoint.param_speed_mps = selected_node.waypoints.starting_node.param_speed_mps
 				elif selected_node is Waypoint:
 					new_waypoint = selected_node.parent_object.waypoints.insert_after(selected_node, _right_click_position)
+					new_waypoint.param_speed_mps = selected_node.param_speed_mps
 
 				new_waypoint._selection_area.selected = true
 			else:
