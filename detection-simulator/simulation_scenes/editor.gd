@@ -315,6 +315,9 @@ func _unhandled_input(event):
 		current_zoom.x += 0.1
 		current_zoom.y += 0.1
 
+		current_zoom.x = clampf(current_zoom.x, 0.1, 10.0)
+		current_zoom.y = clampf(current_zoom.y, 0.1, 10.0)
+
 		$Camera2D.zoom = current_zoom
 	if event.is_action_pressed("zoom_out"):
 		var current_zoom = $Camera2D.zoom
@@ -322,13 +325,46 @@ func _unhandled_input(event):
 		current_zoom.x -= 0.1
 		current_zoom.y -= 0.1
 
+		current_zoom.x = clampf(current_zoom.x, 0.1, 10.0)
+		current_zoom.y = clampf(current_zoom.y, 0.1, 10.0)
+
+		$Camera2D.zoom = current_zoom
+
+	elif event is InputEventPanGesture:
+		var current_zoom = $Camera2D.zoom
+
+		current_zoom.x -= event.delta.y / 2.0
+		current_zoom.y -= event.delta.y / 2.0
+
+		current_zoom.x = clampf(current_zoom.x, 0.1, 2.0)
+		current_zoom.y = clampf(current_zoom.y, 0.1, 2.0)
+
 		$Camera2D.zoom = current_zoom
 
 	if event.is_action_pressed("scale_up"):
-		ui_scale += 1.0
+		#ui_scale += 1.0
+		var current_zoom = $Camera2D.zoom
+
+		current_zoom.x += 0.1
+		current_zoom.y += 0.1
+
+		current_zoom.x = clampf(current_zoom.x, 0.01, 10.0)
+		current_zoom.y = clampf(current_zoom.y, 0.01, 10.0)
+
+		$Camera2D.zoom = current_zoom
 
 	if event.is_action_pressed("scale_down"):
-		ui_scale -= 1.0
+		#ui_scale -= 1.0
+
+		var current_zoom = $Camera2D.zoom
+
+		current_zoom.x -= 0.1
+		current_zoom.y -= 0.1
+
+		current_zoom.x = clampf(current_zoom.x, 0.1, 10.0)
+		current_zoom.y = clampf(current_zoom.y, 0.1, 10.0)
+
+		$Camera2D.zoom = current_zoom
 
 	if event.is_action_pressed("ui_cancel") or event.is_action_pressed("ui_accept"):
 		var current = get_viewport().gui_get_focus_owner()
