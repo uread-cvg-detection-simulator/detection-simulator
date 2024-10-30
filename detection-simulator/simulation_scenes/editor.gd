@@ -32,7 +32,7 @@ class_name ScenarioEditor
 @export_group("File Handling")
 @export var fd_writer: FileDialog = null
 @export var fd_reader: FileDialog = null
-
+@export var event_emittor: EventExporter = null
 
 var _agent_list: Array[Agent]
 
@@ -64,12 +64,14 @@ enum empty_menu_enum {
 
 # Called when the node enters the scene tree for the first time.
 func _ready():
-	_prepare_menu()
+	#_prepare_menu()
 
 	#fd_reader.current_dir = "~/"
 	#fd_writer.current_dir = "~/"
 	_save_button.disabled = true
 	_autosave_check.disabled = true
+
+	event_emittor.editor_base = self
 
 func get_save_data() -> Dictionary:
 	var save_data = {

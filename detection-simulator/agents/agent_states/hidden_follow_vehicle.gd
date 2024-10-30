@@ -7,6 +7,9 @@ func handle_input(_event: InputEvent) -> void:
 var vehicle: Agent = null
 var exit_waypoint: Waypoint = null
 
+signal vehicle_enter(owner_id: int, vehicle_id: int)
+signal vehicle_exit(owener_id: int, vehicle_id: int)
+
 # Virtual function. Corresponds to the `_process()` callback.
 func update(_delta: float) -> void:
 	pass
@@ -44,6 +47,9 @@ func enter(msg := {}, _old_state_name: String = "") -> bool:
 	owner.visible = false
 	vehicle.state_machine.transitioned.connect(self._vehicle_state_change)
 
+	if PlayTimer.exporting:
+		vehicle_enter.emit(owner.agent_id, vehicle.agent_id)
+
 	return true
 
 # Virtual function. Called by the state machine before changing the active state. Use this function
@@ -52,5 +58,9 @@ func exit() -> void:
 	if vehicle:
 		vehicle.state_machine.transitioned.disconnect(self._vehicle_state_change)
 
+	if PlayTimer.exporting:
+		vehicle_exit.emit(owner.agent_id, vehicle.agent_id)
+
 	vehicle = null
 	owner.visible = true
+

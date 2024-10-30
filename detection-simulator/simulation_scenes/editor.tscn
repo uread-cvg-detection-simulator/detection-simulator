@@ -1,4 +1,4 @@
-[gd_scene load_steps=9 format=3 uid="uid://bok4788dfl1al"]
+[gd_scene load_steps=10 format=3 uid="uid://bok4788dfl1al"]
 
 [ext_resource type="Script" path="res://simulation_scenes/editor.gd" id="1_o3h7t"]
 [ext_resource type="Script" path="res://simulation_scenes/camera.gd" id="2_j0bt8"]
@@ -8,8 +8,9 @@
 [ext_resource type="PackedScene" uid="uid://b50ox3rfhikx8" path="res://agents/waypoint.tscn" id="3_k3ur2"]
 [ext_resource type="PackedScene" uid="uid://pxotaj1n83vy" path="res://agents/sensor.tscn" id="5_iwj3y"]
 [ext_resource type="Script" path="res://simulation_scenes/global_exporter.gd" id="8_1i7iy"]
+[ext_resource type="PackedScene" uid="uid://j5rvj5lms7hp" path="res://simulation_scenes/event_emitter.tscn" id="9_8p0j2"]
 
-[node name="editor" type="Node2D" node_paths=PackedStringArray("_agent_root", "_sensor_root", "_gui", "_rightclick_empty", "_status_label", "_ui_scale", "_play_button", "_save_button", "_load_button", "_export_button", "_autosave_check", "_bg_button", "_camera", "fd_writer", "fd_reader")]
+[node name="editor" type="Node2D" node_paths=PackedStringArray("_agent_root", "_sensor_root", "_gui", "_rightclick_empty", "_status_label", "_ui_scale", "_play_button", "_save_button", "_load_button", "_export_button", "_autosave_check", "_bg_button", "_camera", "fd_writer", "fd_reader", "event_emittor")]
 script = ExtResource("1_o3h7t")
 _agent_root = NodePath("agents")
 _sensor_root = NodePath("sensors")
@@ -29,6 +30,7 @@ _sensor_base = ExtResource("5_iwj3y")
 _camera = NodePath("Camera2D")
 fd_writer = NodePath("fd_writer")
 fd_reader = NodePath("fd_reader")
+event_emittor = NodePath("EventEmitter")
 
 [node name="Camera2D" type="Camera2D" parent="."]
 script = ExtResource("2_j0bt8")
@@ -175,6 +177,8 @@ filters = PackedStringArray("*.ds-json")
 [node name="global_exporter" type="Node" parent="." node_paths=PackedStringArray("editor_base")]
 script = ExtResource("8_1i7iy")
 editor_base = NodePath("..")
+
+[node name="EventEmitter" parent="." instance=ExtResource("9_8p0j2")]
 
 [connection signal="pressed" from="CanvasLayer/PlayBar/HBoxContainer/PlayButton" to="." method="_on_play_button_pressed"]
 [connection signal="focus_exited" from="CanvasLayer/PlayBar/HBoxContainer/UiScaleEdit" to="." method="_on_ui_scale_edit_focus_exited"]
