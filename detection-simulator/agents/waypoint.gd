@@ -54,6 +54,9 @@ var enter_vehicle = null # TODO: Reset after play finished
 var load_linked_nodes: Array = []
 var load_enter_exit_nodes: Array = []
 
+# event info
+var _events: Array[SimulationEventExporterManual] = []
+
 # Called when the node enters the scene tree for the first time.
 func _ready():
 	initialised = true
@@ -607,3 +610,14 @@ func _clickable(new_value:bool):
 func ui_scale_update(new_scale: float, old_scale: float):
 	ui_scale = new_scale
 	global_position = (global_position / old_scale) * new_scale
+
+func add_event(event_info: SimulationEventExporterManual):
+	_events.append(event_info)
+
+func remove_event(event_info: SimulationEventExporterManual, propagate: bool):
+	if _events.has(event_info):
+		_events.erase(event_info)
+
+	if propagate:
+		# TODO: Call primary event emitter to remove event from all other wps
+		pass

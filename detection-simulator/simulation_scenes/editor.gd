@@ -10,6 +10,7 @@ class_name ScenarioEditor
 @export_group("GUI")
 @export var _gui : CanvasLayer = null
 @export var _rightclick_empty: PopupMenu = null
+@export var _notifier: GUINotifier = null
 
 @export_subgroup("Labels")
 @export var _status_label : Label = null
@@ -32,7 +33,7 @@ class_name ScenarioEditor
 @export_group("File Handling")
 @export var fd_writer: FileDialog = null
 @export var fd_reader: FileDialog = null
-@export var event_emittor: EventExporter = null
+@export var event_emittor: SimulationEventExporter = null
 
 var _agent_list: Array[Agent]
 
@@ -72,6 +73,7 @@ func _ready():
 	_autosave_check.disabled = true
 
 	event_emittor.editor_base = self
+	event_emittor.event_emitter.connect(_notifier.event_receiver)
 
 func get_save_data() -> Dictionary:
 	var save_data = {

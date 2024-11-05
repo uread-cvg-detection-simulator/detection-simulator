@@ -19,6 +19,9 @@ var playing_accelerate_state = 0.0
 
 @export var base_agent: Agent = null
 
+signal start_follow(from_wp: int, to_wp: int)
+signal stop_follow(from_wp: int, to_wp: int)
+
 # Virtual function. Corresponds to the `_physics_process()` callback.
 func physics_update(delta: float) -> void:
 	if not owner.disabled:
@@ -32,6 +35,9 @@ func physics_update(delta: float) -> void:
 
 		# If reached target, update target information with next waypoint if there is one
 		if owner.global_position == playing_waypoint.global_position:
+
+			stop_follow.emit(owner.waypoints.get_waypoint_index(playing_last_waypoint), owner.waypoints.get_waypoint_index(playing_waypoint))
+
 			# If previous node is an exit node, set it's linked_ready to true (so the vehicle can move on)
 			if playing_waypoint.pt_previous and playing_waypoint.pt_previous.waypoint_type == Waypoint.WaypointType.EXIT:
 				playing_waypoint.pt_previous.linked_ready = true
@@ -126,6 +132,8 @@ func enter(_msg := {}, old_state_name: String = "") -> bool:
 		playing_start_speed = 1.0
 
 	_calculate_accel_factors()
+
+	start_follow.emit(owner.waypoints.get_waypoint_index(playing_last_waypoint), owner.waypoints.get_waypoint_index(playing_waypoint))
 
 	return true
 

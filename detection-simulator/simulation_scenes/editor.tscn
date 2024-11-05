@@ -1,4 +1,4 @@
-[gd_scene load_steps=10 format=3 uid="uid://bok4788dfl1al"]
+[gd_scene load_steps=12 format=3 uid="uid://bok4788dfl1al"]
 
 [ext_resource type="Script" path="res://simulation_scenes/editor.gd" id="1_o3h7t"]
 [ext_resource type="Script" path="res://simulation_scenes/camera.gd" id="2_j0bt8"]
@@ -7,15 +7,18 @@
 [ext_resource type="Script" path="res://simulation_scenes/editor_gui.gd" id="3_fj0mv"]
 [ext_resource type="PackedScene" uid="uid://b50ox3rfhikx8" path="res://agents/waypoint.tscn" id="3_k3ur2"]
 [ext_resource type="PackedScene" uid="uid://pxotaj1n83vy" path="res://agents/sensor.tscn" id="5_iwj3y"]
+[ext_resource type="Script" path="res://simulation_scenes/NotifierContainer.gd" id="7_eh2gn"]
 [ext_resource type="Script" path="res://simulation_scenes/global_exporter.gd" id="8_1i7iy"]
+[ext_resource type="PackedScene" uid="uid://icydq6rdtmr7" path="res://simulation_scenes/event_notifier_template.tscn" id="8_12y3i"]
 [ext_resource type="PackedScene" uid="uid://j5rvj5lms7hp" path="res://simulation_scenes/event_emitter.tscn" id="9_8p0j2"]
 
-[node name="editor" type="Node2D" node_paths=PackedStringArray("_agent_root", "_sensor_root", "_gui", "_rightclick_empty", "_status_label", "_ui_scale", "_play_button", "_save_button", "_load_button", "_export_button", "_autosave_check", "_bg_button", "_camera", "fd_writer", "fd_reader", "event_emittor")]
+[node name="editor" type="Node2D" node_paths=PackedStringArray("_agent_root", "_sensor_root", "_gui", "_rightclick_empty", "_notifier", "_status_label", "_ui_scale", "_play_button", "_save_button", "_load_button", "_export_button", "_autosave_check", "_bg_button", "_camera", "fd_writer", "fd_reader", "event_emittor")]
 script = ExtResource("1_o3h7t")
 _agent_root = NodePath("agents")
 _sensor_root = NodePath("sensors")
 _gui = NodePath("CanvasLayer")
 _rightclick_empty = NodePath("empty_right_click_menu")
+_notifier = NodePath("CanvasLayer/NotifierContainer")
 _status_label = NodePath("CanvasLayer/PlayBar/HBoxContainer/StatusInfo")
 _ui_scale = NodePath("CanvasLayer/PlayBar/HBoxContainer/UiScaleEdit")
 _play_button = NodePath("CanvasLayer/PlayBar/HBoxContainer/PlayButton")
@@ -147,6 +150,16 @@ layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
 columns = 2
+
+[node name="NotifierContainer" type="VBoxContainer" parent="CanvasLayer" node_paths=PackedStringArray("template")]
+offset_right = 511.0
+offset_bottom = 685.0
+script = ExtResource("7_eh2gn")
+template = NodePath("EventNotifierTemplate")
+template_scene = ExtResource("8_12y3i")
+
+[node name="EventNotifierTemplate" parent="CanvasLayer/NotifierContainer" instance=ExtResource("8_12y3i")]
+layout_mode = 2
 
 [node name="empty_right_click_menu" type="PopupMenu" parent="."]
 gui_embed_subwindows = true

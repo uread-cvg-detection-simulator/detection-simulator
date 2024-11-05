@@ -47,8 +47,7 @@ func enter(msg := {}, _old_state_name: String = "") -> bool:
 	owner.visible = false
 	vehicle.state_machine.transitioned.connect(self._vehicle_state_change)
 
-	if PlayTimer.exporting:
-		vehicle_enter.emit(owner.agent_id, vehicle.agent_id)
+	vehicle_enter.emit(owner.agent_id, vehicle.agent_id)
 
 	return true
 
@@ -58,8 +57,7 @@ func exit() -> void:
 	if vehicle:
 		vehicle.state_machine.transitioned.disconnect(self._vehicle_state_change)
 
-	if PlayTimer.exporting:
-		vehicle_exit.emit(owner.agent_id, vehicle.agent_id)
+	vehicle_exit.emit(owner.agent_id, vehicle.agent_id)
 
 	vehicle = null
 	owner.visible = true
