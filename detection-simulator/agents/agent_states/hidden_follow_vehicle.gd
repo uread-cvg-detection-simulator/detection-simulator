@@ -8,7 +8,7 @@ var vehicle: Agent = null
 var exit_waypoint: Waypoint = null
 
 signal vehicle_enter(owner_id: int, vehicle_id: int)
-signal vehicle_exit(owener_id: int, vehicle_id: int)
+signal vehicle_exit(owner_id: int, vehicle_id: int)
 
 # Virtual function. Corresponds to the `_process()` callback.
 func update(_delta: float) -> void:

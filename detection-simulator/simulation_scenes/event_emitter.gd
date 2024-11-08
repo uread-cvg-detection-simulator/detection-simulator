@@ -52,8 +52,9 @@ func _stop_playing():
 		event_fileaccess = null
 
 	for hidden_state in enter_exit_stats:
-		hidden_state.vehicle_enter.disconnect(self._auto_event_vehicle_enter)
-		hidden_state.vehicle_exit.disconnect(self._auto_event_vehicle_exit)
+		if is_instance_valid(hidden_state):
+			hidden_state.vehicle_enter.disconnect(self._auto_event_vehicle_enter)
+			hidden_state.vehicle_exit.disconnect(self._auto_event_vehicle_exit)
 
 	enter_exit_stats.clear()
 
