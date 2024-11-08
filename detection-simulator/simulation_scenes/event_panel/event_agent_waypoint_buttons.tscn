@@ -1,0 +1,29 @@
+[gd_scene load_steps=2 format=3 uid="uid://chhjmfi3ebntn"]
+
+[ext_resource type="Script" path="res://simulation_scenes/event_panel/event_agent_waypoint_buttons.gd" id="1_5piwj"]
+
+[node name="EventAgentWaypointButtons" type="HBoxContainer" node_paths=PackedStringArray("label_index", "label_agent_info", "button_delete")]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+size_flags_horizontal = 3
+script = ExtResource("1_5piwj")
+label_index = NodePath("Index")
+label_agent_info = NodePath("AgentLabel")
+button_delete = NodePath("DeleteButton")
+
+[node name="Index" type="Label" parent="."]
+layout_mode = 2
+text = "0"
+
+[node name="AgentLabel" type="Label" parent="."]
+layout_mode = 2
+text = "    A1 W5    "
+
+[node name="DeleteButton" type="Button" parent="."]
+layout_mode = 2
+text = "X"
+
+[connection signal="pressed" from="DeleteButton" to="." method="_on_delete_button_pressed"]

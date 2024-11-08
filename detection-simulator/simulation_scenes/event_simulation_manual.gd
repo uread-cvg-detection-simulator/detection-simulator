@@ -64,20 +64,49 @@ func load_save_data(data: Dictionary, propagate_to_wps: bool = true):
 			waypoints = data["waypoints"]
 
 			if propagate_to_wps:
-				for waypoint in waypoints:
-					var agent_id = waypoint[0]
-					var waypoint_id = waypoint[1]
-
-					var agent = TreeFuncs.get_agent_with_id(agent_id)
-					var wp = agent.waypoints.get_waypoint(waypoint_id)
-
-					wp.add_event(self)
+				add_event_to_waypoints()
 		else:
 			print_debug("Unknown event version %s" % data["event_version"])
 	else:
 		print_debug("Event version not found in save data")
 
+func add_event_to_waypoints():
+	for waypoint in waypoints:
+		var agent_id = waypoint[0]
+		var waypoint_id = waypoint[1]
 
+		add_event_to_waypoint(agent_id, waypoint_id)
+
+func remove_event_from_waypoints():
+	for waypoint in waypoints:
+		var agent_id = waypoint[0]
+		var waypoint_id = waypoint[1]
+
+		remove_event_from_waypoint(agent_id, waypoint_id)
+
+func add_event_to_waypoint(agent_id: int, waypoint_id: int):
+	var agent = TreeFuncs.get_agent_with_id(agent_id)
+	var wp = agent.waypoints.get_waypoint(waypoint_id)
+
+	wp.add_event(self)
+
+func remove_event_from_waypoint(agent_id: int, waypoint_id: int):
+	var agent = TreeFuncs.get_agent_with_id(agent_id)
+	var wp = agent.waypoints.get_waypoint(waypoint_id)
+
+	wp.remove_event(self, false)
+
+func remove_waypoint(agent_id: int, waypoint_id: int):
+	var index = waypoints.find([agent_id, waypoint_id])
+
+	assert(index != -1)
+
+	waypoints.remove_at(index)
+	remove_event_from_waypoint(agent_id, waypoint_id)
+
+func add_waypoint(agent_id: int, waypoint_id: int):
+	waypoints.append([agent_id, waypoint_id])
+	add_event_to_waypoint(agent_id, waypoint_id)
 
 # Called when the node enters the scene tree for the first time.
 func _ready():

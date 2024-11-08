@@ -143,23 +143,66 @@ func _auto_event_vehicle_exit(agent_id_entrant: int, agent_id_vehicle: int):
 	_create_event(description, type, position_array, timestamp_ms, targets)
 
 func manual_event_add(event_info: SimulationEventExporterManual):
-	_manual_events.append(event_info)
+	if !_manual_events.has(event_info):
 
-	add_child(event_info)
+		var undo_action = UndoRedoAction.new()
+		undo_action.action_name = "Add Manual Event"
+
+		var event_data = event_info.get_save_data()
+
+		######
+		# Do
+		######
+
+		# TODO: Actually add the argument to the store, instead of using the save data
+		var event_ref = undo_action.action_method_store(UndoRedoAction.DoType.Do, func(data):
+			var event = SimulationEventExporterManual.new()
+			event.load_save_data(data)
+
+			return event
+		, [event_data])
+		undo_action.manual_add_item_to_store(event_info, event_ref)
+
+		undo_action.action_object_call(UndoRedoAction.DoType.Do, self._manual_events, "append", [event_ref], [event_ref])
+		undo_action.action_object_call(UndoRedoAction.DoType.Do, self, "add_child", [event_ref], [event_ref])
+
+		######
+		# Undo
+		######
+
+		undo_action.action_object_call_ref(UndoRedoAction.DoType.Undo, event_ref, "remove_event_from_waypoints")
+		undo_action.action_object_call(UndoRedoAction.DoType.Undo, self, "remove_child", [event_ref], [event_ref])
+		undo_action.action_object_call(UndoRedoAction.DoType.Undo, self._manual_events, "erase", [event_ref], [event_ref])
+
+		UndoSystem.add_action(undo_action)
 
 func manual_event_del(event_info: SimulationEventExporterManual):
 
 	if _manual_events.has(event_info):
-		remove_child(event_info)
+		# get the index of the event
+		var index = _manual_events.find(event_info)
 
-		for waypoint_info in event_info.waypoints:
-			var agent_id = waypoint_info[0]
-			var waypoint_id = waypoint_info[1]
+		var undo_action = UndoRedoAction.new()
+		undo_action.action_name = "Delete Manual Event"
 
-			var agent = TreeFuncs.get_agent_with_id(agent_id)
-			var waypoint = agent.waypoints.get_waypoint(waypoint_id)
+		######
+		# Do
+		######
+		var event_ref = undo_action.action_store_method(UndoRedoAction.DoType.Do, func(index):
+			var event = _manual_events[index]
+			return event
+		, [index])
 
-			waypoint.remove_event(event_info, false)
+		undo_action.action_object_call(UndoRedoAction.DoType.Do, self, "remove_child", [event_ref], [event_ref])
+		undo_action.action_object_call_ref(UndoRedoAction.DoType.Do, event_ref, "remove_event_from_waypoints")
+
+		######
+		# Undo
+		######
+		undo_action.action_object_call(UndoRedoAction.DoType.Undo, self, "add_child", [event_ref], [event_ref])
+		undo_action.action_object_call_ref(UndoRedoAction.DoType.Undo, event_ref, "add_event_to_waypoints")
+
+		UndoSystem.add_action(undo_action)
 
 
 
@@ -171,7 +214,7 @@ func _create_event(description: String, type: String, position_array: Array, tim
 		"timestamp_ms" : timestamp_ms,
 		"targets": targets
 	}
-	
+
 	var time = timestamp_ms / 1000
 	var time_string = "%02d:%02d:%02d" % [int(time) / 3600, (int(time) / 60) % 60, int(time) % 60]
 
