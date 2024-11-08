@@ -155,7 +155,7 @@ func manual_event_add(event_info: SimulationEventExporterManual):
 		######
 
 		# TODO: Actually add the argument to the store, instead of using the save data
-		var event_ref = undo_action.action_method_store(UndoRedoAction.DoType.Do, func(data):
+		var event_ref = undo_action.action_store_method(UndoRedoAction.DoType.Do, func(data):
 			var event = SimulationEventExporterManual.new()
 			event.load_save_data(data)
 
@@ -163,7 +163,10 @@ func manual_event_add(event_info: SimulationEventExporterManual):
 		, [event_data])
 		undo_action.manual_add_item_to_store(event_info, event_ref)
 
-		undo_action.action_object_call(UndoRedoAction.DoType.Do, self._manual_events, "append", [event_ref], [event_ref])
+		undo_action.action_method(UndoRedoAction.DoType.Do, func(emitter, event):
+			emitter._manual_events.append(event)
+		, [self, event_ref], [event_ref])
+
 		undo_action.action_object_call(UndoRedoAction.DoType.Do, self, "add_child", [event_ref], [event_ref])
 
 		######
@@ -172,7 +175,10 @@ func manual_event_add(event_info: SimulationEventExporterManual):
 
 		undo_action.action_object_call_ref(UndoRedoAction.DoType.Undo, event_ref, "remove_event_from_waypoints")
 		undo_action.action_object_call(UndoRedoAction.DoType.Undo, self, "remove_child", [event_ref], [event_ref])
-		undo_action.action_object_call(UndoRedoAction.DoType.Undo, self._manual_events, "erase", [event_ref], [event_ref])
+
+		undo_action.action_method(UndoRedoAction.DoType.Undo, func(emitter, event):
+			emitter._manual_events.erase(event)
+		, [self, event_ref], [event_ref])
 
 		UndoSystem.add_action(undo_action)
 

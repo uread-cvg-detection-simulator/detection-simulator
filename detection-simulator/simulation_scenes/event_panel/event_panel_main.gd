@@ -34,23 +34,23 @@ func load_event(current_event: SimulationEventExporterManual):
 
 	match current_event.trigger_type:
 		SimulationEventExporterManual.TriggerType.ON_STOP:
-			_internal_panel.select(0)
+			_internal_panel.trigger_item_list.select(0)
 		SimulationEventExporterManual.TriggerType.ON_START:
-			_internal_panel.select(1)
+			_internal_panel.trigger_item_list.select(1)
 		SimulationEventExporterManual.TriggerType.ON_BOTH:
-			_internal_panel.select(2)
+			_internal_panel.trigger_item_list.select(2)
 
 	match _current_event.mode:
 		SimulationEventExporterManual.Mode.ON_EACH_AGENT:
-			_internal_panel.select(0)
+			_internal_panel.trigger_overall_item_list.select(0)
 		SimulationEventExporterManual.Mode.ON_EACH_AGENT_EXCEPT_FIRST:
-			_internal_panel.select(1)
+			_internal_panel.trigger_overall_item_list.select(1)
 		SimulationEventExporterManual.Mode.ON_EACH_AGENT_EXCEPT_LAST:
-			_internal_panel.select(2)
+			_internal_panel.trigger_overall_item_list.select(2)
 		SimulationEventExporterManual.Mode.ON_EACH_AGENT_EXCEPT_FIRST_AND_LAST:
-			_internal_panel.select(3)
+			_internal_panel.trigger_overall_item_list.select(3)
 		SimulationEventExporterManual.Mode.ON_ALL_AGENTS:
-			_internal_panel.select(4)
+			_internal_panel.trigger_overall_item_list.select(4)
 
 	# Waypoints
 	# TODO Handle if waypoint id changes
@@ -129,7 +129,7 @@ func _set_event_data(event):
 	event.description = _internal_panel.description_edit.text
 	event.type = _internal_panel.type_edit.text
 
-	match _internal_panel.trigger_type:
+	match _internal_panel.trigger_item_list.get_selected_items()[0]:
 		0:
 			event.trigger_type = SimulationEventExporterManual.TriggerType.ON_STOP
 		1:
@@ -137,7 +137,7 @@ func _set_event_data(event):
 		2:
 			event.trigger_type = SimulationEventExporterManual.TriggerType.ON_BOTH
 
-	match _internal_panel.mode:
+	match _internal_panel.trigger_overall_item_list.get_selected_items()[0]:
 		0:
 			event.mode = SimulationEventExporterManual.Mode.ON_EACH_AGENT
 		1:

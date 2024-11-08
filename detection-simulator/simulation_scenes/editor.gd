@@ -720,10 +720,17 @@ func create_event_on_waypoint(agent_id: int, waypoint_id: int):
 	_gui.add_child(event_panel)
 
 	# Centre the panel
-	event_panel.position = Vector2(get_viewport().size.x / 2, get_viewport().size.y / 2) - (event_panel.size / 2)
-	print_debug("Panel Position: %s" % event_panel.position)
-	print_debug("Panel Size: %s" % event_panel.size)
+	event_panel.position = Vector2(get_viewport().size.x / 2, get_viewport().size.y / 2)
 
+	event_panel.event_emitter = event_emittor
 	event_panel.new_event(agent_id, waypoint_id)
 
+func edit_event(event: SimulationEventExporterManual):
+	var event_panel = _event_panel.instantiate()
+	_gui.add_child(event_panel)
 
+	# Centre the panel
+	event_panel.position = Vector2(get_viewport().size.x / 2, get_viewport().size.y / 2)
+
+	event_panel.event_emitter = event_emittor
+	event_panel.load_event(event)

@@ -22,6 +22,7 @@ enum ContextMenuIDs {
 	CREATE_EVENT,
 	ENTER_VEHICLE,
 	EXIT_VEHICLE = 100,
+	EDIT_EVENT = 200,
 }
 
 enum WaypointType {
@@ -137,6 +138,12 @@ func _prepare_menu():
 
 		for enter_wp in all_entered_agents_wp:
 			context_menu.add_item("Exit Vehicle A%d" % [enter_wp.parent_object.agent_id], ContextMenuIDs.EXIT_VEHICLE + enter_wp.parent_object.agent_id)
+
+	if not _events.is_empty():
+		context_menu.add_separator()
+
+		for event in _events:
+			context_menu.add_item("Edit Event %s" % event.description, ContextMenuIDs.EDIT_EVENT)
 
 	# Connect to the context menu's id_pressed signal
 	if not context_menu.is_connected("id_pressed", self._context_menu_id_pressed):
@@ -261,7 +268,7 @@ func _context_menu_id_pressed(id: ContextMenuIDs):
 		ContextMenuIDs.ENTER_VEHICLE:
 			_on_enter_vehicle()
 
-	if id >= ContextMenuIDs.EXIT_VEHICLE:
+	if id >= ContextMenuIDs.EXIT_VEHICLE and id < ContextMenuIDs.EDIT_EVENT:
 		var agent_id = id - ContextMenuIDs.EXIT_VEHICLE
 		var agent: Agent = TreeFuncs.get_agent_with_id(agent_id)
 
@@ -307,6 +314,12 @@ func _context_menu_id_pressed(id: ContextMenuIDs):
 		# If exit_wp has no next waypoint, add one a short distance away
 		if exit_wp.pt_next == null:
 			agent.waypoints.insert_after(exit_wp, global_position + Vector2(64, 64), WaypointType.WAYPOINT, self)
+
+	if id >= ContextMenuIDs.EDIT_EVENT:
+		var event_index = id - ContextMenuIDs.EDIT_EVENT
+		var event = _events[event_index]
+
+		parent_object.base_editor.edit_event(event)
 
 func _on_link():
 	var all_selected_objects = get_tree().get_nodes_in_group("selected")
