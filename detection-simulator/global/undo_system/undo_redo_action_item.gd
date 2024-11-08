@@ -183,12 +183,12 @@ func run():
 				# If no args, just call the method
 				# If args, replace the args with the items in the item store
 				if _action_properties[2].size() == 0:
-					_action_properties[1].call(_action_properties[0])
+					_action_properties[0].call(_action_properties[1])
 				else:
 					var args = _replace_args_with_ref(_action_properties[2], _action_properties[3])
-					_action_properties[1].callv(_action_properties[0], args)
+					_action_properties[0].callv(_action_properties[1], args)
 			else:
-				_action_properties[1].call(_action_properties[0], _action_properties[2])
+				_action_properties[0].call(_action_properties[1], _action_properties[2])
 		ActionType.OBJECT_CALL_REF:
 			# 0 = ref
 			# 1 = method

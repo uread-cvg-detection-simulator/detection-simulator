@@ -110,7 +110,7 @@ func action_property_ref(do_type: DoType, ref_object: String, property_name: Str
 			add_final(new_action)
 
 ## Call a method on an object
-func action_object_call(do_type: DoType, object, method: String, args: Array = [], args_ref = []):
+func action_object_call(do_type: DoType, object: Object, method: String, args: Array = [], args_ref = []):
 	var new_action = UndoRedoActionItem.new()
 	new_action.set_object_call(object, method, args, args_ref)
 
@@ -136,7 +136,7 @@ func action_object_call_ref(do_type: DoType, ref_object: String, method: String,
 			add_final(new_action)
 
 ## Call a method on an object and store the result in the item store
-func action_store_object_call(do_type: DoType, object, method: String, args: Array = [], args_ref = []) -> String:
+func action_store_object_call(do_type: DoType, object: Object, method: String, args: Array = [], args_ref = []) -> String:
 	var new_action = UndoRedoActionItem.new()
 	var new_ref = new_action.set_store_object_call(object, method, args, args_ref)
 
