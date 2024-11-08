@@ -7,7 +7,7 @@
 [ext_resource type="Script" path="res://simulation_scenes/editor_gui.gd" id="3_fj0mv"]
 [ext_resource type="PackedScene" uid="uid://b50ox3rfhikx8" path="res://agents/waypoint.tscn" id="3_k3ur2"]
 [ext_resource type="PackedScene" uid="uid://pxotaj1n83vy" path="res://agents/sensor.tscn" id="5_iwj3y"]
-[ext_resource type="Script" path="res://simulation_scenes/NotifierContainer.gd" id="7_eh2gn"]
+[ext_resource type="Script" path="res://simulation_scenes/event_notifier_container.gd" id="7_eh2gn"]
 [ext_resource type="Script" path="res://simulation_scenes/global_exporter.gd" id="8_1i7iy"]
 [ext_resource type="PackedScene" uid="uid://icydq6rdtmr7" path="res://simulation_scenes/event_notifier_template.tscn" id="8_12y3i"]
 [ext_resource type="PackedScene" uid="uid://j5rvj5lms7hp" path="res://simulation_scenes/event_emitter.tscn" id="9_8p0j2"]

@@ -2,6 +2,7 @@ extends Node2D
 class_name SimulationEventExporterManual
 
 var description: String = ""
+var export_string: String = ""
 var type: String = ""
 
 enum Mode {

@@ -1,0 +1,115 @@
+[gd_scene load_steps=2 format=3 uid="uid://cmy0i5jl2uuxq"]
+
+[ext_resource type="Script" path="res://simulation_scenes/event_gui_panel.gd" id="1_7pjel"]
+
+[node name="EventPanel" type="Control" node_paths=PackedStringArray("description_edit", "type_edit", "trigger_item_list", "trigger_overall_item_list")]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_7pjel")
+description_edit = NodePath("PanelContainer/MarginContainer/ScrollContainer/GridContainer/DescriptionTextEdit")
+type_edit = NodePath("PanelContainer/MarginContainer/ScrollContainer/GridContainer/TypeTextEdit")
+trigger_item_list = NodePath("PanelContainer/MarginContainer/ScrollContainer/GridContainer/TriggerAgentItemList")
+trigger_overall_item_list = NodePath("PanelContainer/MarginContainer/ScrollContainer/GridContainer/TriggerOverallItemList")
+
+[node name="PanelContainer" type="PanelContainer" parent="."]
+layout_mode = 0
+offset_right = 40.0
+offset_bottom = 40.0
+
+[node name="MarginContainer" type="MarginContainer" parent="PanelContainer"]
+layout_mode = 2
+theme_override_constants/margin_left = 10
+theme_override_constants/margin_top = 10
+theme_override_constants/margin_right = 10
+theme_override_constants/margin_bottom = 10
+
+[node name="ScrollContainer" type="ScrollContainer" parent="PanelContainer/MarginContainer"]
+custom_minimum_size = Vector2(0, 500)
+layout_mode = 2
+horizontal_scroll_mode = 0
+
+[node name="GridContainer" type="GridContainer" parent="PanelContainer/MarginContainer/ScrollContainer"]
+layout_mode = 2
+columns = 2
+
+[node name="Title" type="Label" parent="PanelContainer/MarginContainer/ScrollContainer/GridContainer"]
+layout_mode = 2
+text = "Event"
+
+[node name="Null2" type="Control" parent="PanelContainer/MarginContainer/ScrollContainer/GridContainer"]
+custom_minimum_size = Vector2(0, 25)
+layout_mode = 2
+
+[node name="Null3" type="Control" parent="PanelContainer/MarginContainer/ScrollContainer/GridContainer"]
+custom_minimum_size = Vector2(0, 12)
+layout_mode = 2
+
+[node name="Null4" type="Control" parent="PanelContainer/MarginContainer/ScrollContainer/GridContainer"]
+custom_minimum_size = Vector2(0, 12)
+layout_mode = 2
+
+[node name="DescriptionLabel" type="Label" parent="PanelContainer/MarginContainer/ScrollContainer/GridContainer"]
+layout_mode = 2
+text = "Description:"
+
+[node name="DescriptionTextEdit" type="TextEdit" parent="PanelContainer/MarginContainer/ScrollContainer/GridContainer"]
+custom_minimum_size = Vector2(500, 0)
+layout_mode = 2
+placeholder_text = "Input Description Here"
+context_menu_enabled = false
+shortcut_keys_enabled = false
+scroll_fit_content_height = true
+
+[node name="TypeLabel" type="Label" parent="PanelContainer/MarginContainer/ScrollContainer/GridContainer"]
+layout_mode = 2
+tooltip_text = "Exported in the Event Type field"
+mouse_filter = 0
+text = "Event Type:"
+
+[node name="TypeTextEdit" type="TextEdit" parent="PanelContainer/MarginContainer/ScrollContainer/GridContainer"]
+layout_mode = 2
+placeholder_text = "Exported Event Type"
+scroll_fit_content_height = true
+
+[node name="TriggerAgentLabel" type="Label" parent="PanelContainer/MarginContainer/ScrollContainer/GridContainer"]
+layout_mode = 2
+tooltip_text = "When an agent will trigger the event"
+mouse_filter = 0
+text = "Trigger Type Per Agent:"
+
+[node name="TriggerAgentItemList" type="ItemList" parent="PanelContainer/MarginContainer/ScrollContainer/GridContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+allow_search = false
+auto_height = true
+item_count = 3
+item_0/text = "On Arrival at Waypoint"
+item_1/text = "On Leaving Waypoint"
+item_2/text = "On Both of the Above"
+
+[node name="TriggerOverallLabel" type="Label" parent="PanelContainer/MarginContainer/ScrollContainer/GridContainer"]
+layout_mode = 2
+text = "Trigger Type Overall:"
+
+[node name="TriggerOverallItemList" type="ItemList" parent="PanelContainer/MarginContainer/ScrollContainer/GridContainer"]
+layout_mode = 2
+allow_search = false
+auto_height = true
+item_count = 5
+item_0/text = "On Each Agent"
+item_1/text = "On Each Agent (Excluding First)"
+item_2/text = "On Each Agent (Excluding Last)"
+item_3/text = "On Each Agent (Excluding First and Last)"
+item_4/text = "On All Agents"
+
+[node name="Null5" type="Control" parent="PanelContainer/MarginContainer/ScrollContainer/GridContainer"]
+custom_minimum_size = Vector2(0, 25)
+layout_mode = 2
+
+[node name="Null6" type="Control" parent="PanelContainer/MarginContainer/ScrollContainer/GridContainer"]
+custom_minimum_size = Vector2(0, 25)
+layout_mode = 2

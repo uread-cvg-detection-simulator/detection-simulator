@@ -1,6 +1,6 @@
 [gd_scene load_steps=3 format=3 uid="uid://icydq6rdtmr7"]
 
-[ext_resource type="Script" path="res://simulation_scenes/EventNotifierTemplate.gd" id="1_cl1sq"]
+[ext_resource type="Script" path="res://simulation_scenes/event_notifier_template.gd" id="1_edono"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_54ama"]
 bg_color = Color(0.133333, 0.133333, 0.133333, 0.741176)
@@ -12,7 +12,7 @@ border_color = Color(1, 1, 1, 1)
 
 [node name="EventNotifierTemplate" type="PanelContainer" node_paths=PackedStringArray("label")]
 theme_override_styles/panel = SubResource("StyleBoxFlat_54ama")
-script = ExtResource("1_cl1sq")
+script = ExtResource("1_edono")
 label = NodePath("Label")
 
 [node name="Label" type="Label" parent="."]
