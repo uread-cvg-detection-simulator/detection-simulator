@@ -22,6 +22,32 @@ func _ready():
 	PlayTimer.connect("start_playing", self._start_playing)
 	PlayTimer.connect("stop_playing", self._stop_playing)
 
+func get_save_data() -> Dictionary:
+	var save_data = {
+		"event_emitter_version": 1,
+		"manual_events": []
+	}
+
+	for event in _manual_events:
+		save_data["manual_events"].append(event.get_save_data())
+
+	return save_data
+
+func load_save_data(data: Dictionary):
+	if data.has("event_emitter_version"):
+		if data["event_emitter_version"] <= 1:
+
+			_manual_events.clear()
+
+			for event_data in data["manual_events"]:
+				var event = SimulationEventExporterManual.new()
+
+				event.load_save_data(event_data)
+		else:
+			print_debug("Unknown event emitter version %s" % data["event_emitter_version"])
+	else:
+		print_debug("Event emitter version not found in save data")
+
 
 ## Receive a signal from the PlayTimer to start
 func _start_playing():

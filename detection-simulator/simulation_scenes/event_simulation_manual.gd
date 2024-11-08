@@ -42,6 +42,42 @@ var _running: bool = false
 
 signal event_triggered(SimulationEventManual)
 
+func get_save_data() -> Dictionary:
+	var save_data = {
+		"event_version": 1,
+		"description": description,
+		"type": type,
+		"mode": mode,
+		"trigger_type": trigger_type,
+		"waypoints": waypoints,
+	}
+
+	return save_data
+
+func load_save_data(data: Dictionary, propagate_to_wps: bool = true):
+	if data.has("event_version"):
+		if data["event_version"] <= 1:
+			description = data["description"]
+			type = data["type"]
+			mode = data["mode"]
+			trigger_type = data["trigger_type"]
+			waypoints = data["waypoints"]
+
+			if propagate_to_wps:
+				for waypoint in waypoints:
+					var agent_id = waypoint[0]
+					var waypoint_id = waypoint[1]
+
+					var agent = TreeFuncs.get_agent_with_id(agent_id)
+					var wp = agent.waypoints.get_waypoint(waypoint_id)
+
+					wp.add_event(self)
+		else:
+			print_debug("Unknown event version %s" % data["event_version"])
+	else:
+		print_debug("Event version not found in save data")
+
+
 
 # Called when the node enters the scene tree for the first time.
 func _ready():

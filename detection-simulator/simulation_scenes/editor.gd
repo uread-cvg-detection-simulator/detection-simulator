@@ -77,12 +77,13 @@ func _ready():
 
 func get_save_data() -> Dictionary:
 	var save_data = {
-		"version": 3,
+		"version": 4,
 		"agents": [],
 		"sensors": [],
 		"last_id": _last_id,
 		"last_sensor_id": _last_sensor_id,
 		"export_scale": export_scale,
+		"events": event_emittor.get_save_data(),
 	}
 
 	# Load Agents
@@ -112,6 +113,7 @@ func get_save_data() -> Dictionary:
 				"y" : root_scene.bg_scale_marker.y
 			}
 
+
 	return save_data
 
 func load_save_data(data: Dictionary):
@@ -129,7 +131,7 @@ func load_save_data(data: Dictionary):
 
 	# Load agents
 	if data.has("version"):
-		if data["version"] <= 3:
+		if data["version"] <= 4:
 
 			for agent_data in data["agents"]:
 				var current_agent = spawn_agent(Vector2.ZERO)
@@ -171,6 +173,8 @@ func load_save_data(data: Dictionary):
 					root_scene.bg_image.visible = true
 					root_scene.bg_image_buffer = data["bg_image"]
 
+			if data["version"] >= 4:
+				event_emittor.load_save_data(data["events"])
 
 			_last_id = data["last_id"]
 			UndoSystem.clear_history()
