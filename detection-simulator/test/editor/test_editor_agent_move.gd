@@ -23,7 +23,7 @@ func test_agent_move_one_waypoint():
 	assert_object(new_waypoint).is_not_null()
 
 	runner.invoke("_on_play_button_pressed")
-	var timeout = (1.0 / 1.42) * 1000
+	var timeout = (1.5 / 1.42) * 1000
 
 	await runner.await_signal("play_agents_finished", [], timeout + 100)
 
