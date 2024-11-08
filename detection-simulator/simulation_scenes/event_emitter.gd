@@ -37,12 +37,24 @@ func load_save_data(data: Dictionary):
 	if data.has("event_emitter_version"):
 		if data["event_emitter_version"] <= 1:
 
+			for old_event in _manual_events:
+				for wps in old_event.waypoints:
+					var agent_id = wps[0]
+					var waypoint_id = wps[1]
+
+					var agent = TreeFuncs.get_agent_with_id(agent_id)
+					var waypoint = agent.waypoints.get_waypoint(waypoint_id)
+
+					waypoint.remove_event(old_event, false)
+
 			_manual_events.clear()
 
 			for event_data in data["manual_events"]:
 				var event = SimulationEventExporterManual.new()
 
 				event.load_save_data(event_data)
+
+				_manual_events.append(event)
 		else:
 			print_debug("Unknown event emitter version %s" % data["event_emitter_version"])
 	else:
