@@ -1,6 +1,7 @@
 {
 	inputs = {
 		nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
+		nixpkgs-godot.url = "github:NixOS/nixpkgs/666fc80e7b2afb570462423cb0e1cf1a3a34fedd";
 		flake-utils.url = "github:numtide/flake-utils";
 		nixGL = {
 			url = "github:guibou/nixGL";
@@ -8,7 +9,7 @@
 		};
 	};
 
-	outputs = { nixpkgs, flake-utils, nixGL, ... } :
+	outputs = { nixpkgs, nixpkgs-godot, flake-utils, nixGL, ... } :
 		flake-utils.lib.eachDefaultSystem (system:
 			let
 				pkgs = import nixpkgs {
@@ -17,11 +18,17 @@
 					overlays = [ nixGL.overlay ];
 				};
 
+				pkgs-godot = import nixpkgs-godot {
+					system = system;
+					config = { allowUnfree = true; };
+					overlays = [ nixGL.overlay ];
+				};
+
 				lib = pkgs.lib;
 
-				dev-package-list = with pkgs; [ godot_4 ];
+				dev-package-list = with pkgs-godot; [ godot_4 ] ++ (with pkgs; [gdtoolkit_4]);
 
-				godot_export_templates = import ./godot_export_templates.nix { inherit pkgs; godot_version = pkgs.godot_4.version; };
+				godot_export_templates = import ./godot_export_templates.nix { pkgs = pkgs-godot; godot_version = pkgs-godot.godot_4.version; };
 
 				nix-shell-script = pkgs.writeShellScriptBin "godot" ''
 					#!/bin/bash
@@ -78,8 +85,8 @@
 				devShells = {
 					default = pkgs.mkShell {
 						packages = dev-package-list ++ all-scripts ++ [ godot_export_templates ];
-						GODOT_RAW_BIN = "${pkgs.godot_4}/bin/godot4";
-						GODOT_BIN = "${pkgs.godot_4}/bin/godot4";
+						GODOT_RAW_BIN = "${pkgs-godot.godot_4}/bin/godot4";
+						GODOT_BIN = "${pkgs-godot.godot_4}/bin/godot4";
 
 						shellHook = ''
 							set -a; source .env; set +a;
@@ -97,8 +104,8 @@
 
 					nonnix = pkgs.mkShell {
 						packages = dev-package-list ++ [ pkgs.nixgl.auto.nixGLDefault ] ++ all-scripts;
-						GODOT_RAW_BIN = "${pkgs.godot_4}/bin/godot4";
-						GODOT_BIN = "nixGL ${pkgs.godot_4}/bin/godot4";
+						GODOT_RAW_BIN = "${pkgs-godot.godot_4}/bin/godot4";
+						GODOT_BIN = "nixGL ${pkgs-godot.godot_4}/bin/godot4";
 
 						shellHook = ''
 							set -a; source .env; set +a;
