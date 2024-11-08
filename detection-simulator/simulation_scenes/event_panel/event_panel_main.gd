@@ -13,14 +13,14 @@ enum EventStatus {
 
 var _status: EventStatus = EventStatus.NEW
 
-func _ready():
-	_internal_panel.waypoint_base_node = self
-
-func new_event():
+func new_event(agent_id: int, waypoint_id: int):
 	_current_event = SimulationEventExporterManual.new()
 	_status = EventStatus.NEW
 	_internal_panel.delete_button.disabled = true
 	_internal_panel.delete_button.visible = false
+
+	_internal_panel.create_new_waypoint(agent_id, waypoint_id)
+	_internal_panel._order_wps()
 
 func load_event(current_event: SimulationEventExporterManual):
 	_current_event = current_event

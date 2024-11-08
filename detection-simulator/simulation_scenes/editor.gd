@@ -11,6 +11,7 @@ class_name ScenarioEditor
 @export var _gui : CanvasLayer = null
 @export var _rightclick_empty: PopupMenu = null
 @export var _notifier: GUINotifier = null
+@export var _event_panel: PackedScene = null
 
 @export_subgroup("Labels")
 @export var _status_label : Label = null
@@ -713,3 +714,16 @@ func _on_ui_scale_edit_focus_exited():
 		var temp_value = value.to_float()
 
 		ui_scale = maxf(temp_value, 1.0)
+
+func create_event_on_waypoint(agent_id: int, waypoint_id: int):
+	var event_panel = _event_panel.instantiate()
+	_gui.add_child(event_panel)
+
+	# Centre the panel
+	event_panel.position = Vector2(get_viewport().size.x / 2, get_viewport().size.y / 2) - (event_panel.size / 2)
+	print_debug("Panel Position: %s" % event_panel.position)
+	print_debug("Panel Size: %s" % event_panel.size)
+
+	event_panel.new_event(agent_id, waypoint_id)
+
+

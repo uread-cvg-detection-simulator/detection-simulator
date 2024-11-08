@@ -1,7 +1,8 @@
-[gd_scene load_steps=12 format=3 uid="uid://bok4788dfl1al"]
+[gd_scene load_steps=13 format=3 uid="uid://bok4788dfl1al"]
 
 [ext_resource type="Script" path="res://simulation_scenes/editor.gd" id="1_o3h7t"]
 [ext_resource type="Script" path="res://simulation_scenes/camera.gd" id="2_j0bt8"]
+[ext_resource type="PackedScene" uid="uid://cmy0i5jl2uuxq" path="res://simulation_scenes/event_panel/EventPanel.tscn" id="2_jf2ru"]
 [ext_resource type="PackedScene" uid="uid://p0wyr5cxelew" path="res://agents/agent.tscn" id="2_wea12"]
 [ext_resource type="PackedScene" uid="uid://djdqjby78q501" path="res://simulation_scenes/grid.tscn" id="3_2o4sa"]
 [ext_resource type="Script" path="res://simulation_scenes/editor_gui.gd" id="3_fj0mv"]
@@ -19,6 +20,7 @@ _sensor_root = NodePath("sensors")
 _gui = NodePath("CanvasLayer")
 _rightclick_empty = NodePath("empty_right_click_menu")
 _notifier = NodePath("CanvasLayer/NotifierContainer")
+_event_panel = ExtResource("2_jf2ru")
 _status_label = NodePath("CanvasLayer/PlayBar/HBoxContainer/StatusInfo")
 _ui_scale = NodePath("CanvasLayer/PlayBar/HBoxContainer/UiScaleEdit")
 _play_button = NodePath("CanvasLayer/PlayBar/HBoxContainer/PlayButton")

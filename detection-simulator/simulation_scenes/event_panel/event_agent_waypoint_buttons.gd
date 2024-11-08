@@ -24,7 +24,7 @@ func set_index(index: int):
 
 func _set_text():
 	label_index.text = str(_index)
-	label_agent_info.text = "    A{} W{}    " % [_agent_id, _waypoint_id]
+	label_agent_info.text = "    A%d W%d    " % [_agent_id, _waypoint_id]
 
 func _on_delete_button_pressed():
 	delete_signal.emit(_agent_id, _waypoint_id, _index)

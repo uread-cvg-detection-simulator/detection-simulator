@@ -19,6 +19,7 @@ enum ContextMenuIDs {
 	DELETE,
 	PROPERTIES,
 	LINK_WAYPOINT,
+	CREATE_EVENT,
 	ENTER_VEHICLE,
 	EXIT_VEHICLE = 100,
 }
@@ -75,6 +76,7 @@ func _prepare_menu():
 
 	context_menu.add_item("Delete Waypoint", ContextMenuIDs.DELETE)
 	context_menu.add_item("Properties", ContextMenuIDs.PROPERTIES)
+	context_menu.add_item("Create Event", ContextMenuIDs.CREATE_EVENT)
 
 	# If waypoint of another agent is selected, add "Enter Vehicle" to the menu
 	var all_selected_objects = get_tree().get_nodes_in_group("selected")
@@ -252,6 +254,8 @@ func _context_menu_id_pressed(id: ContextMenuIDs):
 		ContextMenuIDs.PROPERTIES:
 			# HACK: Select the waypoint, then the properties dialog will be opened
 			_selection_area.selected = true
+		ContextMenuIDs.CREATE_EVENT:
+			parent_object.base_editor.create_event_on_waypoint(parent_object.agent_id, parent_object.waypoints.get_waypoint_index(self))
 		ContextMenuIDs.LINK_WAYPOINT:
 			_on_link()
 		ContextMenuIDs.ENTER_VEHICLE:
