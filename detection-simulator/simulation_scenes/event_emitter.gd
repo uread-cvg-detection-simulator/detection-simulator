@@ -78,6 +78,9 @@ func _start_playing():
 
 		enter_exit_stats.push_back(hidden_state)
 
+	for event in _manual_events:
+		event.event_triggered.connect(self._manual_event_trigger)
+
 
 ## Receive a signal from the PlayTimer to stop
 func _stop_playing():
@@ -93,6 +96,9 @@ func _stop_playing():
 		if is_instance_valid(hidden_state):
 			hidden_state.vehicle_enter.disconnect(self._auto_event_vehicle_enter)
 			hidden_state.vehicle_exit.disconnect(self._auto_event_vehicle_exit)
+
+	for event in _manual_events:
+		event.event_triggered.disconnect(self._manual_event_trigger)
 
 	enter_exit_stats.clear()
 
@@ -141,6 +147,36 @@ func _auto_event_vehicle_exit(agent_id_entrant: int, agent_id_vehicle: int):
 	var timestamp_ms = PlayTimer.current_time * 1000
 
 	_create_event(description, type, position_array, timestamp_ms, targets)
+
+func _manual_event_trigger(event: SimulationEventExporterManual, trigger_targets: Array):
+	var description = event.description
+	var type = event.type
+	var triggered_index = trigger_targets[0]
+	var other_indexes = trigger_targets.slice(1)
+	var timestamp_ms = PlayTimer.current_time * 1000
+
+	var targets: Array = [event.waypoints[triggered_index][0]]
+	var triggered_agent_wp = TreeFuncs.get_agent_with_id(event.waypoints[triggered_index][0]).waypoints.get_waypoint(event.waypoints[triggered_index][1])
+	var other_agents_wps = []
+
+	for index in other_indexes:
+		targets.push_back(event.waypoints[index][0])
+		other_agents_wps.append(TreeFuncs.get_agent_with_id(event.waypoints[index][0]).waypoints.get_waypoint(event.waypoints[index][1]))
+
+	# Get centre of all agents
+	# TODO: Add a bounding box option
+
+	var centre = triggered_agent_wp.global_position
+
+	for agent in other_agents_wps:
+		centre += agent.global_position
+
+	centre /= other_agents_wps.size() + 1
+
+	var position_array = [{"x": centre.x, "y": centre.y}]
+
+	_create_event(description, type, position_array, timestamp_ms, targets)
+
 
 func manual_event_add(event_info: SimulationEventExporterManual):
 	if !_manual_events.has(event_info):
