@@ -19,10 +19,14 @@ func _ready():
 func new_event():
 	_current_event = SimulationEventExporterManual.new()
 	_status = EventStatus.NEW
+	_internal_panel.delete_button.disabled = true
+	_internal_panel.delete_button.visible = false
 
 func load_event(current_event: SimulationEventExporterManual):
 	_current_event = current_event
 	_status = EventStatus.EDIT
+	_internal_panel.delete_button.disabled = false
+	_internal_panel.delete_button.visible = true
 
 	# Set the GUI elements
 	_internal_panel.description_edit.text = current_event.description
@@ -118,7 +122,7 @@ func _on_save_button_pressed():
 
 		UndoSystem.add_action(undo_action)
 
-
+	queue_free()
 
 
 func _set_event_data(event):
@@ -149,3 +153,10 @@ func _set_event_data(event):
 
 	for wp in _internal_panel.current_waypoint_list:
 		event.waypoints.append([wp._agent_id, wp._waypoint_id])
+
+
+func _on_delete_button_pressed():
+	if _status == EventStatus.EDIT:
+		event_emitter.manual_event_del(_current_event)
+
+	queue_free()

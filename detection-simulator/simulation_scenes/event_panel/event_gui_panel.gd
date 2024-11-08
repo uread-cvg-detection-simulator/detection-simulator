@@ -6,6 +6,7 @@ class_name EventPanelContainer
 @export var type_edit: TextEdit = null
 @export var trigger_item_list: ItemList = null
 @export var trigger_overall_item_list: ItemList = null
+@export var delete_button: Button = null
 
 @export var wp_add_new: Control = null
 
