@@ -35,9 +35,12 @@ func _on_new_waypoint_button_pressed():
 
 func _on_new_waypoint_selected(group: String, node: Node):
 	if group == "selected":
-		if node is Waypoint:
+		if node.parent_object is Waypoint:
+			var wp = node.parent_object
+			var agent = wp.parent_object
+
 			# Create new waypoint
-			create_new_waypoint(node.parent_object.agent_id, node.parent_object.waypoints.get_waypoint_index(node))
+			create_new_waypoint(agent.agent_id, agent.waypoints.get_waypoint_index(wp))
 
 			# Return GUI to normal
 			visible = true
