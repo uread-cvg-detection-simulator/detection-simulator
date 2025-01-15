@@ -58,6 +58,8 @@ func create_new_waypoint(agent_id: int, waypoint_id: int):
 	current_waypoint_list.append(new_wp)
 	waypoint_base_node.add_child(new_wp)
 
+	_order_wps()
+
 
 func _order_wps():
 	var index: int = 0

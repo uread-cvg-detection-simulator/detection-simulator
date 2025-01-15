@@ -638,3 +638,9 @@ func remove_event(event_info: SimulationEventExporterManual, propagate: bool):
 	if propagate:
 		# TODO: Call primary event emitter to remove event from all other wps
 		pass
+
+func get_waypoint_index() -> int:
+	if parent_object is Agent:
+		return parent_object.waypoints.get_waypoint_index(self)
+	else:
+		return -2
