@@ -30,7 +30,6 @@ func test_event_on_arrival():
 	event.waypoints = [[agent.agent_id, wp_1.get_waypoint_index()]]
 
 	event_emitter.manual_event_add(event)
-	event.queue_free()
 
 	# Run simulation and test for event poll
 	#signal event_triggered(event: SimulationEventExporterManual, trigger_targets: Array)
@@ -39,4 +38,7 @@ func test_event_on_arrival():
 
 	await runner.await_signal_on(event_emitter._manual_events[0], "event_triggered", [], 3000)
 
+	agent.queue_free()
 
+	event_emitter.manual_event_del(event)
+	event.queue_free()
