@@ -396,4 +396,3 @@ func _find_string_in_context_menu(context_menu: PopupMenu, string: String):
 			break
 
 	return string_found
-

@@ -270,4 +270,3 @@ func _create_event(description: String, type: String, position_array: Array, tim
 			event_fileaccess.store_string(",")
 
 		event_fileaccess.store_string(JSON.stringify(event))
-

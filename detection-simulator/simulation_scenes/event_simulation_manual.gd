@@ -206,4 +206,3 @@ func _on_stop_moving(agent_id: int, waypoint_id: int):
 		_agent_triggered[index] = true
 
 	_evaluate_send_events(index)
-

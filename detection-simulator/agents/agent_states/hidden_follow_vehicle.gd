@@ -61,4 +61,3 @@ func exit() -> void:
 
 	vehicle = null
 	owner.visible = true
-
