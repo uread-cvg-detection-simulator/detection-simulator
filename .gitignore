@@ -1,3 +1,4 @@
 .direnv
 build
 detection-simulator/reports
+detection-simulator/addons/gdUnit4/GdUnitRunner.cfg
