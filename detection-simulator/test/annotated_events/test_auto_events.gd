@@ -34,10 +34,10 @@ func before_test():
 	var wp_agent_before_enter = TestFuncs.spawn_waypoint_from(agent_person, Vector2(1, 0.5), runner)
 
 	await await_idle_frame()
-	enter_vehicle(wp_agent_before_enter, wp_enter)
-	exit_vehicle(agent_person, wp_exit)
+	TestFuncs.enter_vehicle(wp_agent_before_enter, wp_enter, runner)
+	TestFuncs.exit_vehicle(agent_person, wp_exit)
 
-	var wp_agent_after_exit = get_after_exit_waypoint(wp_agent_before_enter)
+	var wp_agent_after_exit = TestFuncs.get_after_exit_waypoint(wp_agent_before_enter)
 
 	if wp_agent_after_exit == null:
 		assert_object(wp_agent_after_exit).is_not_null()
@@ -55,40 +55,6 @@ func after_test():
 
 func store_event(type: String, description: String, time: String):
 	stored_events.append([type, description, time])
-
-func enter_vehicle(wp_individual: Waypoint, wp_enter: Waypoint):
-	wp_individual._selection_area.selected = true
-	runner.simulate_frames(1)
-
-	wp_enter._on_enter_vehicle()
-	runner.simulate_frames(1)
-
-func exit_vehicle(agent: Agent, wp_exit: Waypoint) -> bool:
-	wp_exit._prepare_menu()
-
-	if TestFuncs.find_string_in_context_menu(wp_exit.context_menu, "Exit Vehicle A%d" % agent.agent_id):
-		wp_exit._context_menu_id_pressed(Waypoint.ContextMenuIDs.EXIT_VEHICLE + agent.agent_id)
-		return true
-	else:
-		return false
-
-func get_after_exit_waypoint(wp_before_enter: Waypoint) -> Waypoint:
-	# Before Enter -> Enter -> Exit -> After Exit
-
-	if wp_before_enter.pt_next == null:
-		return null
-
-	var wp_enter = wp_before_enter.pt_next
-
-	if wp_enter.pt_next == null:
-		return null
-
-	var wp_exit = wp_enter.pt_next
-
-	if wp_exit.pt_next == null:
-		return null
-
-	return wp_exit.pt_next
 
 func test_agent_enter_event():
 	# Start the simulation

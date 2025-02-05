@@ -60,3 +60,37 @@ func find_string_in_context_menu(context_menu: PopupMenu, string: String):
 			break
 
 	return string_found
+
+func enter_vehicle(wp_individual: Waypoint, wp_enter: Waypoint, runner: GdUnitSceneRunner):
+	wp_individual._selection_area.selected = true
+	runner.simulate_frames(1)
+
+	wp_enter._on_enter_vehicle()
+	runner.simulate_frames(1)
+
+func exit_vehicle(agent: Agent, wp_exit: Waypoint) -> bool:
+	wp_exit._prepare_menu()
+
+	if TestFuncs.find_string_in_context_menu(wp_exit.context_menu, "Exit Vehicle A%d" % agent.agent_id):
+		wp_exit._context_menu_id_pressed(Waypoint.ContextMenuIDs.EXIT_VEHICLE + agent.agent_id)
+		return true
+	else:
+		return false
+
+func get_after_exit_waypoint(wp_before_enter: Waypoint) -> Waypoint:
+	# Before Enter -> Enter -> Exit -> After Exit
+
+	if wp_before_enter.pt_next == null:
+		return null
+
+	var wp_enter = wp_before_enter.pt_next
+
+	if wp_enter.pt_next == null:
+		return null
+
+	var wp_exit = wp_enter.pt_next
+
+	if wp_exit.pt_next == null:
+		return null
+
+	return wp_exit.pt_next
