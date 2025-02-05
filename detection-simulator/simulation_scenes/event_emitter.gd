@@ -13,6 +13,7 @@ var enter_exit_stats: Array = []
 
 # Tuple of event and lambda for signal
 var _manual_events: Array = []
+var _undo_stored_events: Array = []
 
 # Signals with a type and description whenever an event is triggered
 signal event_emitter(type: String, description: String, time: String, targets: Array)
@@ -177,9 +178,22 @@ func _manual_event_trigger(event: SimulationEventExporterManual, trigger_targets
 
 	_create_event(description, type, position_array, timestamp_ms, targets)
 
+func manual_event_known(event_info: SimulationEventExporterManual) -> int:
+	if _manual_events.is_empty():
+		return -1
+
+	for ev_idx in range(0,_manual_events.size()):
+		if event_info.equals(_manual_events[ev_idx]):
+			return ev_idx
+
+	return -1
+
 
 func manual_event_add(event_info: SimulationEventExporterManual):
-	if !_manual_events.has(event_info):
+
+	var known_index = manual_event_known(event_info)
+
+	if known_index == -1:
 
 		var undo_action = UndoRedoAction.new()
 		undo_action.action_name = "Add Manual Event"
@@ -220,10 +234,9 @@ func manual_event_add(event_info: SimulationEventExporterManual):
 
 func manual_event_del(event_info: SimulationEventExporterManual):
 
-	if _manual_events.has(event_info):
-		# get the index of the event
-		var index = _manual_events.find(event_info)
+	var index = manual_event_known(event_info)
 
+	if index != -1:
 		var undo_action = UndoRedoAction.new()
 		undo_action.action_name = "Delete Manual Event"
 
@@ -237,10 +250,24 @@ func manual_event_del(event_info: SimulationEventExporterManual):
 
 		undo_action.action_object_call(UndoRedoAction.DoType.Do, self, "remove_child", [event_ref], [event_ref])
 		undo_action.action_object_call_ref(UndoRedoAction.DoType.Do, event_ref, "remove_event_from_waypoints")
+		undo_action.action_method(UndoRedoAction.DoType.Do, func(index, event):
+			_manual_events.remove_at(index)
+			_undo_stored_events.append(event)
+			PlayTimer.start_playing.disconnect(event._start_playing)
+			PlayTimer.stop_playing.disconnect(event._stop_playing)
+		, [index, event_ref], [event_ref])
 
 		######
 		# Undo
 		######
+
+		undo_action.action_method(UndoRedoAction.DoType.Undo, func(index, event):
+			_manual_events.insert(index, event)
+			_undo_stored_events.erase(event)
+			PlayTimer.start_playing.connect(event._start_playing)
+			PlayTimer.stop_playing.connect(event._stop_playing)
+		, [index, event_ref], [event_ref])
+
 		undo_action.action_object_call(UndoRedoAction.DoType.Undo, self, "add_child", [event_ref], [event_ref])
 		undo_action.action_object_call_ref(UndoRedoAction.DoType.Undo, event_ref, "add_event_to_waypoints")
 

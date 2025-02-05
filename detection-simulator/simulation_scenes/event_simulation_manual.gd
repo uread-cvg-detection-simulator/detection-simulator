@@ -70,6 +70,54 @@ func load_save_data(data: Dictionary, propagate_to_wps: bool = true):
 	else:
 		print_debug("Event version not found in save data")
 
+func equals(other: SimulationEventExporterManual) -> bool:
+
+	var self_dict = get_save_data()
+	var other_dict = other.get_save_data()
+
+	return dict_equals(self_dict, other_dict)
+
+func dict_equals(self_dict: Dictionary, other_dict: Dictionary):
+	for key in self_dict:
+		if not other_dict.has(key):
+			return false
+
+		var self_value = self_dict[key]
+		var other_value = other_dict[key]
+
+		if typeof(self_value) == TYPE_DICTIONARY:
+			if !dict_equals(self_value, other_value):
+				return false
+		if typeof(self_value) == TYPE_ARRAY:
+			if !array_equals(self_value, other_value):
+				return false
+		else:
+			if self_value != other_value:
+				return false
+
+	return true
+
+func array_equals(self_array: Array, other_array: Array):
+
+	if self_array.size() != other_array.size():
+		return false
+
+	for idx in range(0, self_array.size()):
+		var self_value = self_array[0]
+		var other_value = other_array[0]
+
+		if typeof(self_value) == TYPE_DICTIONARY:
+			if !dict_equals(self_value, other_value):
+				return false
+		if typeof(self_value) == TYPE_ARRAY:
+			if !array_equals(self_value, other_value):
+				return false
+		else:
+			if self_value != other_value:
+				return false
+
+	return true
+
 func add_event_to_waypoints():
 	for waypoint in waypoints:
 		var agent_id = waypoint[0]
