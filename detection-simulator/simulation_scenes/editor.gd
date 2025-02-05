@@ -49,6 +49,7 @@ var save_path_export_base = null
 var _current_save_hash = 0
 var _last_save_data: Dictionary = {}
 var _data_to_save = false
+var _current_event_panel: EventPanel = null
 
 signal play_agents_finished
 
@@ -728,6 +729,8 @@ func create_event_on_waypoint(agent_id: int, waypoint_id: int):
 func edit_event(event: SimulationEventExporterManual):
 	var event_panel = _event_panel.instantiate()
 	_gui.add_child(event_panel)
+
+	_current_event_panel = event_panel
 
 	# Centre the panel
 	event_panel.position = Vector2(get_viewport().size.x / 2, get_viewport().size.y / 2)

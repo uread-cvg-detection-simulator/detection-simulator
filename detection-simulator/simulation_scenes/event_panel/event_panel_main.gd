@@ -64,23 +64,23 @@ func _on_cancel_button_pressed():
 	queue_free()
 
 func _on_save_button_pressed():
-	_current_event.remove_event_from_waypoints()
 
 	if _status == EventStatus.NEW:
 		_set_event_data(_current_event)
 
 		event_emitter.manual_event_add(_current_event)
 	else:
-		var event_index = event_emitter._manual_events.find(_current_event)
-		var duplicate_event = _current_event.duplicate()
+		var event_index = event_emitter.manual_event_known(_current_event)
+
+		var duplicate_event = SimulationEventExporterManual.new()
+		duplicate_event.load_save_data(_current_event.get_save_data(), false)
+
+		_set_event_data(duplicate_event)
 
 		var undo_action = UndoRedoAction.new()
 		undo_action.action_name = "Edit event"
 
-		var event_ref = undo_action.action_store_method(UndoRedoAction.DoType.Do, func(index):
-			var event = event_emitter._manual_events[index]
-			return event
-		, [event_index])
+		var event_ref = undo_action.action_store_object_call(UndoRedoAction.DoType.Do, event_emitter, "get_manual_event_index", [event_index])
 
 		if _current_event.description != duplicate_event.description:
 			undo_action.action_property_ref(UndoRedoAction.DoType.Do, event_ref, "description", duplicate_event.description)

@@ -178,6 +178,9 @@ func _manual_event_trigger(event: SimulationEventExporterManual, trigger_targets
 
 	_create_event(description, type, position_array, timestamp_ms, targets)
 
+func get_manual_event_index(idx: int) -> SimulationEventExporterManual:
+	return _manual_events[idx]
+
 func manual_event_known(event_info: SimulationEventExporterManual) -> int:
 	if _manual_events.is_empty():
 		return -1
@@ -187,7 +190,6 @@ func manual_event_known(event_info: SimulationEventExporterManual) -> int:
 			return ev_idx
 
 	return -1
-
 
 func manual_event_add(event_info: SimulationEventExporterManual):
 
