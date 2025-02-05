@@ -18,7 +18,8 @@ func before():
 
 func before_test():
 	event_emitter = runner.get_property("event_emittor")
-	event_emitter.event_emitter.connect(store_event)
+	if !event_emitter.event_emitter.is_connected(store_event):
+		event_emitter.event_emitter.connect(store_event)
 
 	agent_one = TestFuncs.spawn_and_get_agent(Vector2.ZERO, runner)
 	agent_two = TestFuncs.spawn_and_get_agent(Vector2(-1, 1), runner)
@@ -43,6 +44,9 @@ func after_test():
 
 	await await_idle_frame()
 
+func after():
+	event_emitter.event_emitter.disconnect(store_event)
+
 func store_event(type: String, description: String, time: String, targets: Array):
 	stored_events.append([type, description, time, targets])
 
@@ -57,6 +61,8 @@ func test_event_multiple_each_arrival():
 
 	event_emitter.manual_event_add(event)
 
+	await await_idle_frame()
+	assert_bool(PlayTimer.play).is_false()
 	runner.invoke("_on_play_button_pressed")
 	await await_signal_on(agent_one.state_machine, "transitioned", ["wait_waypoint_conditions"], 2000)
 	await await_millis(50)
@@ -87,6 +93,8 @@ func test_event_multiple_all_arrival():
 
 	event_emitter.manual_event_add(event)
 
+	await await_idle_frame()
+	assert_bool(PlayTimer.play).is_false()
 	runner.invoke("_on_play_button_pressed")
 	await await_signal_on(agent_one.state_machine, "transitioned", ["wait_waypoint_conditions"], 2000)
 	await await_millis(50)

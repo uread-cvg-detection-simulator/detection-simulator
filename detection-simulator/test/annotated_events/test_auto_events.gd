@@ -21,7 +21,9 @@ func before():
 
 func before_test():
 	event_emitter = runner.get_property("event_emittor")
-	event_emitter.event_emitter.connect(store_event)
+
+	if !event_emitter.event_emitter.is_connected(store_event):
+		event_emitter.event_emitter.connect(store_event)
 
 	agent_person = TestFuncs.spawn_and_get_agent(Vector2.ZERO, runner)
 	agent_vehicle = TestFuncs.spawn_and_get_agent(Vector2(0, 1), runner)
@@ -53,12 +55,16 @@ func after_test():
 	agent_person.queue_free()
 	agent_vehicle.queue_free()
 
+func after():
+	event_emitter.event_emitter.disconnect(store_event)
+
 func store_event(type: String, description: String, time: String, targets: Array):
 	stored_events.append([type, description, time, targets])
 
 func test_agent_enter_event():
 	# Start the simulation
 
+	await await_idle_frame()
 	runner.invoke("_on_play_button_pressed")
 	await await_idle_frame()
 
@@ -77,6 +83,7 @@ func test_agent_enter_event():
 
 
 func test_agent_exit_event():
+	await await_idle_frame()
 	runner.invoke("_on_play_button_pressed")
 	await await_idle_frame()
 
