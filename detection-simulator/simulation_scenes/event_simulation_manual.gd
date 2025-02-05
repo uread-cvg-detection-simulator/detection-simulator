@@ -189,10 +189,11 @@ func _on_start_moving(agent_id: int, waypoint_id: int):
 
 	_agent_state[index] = AgentState.LEFT
 
-	if trigger_type == TriggerType.ON_START or trigger_type == TriggerType.ON_BOTH:
-		_agent_triggered[index] = true
+	if !_agent_triggered[index]:
+		if trigger_type == TriggerType.ON_START or trigger_type == TriggerType.ON_BOTH:
+			_agent_triggered[index] = true
 
-	_evaluate_send_events(index)
+		_evaluate_send_events(index)
 
 # Called when an agent stops moving (when arriving at a waypoint)
 func _on_stop_moving(agent_id: int, waypoint_id: int):
@@ -202,7 +203,8 @@ func _on_stop_moving(agent_id: int, waypoint_id: int):
 
 	_agent_state[index] = AgentState.ARRIVED
 
-	if trigger_type == TriggerType.ON_STOP or trigger_type == TriggerType.ON_BOTH:
-		_agent_triggered[index] = true
+	if !_agent_triggered[index]:
+		if trigger_type == TriggerType.ON_STOP or trigger_type == TriggerType.ON_BOTH:
+			_agent_triggered[index] = true
 
-	_evaluate_send_events(index)
+		_evaluate_send_events(index)
