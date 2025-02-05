@@ -14,7 +14,9 @@ func before_test():
 
 	agent_vehicle.agent_type = Agent.AgentType.BoatTarget
 
-
+func after():
+	if PlayTimer.play:
+		runner.invoke("_on_play_button_pressed")
 
 
 func test_agent_exit_on_last_vehicle_wp():
@@ -39,8 +41,8 @@ func test_agent_exit_on_last_vehicle_wp():
 	var final_wp = TestFuncs.spawn_waypoint_from(wp_agent_after_exit, Vector2(3, 0), runner)
 	await await_idle_frame()
 
-
 	runner.invoke("_on_play_button_pressed")
+
 	var timeout = 10 * 1000
 
 	await runner.await_signal("play_agents_finished", [], timeout + 100)

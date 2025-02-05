@@ -58,6 +58,9 @@ func after_test():
 func after():
 	event_emitter.event_emitter.disconnect(store_event)
 
+	if PlayTimer.play:
+		runner.invoke("_on_play_button_pressed")
+
 func store_event(type: String, description: String, time: String, targets: Array):
 	stored_events.append([type, description, time, targets])
 

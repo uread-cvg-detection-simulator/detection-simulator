@@ -14,6 +14,9 @@ func before_test():
 
 	agent_vehicle.agent_type = Agent.AgentType.BoatTarget
 
+func after():
+	if PlayTimer.play:
+		runner.invoke("_on_play_button_pressed")
 
 func enter_vehicle(wp_individual: Waypoint, wp_enter: Waypoint):
 	wp_individual._selection_area.selected = true
