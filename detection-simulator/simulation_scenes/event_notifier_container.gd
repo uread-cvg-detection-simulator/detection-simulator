@@ -12,7 +12,7 @@ func new_notification(text: String):
 	var new_notification: EventNotifierTemplate = template_scene.instantiate()
 
 	new_notification.label.text = ""
-	
+
 	var text_size = new_notification.label.get_theme_default_font().get_multiline_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, size.x)
 
 	new_notification.custom_minimum_size = text_size + Vector2(10, 10)
@@ -30,5 +30,5 @@ func new_notification(text: String):
 
 	add_child(new_notification)
 
-func event_receiver(type: String, description: String, time: String):
+func event_receiver(type: String, description: String, time: String, targets: Array):
 	new_notification("%s - %s @ %s" % [type, description, time])

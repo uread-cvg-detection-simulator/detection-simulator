@@ -53,8 +53,8 @@ func after_test():
 	agent_person.queue_free()
 	agent_vehicle.queue_free()
 
-func store_event(type: String, description: String, time: String):
-	stored_events.append([type, description, time])
+func store_event(type: String, description: String, time: String, targets: Array):
+	stored_events.append([type, description, time, targets])
 
 func test_agent_enter_event():
 	# Start the simulation

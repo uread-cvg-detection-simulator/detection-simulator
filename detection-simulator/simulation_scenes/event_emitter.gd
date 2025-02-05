@@ -15,7 +15,7 @@ var enter_exit_stats: Array = []
 var _manual_events: Array = []
 
 # Signals with a type and description whenever an event is triggered
-signal event_emitter(type: String, description: String, time: String)
+signal event_emitter(type: String, description: String, time: String, targets: Array)
 
 # Called when the node enters the scene tree for the first time.
 func _ready():
@@ -260,7 +260,7 @@ func _create_event(description: String, type: String, position_array: Array, tim
 	var time = timestamp_ms / 1000
 	var time_string = "%02d:%02d:%02d" % [int(time) / 3600, (int(time) / 60) % 60, int(time) % 60]
 
-	event_emitter.emit(type, description, time_string)
+	event_emitter.emit(type, description, time_string, targets)
 
 	if PlayTimer.exporting:
 		if event_fileaccess == null:
