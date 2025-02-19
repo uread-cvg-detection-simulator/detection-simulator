@@ -1,0 +1,35 @@
+on:
+  push:
+    branches:
+      - "master"
+
+jobs:
+  build:
+    name: Build - ${{ matrix.platform.os_name }}
+    runs-on: [self-hosted, linux]
+    container:
+      image: nixos/nix:latest
+    strategy:
+      matrix:
+        platform:
+          - os_name: windows
+            upload-target: build/windows
+          - os_name: macos
+            upload-target: build/macos/detection-simulator.zip
+          - os_name: linux
+            upload-target: build/linux
+
+    steps:
+      - uses: actions/checkout@v1
+      # - uses: cachix/install-nix-action@v30
+      #   with:
+      #     nix_path: nixpkgs=channel:nixos-24.11
+      - uses: cachix/cachix-action@v15
+        with:
+          name: nix-godot-build-cache
+      - run: nix develop --command godot-build-${{ matrix.platform.os_name }}
+        continue-on-error: true
+      - uses: actions/upload-artifact@v4.6.0
+        with:
+          name: ${{ matrix.platform.os_name }}-release
+          path: ${{ matrix.platform.upload-target }}
