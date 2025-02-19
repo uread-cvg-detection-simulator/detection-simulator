@@ -83,6 +83,8 @@ pages:
 
 prepare:release-zip:
   stage: prepare_release
+  tags:
+    - docker
   dependencies:
     - windows
     - linux
@@ -103,13 +105,44 @@ prepare:release-zip:
       - $EXPORT_NAME-macos.zip
     expire_in: 1 hour
 
-prepare:release-upload:
+prepare:delete_unstable_package:
+  stage: prepare_release
+  image: alpine/curl:latest
+  tags:
+    - docker
+  before_script:
+    - apk --no-cache add jq
+  script:
+    - echo "Fetching package list..."
+    - |
+      curl --silent --header "JOB-TOKEN: $CI_JOB_TOKEN" "https://gitlab.com/api/v4/projects/$CI_PROJECT_ID/packages" > response.json
+
+      if cat response.json | jq empty > /dev/null 2>&1; then
+        PACKAGE_ID=$(jq -r --arg name "$EXPORT_NAME" '.[] | select(.name==$name and .version=="unstable") | .id' response.json)
+
+        if [ -n "$PACKAGE_ID" ] && [ "$PACKAGE_ID" != "null" ]; then
+          echo "Deleting package ID: $PACKAGE_ID (unstable)"
+          curl --request DELETE --header "JOB-TOKEN: $CI_JOB_TOKEN" "https://gitlab.com/api/v4/projects/$CI_PROJECT_ID/packages/$PACKAGE_ID"
+        else
+          echo "No unstable package found, skipping delete."
+        fi
+      else
+        echo "Error: GitLab API response is not valid JSON!"
+        echo "Response: $RESPONSE"
+        exit 1
+      fi
+  only:
+    - master
+
+prepare:release-upload-latest:
   stage: release
   image: alpine/curl:latest
   dependencies:
     - prepare:release-zip
   script:
-    - 'curl --header "JOB-TOKEN: $CI_JOB_TOKEN" --upload-file "detection-simulator-windows.zip" "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/detection-simulator/unstable/detection-simulator-windows.zip"'
-    - 'curl --header "JOB-TOKEN: $CI_JOB_TOKEN" --upload-file "detection-simulator-linux.zip" "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/detection-simulator/unstable/detection-simulator-linux.zip"'
-    - 'curl --header "JOB-TOKEN: $CI_JOB_TOKEN" --upload-file "detection-simulator-macos.zip" "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/detection-simulator/unstable/detection-simulator-macos.zip"'
+    - 'curl --header "JOB-TOKEN: $CI_JOB_TOKEN" --upload-file "$EXPORT_NAME-windows.zip" "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/$EXPORT_NAME/unstable/$EXPORT_NAME-windows.zip"'
+    - 'curl --header "JOB-TOKEN: $CI_JOB_TOKEN" --upload-file "$EXPORT_NAME-linux.zip" "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/$EXPORT_NAME/unstable/$EXPORT_NAME-linux.zip"'
+    - 'curl --header "JOB-TOKEN: $CI_JOB_TOKEN" --upload-file "$EXPORT_NAME-macos.zip" "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/$EXPORT_NAME/unstable/$EXPORT_NAME-macos.zip"'
+  only:
+    - master
 
