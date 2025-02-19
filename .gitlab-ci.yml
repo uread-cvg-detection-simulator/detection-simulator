@@ -1,0 +1,115 @@
+image: barichello/godot-ci:4.3
+
+variables:
+  EXPORT_NAME: detection-simulator
+
+stages:
+  - export
+  - deploy
+  - prepare_release
+  - release
+
+windows:
+  stage: export
+  tags:
+    - docker
+  script:
+    - cd detection-simulator
+    - mkdir -v -p build/windows
+    - godot -v --headless --export-debug "Windows Desktop" ./build/windows/$EXPORT_NAME.exe || true
+  artifacts:
+    name: $EXPORT_NAME-$CI_JOB_NAME
+    paths:
+      - detection-simulator/build/windows
+    expire_in: 1 hour
+
+linux:
+  stage: export
+  tags:
+    - docker
+  script:
+    - cd detection-simulator
+    - mkdir -v -p build/linux
+    - godot -v --headless --export-debug "Linux/X11" ./build/linux/$EXPORT_NAME.x86_64 || true
+  artifacts:
+    name: $EXPORT_NAME-$CI_JOB_NAME
+    paths:
+      - detection-simulator/build/linux
+    expire_in: 1 hour
+
+macos:
+  stage: export
+  tags:
+    - docker
+  script:
+    - cd detection-simulator
+    - mkdir -v -p build/macos
+    - godot -v --headless --export-debug "macOS" ./build/macos/$EXPORT_NAME.zip || true
+  artifacts:
+    name: $EXPORT_NAME-$CI_JOB_NAME
+    paths:
+      - detection-simulator/build/macos
+    expire_in: 1 hour
+
+html5:
+  stage: export
+  tags:
+    - docker
+  script:
+    - cd detection-simulator
+    - mkdir -v -p build/html5
+    - godot -v --headless --export-debug "Web" ./build/html5/$EXPORT_NAME.html || true
+    - mv build/html5/$EXPORT_NAME.html build/html5/index.html
+  artifacts:
+    name: $EXPORT_NAME-$CI_JOB_NAME
+    paths:
+      - detection-simulator/build/html5
+    expire_in: 1 hour
+
+pages:
+  stage: deploy
+  tags:
+    - docker
+  dependencies:
+    - html5
+  script:
+    - rm -rf public
+    - cp -r detection-simulator/build/html5 public
+  artifacts:
+    paths:
+      - public
+  only:
+    - develop
+
+prepare:release-zip:
+  stage: prepare_release
+  dependencies:
+    - windows
+    - linux
+    - macos
+  before_script:
+    - apt install zip
+  script:
+    - echo "Preparing Windows"
+    - pushd detection-simulator/build/windows; zip $EXPORT_NAME-windows.zip *; mv $EXPORT_NAME-windows.zip ../../..; popd;
+    - echo "Preparing MacOS"
+    - pushd detection-simulator/build/macos; mv $EXPORT_NAME.zip ../../../$EXPORT_NAME-macos.zip; popd;
+    - echo "Preparing Linux"
+    - pushd detection-simulator/build/linux; zip $EXPORT_NAME-linux.zip *; mv $EXPORT_NAME-linux.zip ../../..; popd;
+  artifacts:
+    paths:
+      - $EXPORT_NAME-windows.zip
+      - $EXPORT_NAME-linux.zip
+      - $EXPORT_NAME-macos.zip
+    expire_in: 1 hour
+
+prepare:release-upload:
+  stage: release
+  image: alpine/curl:latest
+  dependencies:
+    - prepare:release-zip
+  script:
+    - 'curl --header "JOB-TOKEN: $CI_JOB_TOKEN" --upload-file "detection-simulator-windows.zip" "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/detection-simulator/unstable/detection-simulator-windows.zip"'
+    - 'curl --header "JOB-TOKEN: $CI_JOB_TOKEN" --upload-file "detection-simulator-linux.zip" "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/detection-simulator/unstable/detection-simulator-linux.zip"'
+    - 'curl --header "JOB-TOKEN: $CI_JOB_TOKEN" --upload-file "detection-simulator-macos.zip" "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/detection-simulator/unstable/detection-simulator-macos.zip"'
+
