@@ -115,14 +115,14 @@ prepare:delete_unstable_package:
   script:
     - echo "Fetching package list..."
     - |
-      curl --silent --header "JOB-TOKEN: $CI_JOB_TOKEN" "https://gitlab.com/api/v4/projects/$CI_PROJECT_ID/packages" > response.json
+      curl --silent --header "JOB-TOKEN: $CI_JOB_TOKEN" "${CI_API_V4_URL}/projects/$CI_PROJECT_ID/packages" > response.json
 
       if cat response.json | jq empty > /dev/null 2>&1; then
         PACKAGE_ID=$(jq -r --arg name "$EXPORT_NAME" '.[] | select(.name==$name and .version=="unstable") | .id' response.json)
 
         if [ -n "$PACKAGE_ID" ] && [ "$PACKAGE_ID" != "null" ]; then
           echo "Deleting package ID: $PACKAGE_ID (unstable)"
-          curl --request DELETE --header "JOB-TOKEN: $CI_JOB_TOKEN" "https://gitlab.com/api/v4/projects/$CI_PROJECT_ID/packages/$PACKAGE_ID"
+          curl --request DELETE --header "JOB-TOKEN: $CI_JOB_TOKEN" "${CI_API_V4_URL}/projects/$CI_PROJECT_ID/packages/$PACKAGE_ID"
         else
           echo "No unstable package found, skipping delete."
         fi
