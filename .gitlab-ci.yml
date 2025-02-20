@@ -137,6 +137,8 @@ prepare:delete_unstable_package:
 prepare:release-upload-latest:
   stage: release
   image: alpine/curl:latest
+  tags:
+    - docker
   dependencies:
     - prepare:release-zip
   script:
