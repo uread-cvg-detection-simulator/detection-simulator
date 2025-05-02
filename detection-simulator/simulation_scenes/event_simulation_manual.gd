@@ -208,6 +208,8 @@ func _stop_playing():
 
 		_running = false
 
+	_agent_triggered.clear()
+
 # Evaluate if the event should be triggered
 func _evaluate_send_events(triggered_index: int):
 	var num_triggered = 0
