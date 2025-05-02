@@ -145,7 +145,14 @@ func remove_event_from_waypoint(agent_id: int, waypoint_id: int):
 	wp.remove_event(self, false)
 
 func remove_waypoint(agent_id: int, waypoint_id: int):
-	var index = waypoints.find([agent_id, waypoint_id])
+	var index = -1
+
+	for i in waypoints.size():
+		var wp_agent_id = waypoints[i][0]
+		var wp_waypoint_id = waypoints[i][1]
+
+		if agent_id == wp_agent_id and wp_waypoint_id == waypoint_id:
+			index = i
 
 	assert(index != -1)
 
