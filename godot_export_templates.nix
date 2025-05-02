@@ -7,6 +7,7 @@ let
       "4.1.3" = "sha256-QZBa0/8jLTf1XHHsFZnYM5v+81P2GN5obev4fT0OtHM=";
       "4.2" = "sha256-LOH/LScK6ghWoaqhiFyc5st8YHQqO8M0MW4yt5ByGY4=";
       "4.3" = "sha256-9fENuvVqeQg0nmS5TqjCyTwswR+xAUyVZbaKK7Q3uSI=";
+      "4.4" = "sha256-cLa5ixpVAsAeKsoY6OVnvwRO7YtJ0N63Xf38pXP+Uvg=";
     }
     .${version} or (pkgs.lib.warn "No hash for Godot version ${version} found" pkgs.lib.fakeHash);
 

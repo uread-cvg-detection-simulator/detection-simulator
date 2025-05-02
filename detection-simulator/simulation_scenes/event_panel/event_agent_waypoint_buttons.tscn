@@ -1,6 +1,6 @@
 [gd_scene load_steps=2 format=3 uid="uid://chhjmfi3ebntn"]
 
-[ext_resource type="Script" path="res://simulation_scenes/event_panel/event_agent_waypoint_buttons.gd" id="1_5piwj"]
+[ext_resource type="Script" uid="uid://ddhqa6tw1cqgr" path="res://simulation_scenes/event_panel/event_agent_waypoint_buttons.gd" id="1_5piwj"]
 
 [node name="EventAgentWaypointButtons" type="HBoxContainer" node_paths=PackedStringArray("label_index", "label_agent_info", "button_delete")]
 anchors_preset = 15

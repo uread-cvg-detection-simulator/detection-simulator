@@ -1,6 +1,6 @@
 [gd_scene load_steps=2 format=3 uid="uid://bb8wkdpqvw6iq"]
 
-[ext_resource type="Script" path="res://simulation_scenes/dragable_object.gd" id="1_54xdj"]
+[ext_resource type="Script" uid="uid://c2ftepsteib7k" path="res://simulation_scenes/dragable_object.gd" id="1_54xdj"]
 
 [node name="DragableObject" type="Node2D"]
 script = ExtResource("1_54xdj")

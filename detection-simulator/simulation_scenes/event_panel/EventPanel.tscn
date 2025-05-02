@@ -1,7 +1,7 @@
 [gd_scene load_steps=4 format=3 uid="uid://cmy0i5jl2uuxq"]
 
-[ext_resource type="Script" path="res://simulation_scenes/event_panel/event_panel_main.gd" id="1_pinyc"]
-[ext_resource type="Script" path="res://simulation_scenes/event_panel/event_gui_panel.gd" id="1_wsiaw"]
+[ext_resource type="Script" uid="uid://5p8yiadgixey" path="res://simulation_scenes/event_panel/event_panel_main.gd" id="1_pinyc"]
+[ext_resource type="Script" uid="uid://brk7yncqsw4jd" path="res://simulation_scenes/event_panel/event_gui_panel.gd" id="1_wsiaw"]
 [ext_resource type="PackedScene" uid="uid://chhjmfi3ebntn" path="res://simulation_scenes/event_panel/event_agent_waypoint_buttons.tscn" id="2_skccq"]
 
 [node name="EventPanel" type="Control"]

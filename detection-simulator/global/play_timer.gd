@@ -24,4 +24,3 @@ func _set_play(value):
 		emit_signal("stop_playing")
 
 	play = value
-

@@ -1,7 +1,7 @@
 {
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
-    nixpkgs-godot.url = "github:NixOS/nixpkgs/9cf669b81143caf2cad0664c6610086ae0b84184";
+    nixpkgs-godot.url = "github:NixOS/nixpkgs/4f5970c8e7dfa66bdd3e0fe828b69773e9fca193";
     flake-utils.url = "github:numtide/flake-utils";
     nixGL = {
       url = "github:guibou/nixGL";

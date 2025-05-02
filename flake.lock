@@ -72,17 +72,17 @@
     },
     "nixpkgs-godot": {
       "locked": {
-        "lastModified": 1734628085,
-        "narHash": "sha256-icf0rNML+B8pq3cRQQjvgOQZtGZUo/avpJdCgvgZskU=",
+        "lastModified": 1741447320,
+        "narHash": "sha256-zyz5vyBrifSp4XKO02UZjUvCdFoomQfUOC9UaymB9NE=",
         "owner": "NixOS",
         "repo": "nixpkgs",
-        "rev": "9cf669b81143caf2cad0664c6610086ae0b84184",
+        "rev": "4f5970c8e7dfa66bdd3e0fe828b69773e9fca193",
         "type": "github"
       },
       "original": {
         "owner": "NixOS",
         "repo": "nixpkgs",
-        "rev": "9cf669b81143caf2cad0664c6610086ae0b84184",
+        "rev": "4f5970c8e7dfa66bdd3e0fe828b69773e9fca193",
         "type": "github"
       }
     },

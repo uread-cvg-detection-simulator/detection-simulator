@@ -1,9 +1,9 @@
 [gd_scene load_steps=8 format=3 uid="uid://pxotaj1n83vy"]
 
 [ext_resource type="PackedScene" uid="uid://kf8tqdlm8c5t" path="res://addons/vision_cone_2d/vision_cone_2d_template.tscn" id="1_fkk1c"]
-[ext_resource type="Script" path="res://agents/sensor.gd" id="1_gwecx"]
-[ext_resource type="Shader" path="res://agents/agent-colour.gdshader" id="3_5ct4b"]
-[ext_resource type="Script" path="res://agents/sensor_detected_lines.gd" id="3_no7rn"]
+[ext_resource type="Script" uid="uid://dfadg22ayfxd7" path="res://agents/sensor.gd" id="1_gwecx"]
+[ext_resource type="Shader" uid="uid://1vdty33ofb43" path="res://agents/agent-colour.gdshader" id="3_5ct4b"]
+[ext_resource type="Script" uid="uid://cak5w78dxdseu" path="res://agents/sensor_detected_lines.gd" id="3_no7rn"]
 [ext_resource type="Texture2D" uid="uid://brxbf2vvd8wi6" path="res://agents/camera.png" id="4_j7cge"]
 [ext_resource type="PackedScene" uid="uid://c5r11cmhlqudb" path="res://agents/SelectionArea2D.tscn" id="5_eb1s1"]
 

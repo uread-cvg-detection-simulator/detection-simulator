@@ -1,7 +1,7 @@
 [gd_scene load_steps=4 format=3 uid="uid://dfq7ktjfojsqg"]
 
 [ext_resource type="PackedScene" uid="uid://bok4788dfl1al" path="res://simulation_scenes/editor.tscn" id="1_s1mmq"]
-[ext_resource type="Script" path="res://sim_root.gd" id="1_vh57c"]
+[ext_resource type="Script" uid="uid://61vbxwp3f8mo" path="res://sim_root.gd" id="1_vh57c"]
 [ext_resource type="PackedScene" uid="uid://dumnmqb8xs4m2" path="res://simulation_scenes/image_loader.tscn" id="2_c1ljt"]
 
 [node name="SimRoot" type="Node2D" node_paths=PackedStringArray("editor", "image_loader")]

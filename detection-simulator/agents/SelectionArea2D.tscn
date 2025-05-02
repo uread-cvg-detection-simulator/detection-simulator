@@ -1,6 +1,6 @@
 [gd_scene load_steps=2 format=3 uid="uid://c5r11cmhlqudb"]
 
-[ext_resource type="Script" path="res://agents/SelectionArea2D.gd" id="1_drs7f"]
+[ext_resource type="Script" uid="uid://c3aownmdnugx6" path="res://agents/SelectionArea2D.gd" id="1_drs7f"]
 
 [node name="SelectionArea2D" type="Area2D"]
 collision_layer = 8388608

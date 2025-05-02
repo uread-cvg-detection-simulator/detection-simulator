@@ -1,8 +1,8 @@
 [gd_scene load_steps=4 format=3 uid="uid://djdqjby78q501"]
 
-[ext_resource type="Script" path="res://simulation_scenes/grid.gd" id="1_x4mq7"]
-[ext_resource type="Script" path="res://simulation_scenes/grid-labels.gd" id="2_dqd6x"]
-[ext_resource type="Script" path="res://simulation_scenes/grid-lines.gd" id="3_33gnu"]
+[ext_resource type="Script" uid="uid://djvxu8bgomqqy" path="res://simulation_scenes/grid.gd" id="1_x4mq7"]
+[ext_resource type="Script" uid="uid://dh22s74agef4p" path="res://simulation_scenes/grid-labels.gd" id="2_dqd6x"]
+[ext_resource type="Script" uid="uid://cv1d16yv7son1" path="res://simulation_scenes/grid-lines.gd" id="3_33gnu"]
 
 [node name="grid" type="Node2D" node_paths=PackedStringArray("grid_lines", "grid_labels")]
 script = ExtResource("1_x4mq7")
