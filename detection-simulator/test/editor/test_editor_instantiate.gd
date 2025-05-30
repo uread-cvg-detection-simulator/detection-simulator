@@ -10,5 +10,3 @@ func test_instantiate_menu() -> void:
 	assert_that(menu).is_not_null()
 
 	assert_int(menu.item_count).is_not_zero()
-
-

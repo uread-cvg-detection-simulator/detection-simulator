@@ -206,6 +206,7 @@ func _stop_playing():
 			follow_waypoints_state.start_follow.disconnect(start_func)
 			follow_waypoints_state.stop_follow.disconnect(stop_func)
 
+		_signal_connect_funcs.clear()
 		_running = false
 
 	_agent_triggered.clear()

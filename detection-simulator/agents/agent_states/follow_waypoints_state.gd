@@ -141,4 +141,3 @@ func enter(_msg := {}, old_state_name: String = "") -> bool:
 # to clean up the state.
 func exit() -> void:
 	pass
-
