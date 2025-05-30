@@ -43,7 +43,7 @@
           godot_version = pkgs-godot.godot_4.version;
         };
 
-        nix-shell-script = pkgs.writeShellScriptBin "godot" ''
+        nix-shell-script = pkgs.writeShellScriptBin "godot-pr" ''
           #!/bin/bash
           $GODOT_BIN --path $PROJECT_NAME -e
         '';

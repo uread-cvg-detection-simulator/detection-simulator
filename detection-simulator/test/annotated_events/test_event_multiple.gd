@@ -114,7 +114,37 @@ func test_event_multiple_all_arrival():
 	event_emitter.manual_event_del(event)
 	event.queue_free()
 
+func test_event_multiple_each_except_first_arrival():
+	var event = SimulationEventExporterManual.new()
+	event.description = "Join Area"
+	event.type = "Test Type"
+	event.trigger_type = SimulationEventExporterManual.TriggerType.ON_STOP
+	event.mode = SimulationEventExporterManual.Mode.ON_EACH_AGENT_EXCEPT_FIRST
+	event.waypoints = [[agent_one.agent_id, agent_one_wps[0].get_waypoint_index()],
+					   [agent_two.agent_id, agent_two_wps[0].get_waypoint_index()]]
 
+	event_emitter.manual_event_add(event)
+
+	await await_idle_frame()
+	assert_bool(PlayTimer.play).is_false()
+	runner.invoke("_on_play_button_pressed")
+	await await_signal_on(agent_one.state_machine, "transitioned", ["wait_waypoint_conditions"], 2000)
+	await await_millis(50)
+
+	var first_event_count = count_type("Test Type")
+	assert_int(first_event_count).is_equal(0)
+
+
+	await await_signal_on(agent_one.state_machine, "transitioned", ["follow_waypoints"], 2000)
+	await await_millis(500)
+
+
+	var second_event_count = count_type("Test Type")
+	assert_int(second_event_count).is_equal(1)
+
+	runner.invoke("_on_play_button_pressed")
+	event_emitter.manual_event_del(event)
+	event.queue_free()
 
 func count_type(type: String) -> int:
 	var count = 0
