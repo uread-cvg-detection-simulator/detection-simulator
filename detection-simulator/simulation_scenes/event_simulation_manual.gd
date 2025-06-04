@@ -145,14 +145,7 @@ func remove_event_from_waypoint(agent_id: int, waypoint_id: int):
 	wp.remove_event(self, false)
 
 func remove_waypoint(agent_id: int, waypoint_id: int):
-	var index = -1
-
-	for i in waypoints.size():
-		var wp_agent_id = waypoints[i][0]
-		var wp_waypoint_id = waypoints[i][1]
-
-		if agent_id == wp_agent_id and wp_waypoint_id == waypoint_id:
-			index = i
+	var index = find_in_waypoints(agent_id, waypoint_id)
 
 	assert(index != -1)
 
@@ -241,7 +234,7 @@ func _evaluate_send_events(triggered_index: int):
 
 # Called when an agent starts moving (when leaving a waypoint)
 func _on_start_moving(agent_id: int, waypoint_id: int):
-	var index = waypoints.find([agent_id, waypoint_id])
+	var index = find_in_waypoints(agent_id, waypoint_id)
 
 	assert(index != -1)
 
@@ -255,7 +248,8 @@ func _on_start_moving(agent_id: int, waypoint_id: int):
 
 # Called when an agent stops moving (when arriving at a waypoint)
 func _on_stop_moving(agent_id: int, waypoint_id: int):
-	var index = waypoints.find([agent_id, waypoint_id])
+
+	var index = find_in_waypoints(agent_id, waypoint_id)
 
 	assert(index != -1)
 
@@ -266,3 +260,15 @@ func _on_stop_moving(agent_id: int, waypoint_id: int):
 			_agent_triggered[index] = true
 
 		_evaluate_send_events(index)
+
+func find_in_waypoints(agent_id: int, waypoint_id: int):
+	var index = -1
+
+	for i in waypoints.size():
+		var wp_agent_id = waypoints[i][0]
+		var wp_waypoint_id = waypoints[i][1]
+
+		if agent_id == wp_agent_id and wp_waypoint_id == waypoint_id:
+			index = i
+
+	return index
