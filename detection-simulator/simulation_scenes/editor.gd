@@ -127,6 +127,8 @@ func load_save_data(data: Dictionary):
 		sensor.queue_free()
 
 	UndoSystem.clear_history()
+	
+	await get_tree().process_frame
 
 	_last_id = 1000
 	ui_scale = 1.0
@@ -175,6 +177,8 @@ func load_save_data(data: Dictionary):
 					root_scene.bg_image.visible = true
 					root_scene.bg_image_buffer = data["bg_image"]
 
+			await get_tree().process_frame
+			
 			if data["version"] >= 4:
 				event_emittor.load_save_data(data["events"])
 
