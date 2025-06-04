@@ -47,6 +47,7 @@ func load_save_data(data: Dictionary):
 					var waypoint = agent.waypoints.get_waypoint(waypoint_id)
 
 					waypoint.remove_event(old_event, false)
+				remove_child(old_event)
 
 			_manual_events.clear()
 
@@ -56,6 +57,7 @@ func load_save_data(data: Dictionary):
 				event.load_save_data(event_data)
 
 				_manual_events.append(event)
+				add_child(event)
 		else:
 			print_debug("Unknown event emitter version %s" % data["event_emitter_version"])
 	else:
