@@ -280,9 +280,12 @@ func manual_event_del(event_info: SimulationEventExporterManual):
 
 
 func _create_event(description: String, type: String, position_array: Array, timestamp_ms: int, targets: Array):
+
+	var description_format = description.format({"t": targets[0]})
+
 	var event = {
 		"event_type" : type,
-		"event_description": description,
+		"event_description": description_format,
 		"position" : position_array,
 		"timestamp_ms" : timestamp_ms,
 		"targets": targets
@@ -291,7 +294,7 @@ func _create_event(description: String, type: String, position_array: Array, tim
 	var time = timestamp_ms / 1000
 	var time_string = "%02d:%02d:%02d" % [int(time) / 3600, (int(time) / 60) % 60, int(time) % 60]
 
-	event_emitter.emit(type, description, time_string, targets)
+	event_emitter.emit(type, description_format, time_string, targets)
 
 	if PlayTimer.exporting:
 		if event_fileaccess == null:
