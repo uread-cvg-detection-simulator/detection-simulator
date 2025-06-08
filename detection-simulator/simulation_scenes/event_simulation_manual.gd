@@ -213,7 +213,8 @@ func _evaluate_send_events(triggered_index: int):
 	for triggered in _agent_triggered:
 		if triggered:
 			num_triggered += 1
-			other_triggered.append(index)
+			if int(index) != int(triggered_index):
+				other_triggered.append(int(index))
 		index += 1
 
 	if mode == Mode.ON_EACH_AGENT:
