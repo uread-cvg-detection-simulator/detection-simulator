@@ -27,8 +27,8 @@ var _type_string = {
 	AgentType.Circle : "Circle",
 	AgentType.SquareTarget: "Square",
 	AgentType.PersonTarget: "Person",
-	AgentType.BoatTarget: "Ship",
-	AgentType.CarTarget: "Car",
+	AgentType.BoatTarget: "Vessel",
+	AgentType.CarTarget: "Vehicle",
 	AgentType.Invisible: "Invisible"
 }
 
