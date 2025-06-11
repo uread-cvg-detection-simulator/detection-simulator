@@ -281,14 +281,28 @@ func manual_event_del(event_info: SimulationEventExporterManual):
 
 func _create_event(description: String, type: String, position_array: Array, timestamp_ms: int, targets: Array):
 
-	var description_format = description.format({"t": targets[0]})
+	var description_format = description.format({"t": int(targets[0])})
+
+	var out_targets = []
+
+	for target in targets:
+		if typeof(target) != TYPE_DICTIONARY:
+			var agent_id = int(target)
+			var agent: Agent = TreeFuncs.get_agent_with_id(agent_id)
+
+			out_targets.push_back({
+				"id": agent_id,
+				"class": agent._type_string[agent.agent_type],
+			})
+		else:
+			out_targets.push_back(target)
 
 	var event = {
 		"event_type" : type,
 		"event_description": description_format,
 		"position" : position_array,
 		"timestamp_ms" : timestamp_ms,
-		"targets": targets
+		"targets": out_targets
 	}
 
 	var time = timestamp_ms / 1000
