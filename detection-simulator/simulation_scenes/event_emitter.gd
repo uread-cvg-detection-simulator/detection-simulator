@@ -281,7 +281,12 @@ func manual_event_del(event_info: SimulationEventExporterManual):
 
 func _create_event(description: String, type: String, position_array: Array, timestamp_ms: int, targets: Array):
 
-	var description_format = description.format({"t": int(targets[0])})
+	var description_format = ""
+
+	if typeof(targets[0]) != TYPE_DICTIONARY:
+		description_format = description.format({"t": int(targets[0])})
+	else:
+		description_format = description.format({"t": int(targets[0].id)})
 
 	var out_targets = []
 
