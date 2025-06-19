@@ -11,6 +11,7 @@ func update(_delta: float) -> void:
 var playing_waypoint: Waypoint = null ## The waypoint that the agent is currently moving towards
 var playing_last_waypoint: Waypoint = null ## The last waypoint
 var playing_speed: float = 1.0 ## The speed at which the agent will move
+var transition_waypoint: bool = false ## Used to indicate when we try to transition to the waiting state, but unable to
 
 var playing_accel_time_factor: float = 0.0
 var playing_start_speed: float = 1.0
@@ -25,6 +26,12 @@ signal stop_follow(from_wp: int, to_wp: int)
 # Virtual function. Corresponds to the `_physics_process()` callback.
 func physics_update(delta: float) -> void:
 	if not owner.disabled:
+		# If for some reason we are active without transitioning out and back to this state
+		# then we emit the start signal again
+		if transition_waypoint:
+			start_follow.emit(owner.waypoints.get_waypoint_index(playing_last_waypoint), owner.waypoints.get_waypoint_index(playing_waypoint))
+			transition_waypoint = false
+
 		# Update position
 		# TODO: use navigation system
 		if playing_accelerate_state < 1.0:
@@ -96,6 +103,7 @@ func _update_target_information(waypoint: Waypoint, transition: bool = true):
 	_calculate_accel_factors()
 
 	if transition:
+		transition_waypoint = true
 		state_machine.transition_to("wait_waypoint_conditions", {
 			"playing_next_move_time": playing_next_move_time,
 			"playing_waypoint": playing_waypoint,
@@ -134,6 +142,9 @@ func enter(_msg := {}, old_state_name: String = "") -> bool:
 	_calculate_accel_factors()
 
 	start_follow.emit(owner.waypoints.get_waypoint_index(playing_last_waypoint), owner.waypoints.get_waypoint_index(playing_waypoint))
+
+	# Reset transition flag if we return properly into this state
+	transition_waypoint = false
 
 	return true
 
