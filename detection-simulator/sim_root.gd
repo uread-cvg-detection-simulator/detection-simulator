@@ -56,6 +56,10 @@ func switch_to_loader():
 
 
 func _ready():
+	if DisplayServer.screen_get_dpi(0) > 120:
+		get_window().content_scale_size = Vector2i(0.5,0.5)
+		
+	
 	image_loader.process_mode = Node.PROCESS_MODE_DISABLED
 	image_loader.visible = false
 	remove_child(image_loader)
