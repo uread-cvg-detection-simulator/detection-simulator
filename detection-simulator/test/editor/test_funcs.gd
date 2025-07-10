@@ -150,3 +150,32 @@ static func simulate_agent_deletion(agent: Agent) -> bool:
 	# Simulate the context menu deletion
 	agent._context_menu(Agent.ContextMenuIDs.DELETE)
 	return true
+
+## Links two waypoints together for testing
+static func link_waypoints(wp1: Waypoint, wp2: Waypoint):
+	wp1.link_waypoint(wp2)
+
+## Returns array of all waypoints that are linked to this waypoint
+static func get_linked_waypoints(waypoint: Waypoint) -> Array:
+	return waypoint.linked_nodes.duplicate()
+
+## Validates that two waypoints are bidirectionally linked
+static func validate_waypoints_linked(wp1: Waypoint, wp2: Waypoint) -> bool:
+	return wp2 in wp1.linked_nodes and wp1 in wp2.linked_nodes
+
+## Validates that two waypoints are NOT linked
+static func validate_waypoints_not_linked(wp1: Waypoint, wp2: Waypoint) -> bool:
+	return wp2 not in wp1.linked_nodes and wp1 not in wp2.linked_nodes
+
+## Returns the total count of linked waypoints for an agent
+static func count_agent_linked_waypoints(agent: Agent) -> int:
+	var count = 0
+	var current_wp = agent.waypoints.starting_node
+	while current_wp != null:
+		count += current_wp.linked_nodes.size()
+		current_wp = current_wp.pt_next
+	return count
+
+## Validates that an agent has no linked waypoints
+static func validate_agent_has_no_linked_waypoints(agent: Agent) -> bool:
+	return count_agent_linked_waypoints(agent) == 0
