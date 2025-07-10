@@ -330,13 +330,21 @@ func remove_agent_from_events(agent_id: int, event_data: Dictionary):
 	# First, modify events that involve multiple agents
 	for event_index in event_data["events_to_modify"]:
 		var event = _manual_events[event_index]
-		var waypoint_indices = event_data["removed_waypoints"][event_index]
+		
+		# IMPORTANT: Recalculate waypoint indices to remove, don't use stored indices
+		# This is because previous agent deletions may have modified this event already
+		var waypoints_to_remove = []
+		
+		# Find waypoints that belong to this agent (by scanning current waypoints)
+		for wp_index in range(event.waypoints.size()):
+			var waypoint_data = event.waypoints[wp_index]
+			if waypoint_data[0] == agent_id:
+				waypoints_to_remove.append(wp_index)
 		
 		# Remove waypoints in reverse order to maintain indices
-		waypoint_indices.sort()
-		waypoint_indices.reverse()
+		waypoints_to_remove.reverse()
 		
-		for wp_index in waypoint_indices:
+		for wp_index in waypoints_to_remove:
 			var waypoint_data = event.waypoints[wp_index]
 			var wp_agent_id = waypoint_data[0]
 			var wp_waypoint_id = waypoint_data[1]
