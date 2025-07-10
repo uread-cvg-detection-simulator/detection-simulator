@@ -134,13 +134,21 @@ func remove_event_from_waypoints():
 
 func add_event_to_waypoint(agent_id: int, waypoint_id: int):
 	var agent = TreeFuncs.get_agent_with_id(agent_id)
+	if agent == null:
+		return
 	var wp = agent.waypoints.get_waypoint(waypoint_id)
+	if wp == null:
+		return
 
 	wp.add_event(self)
 
 func remove_event_from_waypoint(agent_id: int, waypoint_id: int):
 	var agent = TreeFuncs.get_agent_with_id(agent_id)
+	if agent == null:
+		return
 	var wp = agent.waypoints.get_waypoint(waypoint_id)
+	if wp == null:
+		return
 
 	wp.remove_event(self, false)
 

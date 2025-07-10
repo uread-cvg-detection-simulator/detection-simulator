@@ -94,3 +94,59 @@ func get_after_exit_waypoint(wp_before_enter: Waypoint) -> Waypoint:
 		return null
 
 	return wp_exit.pt_next
+
+## Creates a manual event for testing
+static func create_manual_event_for_agent(agent: Agent, waypoint: Waypoint, description: String = "Test Event", type: String = "Test Type") -> SimulationEventExporterManual:
+	var event = SimulationEventExporterManual.new()
+	event.description = description
+	event.type = type
+	event.trigger_type = SimulationEventExporterManual.TriggerType.ON_STOP
+	event.mode = SimulationEventExporterManual.Mode.ON_EACH_AGENT
+	event.waypoints = [[agent.agent_id, waypoint.get_waypoint_index()]]
+	return event
+
+## Adds event to the event emitter
+static func add_event_to_emitter(event: SimulationEventExporterManual, runner: GdUnitSceneRunner):
+	var event_emitter = runner.get_property("event_emittor")
+	event_emitter.manual_event_add(event)
+
+## Returns array of events that contain this agent
+static func validate_agent_in_events(agent_id: int, runner: GdUnitSceneRunner) -> Array:
+	var event_emitter = runner.get_property("event_emittor")
+	var events_with_agent = []
+	
+	for event in event_emitter._manual_events:
+		for waypoint_data in event.waypoints:
+			if waypoint_data[0] == agent_id:
+				events_with_agent.append(event)
+				break
+	
+	return events_with_agent
+
+## Validates that event is properly connected to its waypoints
+static func validate_event_waypoint_connections(event: SimulationEventExporterManual) -> bool:
+	for waypoint_data in event.waypoints:
+		var agent_id = waypoint_data[0]
+		var waypoint_id = waypoint_data[1]
+		
+		var agent = TreeFuncs.get_agent_with_id(agent_id)
+		if agent == null:
+			return false
+			
+		var waypoint = agent.waypoints.get_waypoint(waypoint_id)
+		if waypoint == null:
+			return false
+			
+		if not waypoint._events.has(event):
+			return false
+	
+	return true
+
+## Simulates agent deletion via context menu
+static func simulate_agent_deletion(agent: Agent) -> bool:
+	if agent._current_agent == null:
+		return false
+	
+	# Simulate the context menu deletion
+	agent._context_menu(Agent.ContextMenuIDs.DELETE)
+	return true
