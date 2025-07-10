@@ -309,6 +309,13 @@ func _context_menu(id: ContextMenuIDs):
 				if not event_data["events_to_remove"].is_empty() or not event_data["events_to_modify"].is_empty():
 					event_data_ref = undo_action.manual_add_item_to_store(event_data)
 
+			# Store linked node data if there are linked nodes to manage
+			var linked_data_ref = null
+			if base_editor != null:
+				var linked_data = base_editor.get_agent_linked_nodes(agent_id)
+				if not linked_data["waypoints_to_unlink"].is_empty() or not linked_data["other_waypoints_to_unlink"].is_empty():
+					linked_data_ref = undo_action.manual_add_item_to_store(linked_data)
+
 			######
 			# DO Actions (in order)
 			######
@@ -317,7 +324,11 @@ func _context_menu(id: ContextMenuIDs):
 			if event_data_ref != null:
 				undo_action.action_object_call(UndoRedoAction.DoType.Do, base_editor.event_emittor, "remove_agent_from_events", [agent_id, event_data_ref], [event_data_ref])
 			
-			# 2. Remove agent from group and disable it
+			# 2. Remove agent from linked nodes BEFORE disabling the agent
+			if linked_data_ref != null:
+				undo_action.action_object_call(UndoRedoAction.DoType.Do, base_editor, "remove_agent_from_linked_nodes", [agent_id, linked_data_ref], [linked_data_ref])
+			
+			# 3. Remove agent from group and disable it
 			undo_action.action_method(UndoRedoAction.DoType.Do, GroupHelpers.remove_node_from_group, [ref, "agent"], ref)
 			undo_action.action_property_ref(UndoRedoAction.DoType.Do, ref, "disabled", true)
 
@@ -332,6 +343,10 @@ func _context_menu(id: ContextMenuIDs):
 			# 2. Restore events AFTER agent is restored
 			if event_data_ref != null:
 				undo_action.action_object_call(UndoRedoAction.DoType.Undo, base_editor.event_emittor, "restore_agent_to_events", [agent_id, event_data_ref], [event_data_ref])
+			
+			# 3. Restore linked nodes AFTER agent is restored
+			if linked_data_ref != null:
+				undo_action.action_object_call(UndoRedoAction.DoType.Undo, base_editor, "restore_agent_to_linked_nodes", [agent_id, linked_data_ref], [linked_data_ref])
 
 			# OnRemoval Actions - cleanup when undo action is discarded
 			undo_action.action_object_call_ref(UndoRedoAction.DoType.OnRemoval, ref, "_free_if_not_in_group")
