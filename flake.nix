@@ -111,12 +111,28 @@
           };
         };
 
+        python-interp = pkgs.python3;
+
+        python-with-pkgs = python-interp.withPackages (
+          ps: with ps; [
+            typer
+            rich
+          ]
+        );
+
         project_name = "detection-simulator";
       in
       {
         devShells = {
           default = pkgs.mkShell {
-            packages = dev-package-list ++ all-scripts ++ [ godot_export_templates ];
+            packages =
+              dev-package-list
+              ++ all-scripts
+              ++ [
+                godot_export_templates
+                python-with-pkgs
+                pkgs.gitflow
+              ];
             GODOT_RAW_BIN = "${pkgs-godot.godot_4}/bin/godot4";
             GODOT_BIN = "${pkgs-godot.godot_4}/bin/godot4";
 
@@ -136,7 +152,14 @@
           };
 
           nonnix = pkgs.mkShell {
-            packages = dev-package-list ++ [ pkgs.nixgl.auto.nixGLDefault ] ++ all-scripts;
+            packages =
+              dev-package-list
+              ++ [
+                pkgs.nixgl.auto.nixGLDefault
+                python-with-pkgs
+                pkgs.gitflow
+              ]
+              ++ all-scripts;
             GODOT_RAW_BIN = "${pkgs-godot.godot_4}/bin/godot4";
             GODOT_BIN = "nixGL ${pkgs-godot.godot_4}/bin/godot4";
 
