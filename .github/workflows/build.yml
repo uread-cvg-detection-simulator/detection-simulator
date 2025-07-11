@@ -166,9 +166,6 @@ jobs:
 
           This Zenodo archive contains the source code for citation and archival purposes.
 
-        # Path to .zenodo.json metadata file (for other metadata like title, creators, license)
-        zenodo_json: ".zenodo.json"
-
   dev-release:
     needs: build
     runs-on: ubuntu-latest
