@@ -54,11 +54,48 @@ func load_save_data(data: Dictionary):
 func is_empty():
 	return waypoints.is_empty()
 
-func delete_waypoint(del_point: Waypoint, undo_action_in: UndoRedoAction = null):
+func _find_corresponding_exit_waypoint(enter_waypoint_index: int) -> Waypoint:
+	# Look through subsequent waypoints in the same agent to find the next EXIT waypoint
+	# Since ENTER/EXIT are created as pairs, the next EXIT waypoint should be the corresponding one
 
-	var current_point_index = get_waypoint_index(del_point)
-	var previous_point_index = current_point_index - 1 if current_point_index > 0 else -1
-	var next_point_index = current_point_index + 1 if current_point_index < len(waypoints) - 1 else null
+	var enter_waypoint = get_waypoint(enter_waypoint_index)
+
+	if not enter_waypoint:
+		return null
+
+	var current_wp = enter_waypoint.pt_next
+
+	while current_wp != null:
+		if current_wp.waypoint_type == Waypoint.WaypointType.EXIT:
+			return current_wp
+		current_wp = current_wp.pt_next
+
+	return null
+
+func _find_corresponding_enter_waypoint(exit_waypoint_index: int) -> Waypoint:
+	# Look through previous waypoints in the same agent to find the most recent ENTER waypoint
+	# Since ENTER/EXIT are created as pairs, the most recent ENTER waypoint should be the corresponding one
+
+	var exit_waypoint = get_waypoint(exit_waypoint_index)
+
+	if not exit_waypoint:
+		return null
+
+	var current_wp = exit_waypoint.pt_previous
+
+	while current_wp != null:
+		if current_wp.waypoint_type == Waypoint.WaypointType.ENTER:
+			return current_wp
+
+		current_wp = current_wp.pt_previous
+
+	return null
+
+func _add_waypoint_deletion_do_actions(del_point: Waypoint, undo_action: UndoRedoAction, custom_indices: Dictionary = {}) -> Dictionary:
+	var current_point_index = custom_indices.get("current_point_index", get_waypoint_index(del_point))
+	var previous_point_index = custom_indices.get("previous_point_index", current_point_index - 1 if current_point_index > 0 else -1)
+	var next_point_index = custom_indices.get("next_point_index", current_point_index + 1 if current_point_index < len(waypoints) - 1 else null)
+
 
 	# If the next point is EXIT node, then skip it (as it will be deleted too)
 	if next_point_index != null and next_point_index != -1:
@@ -69,38 +106,20 @@ func delete_waypoint(del_point: Waypoint, undo_action_in: UndoRedoAction = null)
 
 	if previous_point_index == null and next_point_index == null:
 		print_debug("Error: Could not find previous or next point")
-		return
-
-	# Create undo action
-	var undo_action = undo_action_in
-
-	if undo_action == null:
-		undo_action = UndoRedoAction.new()
-		undo_action.action_name = "Delete Waypoint %d" % current_point_index
-
-	########
-	# DO
-	########
+		return {}
 
 	# Get the agent
 	var undo_agent_ref = undo_action.action_store_method(UndoRedoAction.DoType.Do, TreeFuncs.get_agent_with_id, [parent_object.agent_id])
 	undo_action.manual_add_item_to_store(parent_object, undo_agent_ref)
 
-	# Get the waypoints
-	var current_point_ref = undo_action.action_store_method(UndoRedoAction.DoType.Do, func(x, curr_point_index):
-		return x.waypoints.waypoints[curr_point_index]
-		, [undo_agent_ref, current_point_index], undo_agent_ref
-	)
+	# Store the waypoint objects directly and recalculate indices at execution time
+	var current_point_ref = undo_action.manual_add_item_to_store(del_point)
 
-	var previous_point_ref = undo_action.action_store_method(UndoRedoAction.DoType.Do, func(x, prev_point_index):
-		return x.waypoints.waypoints[prev_point_index] if prev_point_index != null and prev_point_index != -1 else x.waypoints.starting_node
-		, [undo_agent_ref, previous_point_index], undo_agent_ref
-	)
+	var previous_point = waypoints[previous_point_index] if previous_point_index != null and previous_point_index != -1 else starting_node
+	var previous_point_ref = undo_action.manual_add_item_to_store(previous_point)
 
-	var next_point_ref = undo_action.action_store_method(UndoRedoAction.DoType.Do, func(x, nxt_point_index):
-		return x.waypoints.waypoints[nxt_point_index] if nxt_point_index != null else null
-		, [undo_agent_ref, next_point_index], undo_agent_ref
-	)
+	var next_point = waypoints[next_point_index] if next_point_index != null else null
+	var next_point_ref = undo_action.manual_add_item_to_store(next_point)
 
 	var undo_ref_wp_agent = null
 	var undo_ref_wp = null
@@ -120,14 +139,10 @@ func delete_waypoint(del_point: Waypoint, undo_action_in: UndoRedoAction = null)
 
 	# Update the links in the points
 	undo_action.action_method(UndoRedoAction.DoType.Do, func(previous_point, next_point):
-		if previous_point and next_point:
+		if previous_point:
 			previous_point.pt_next = next_point
+		if next_point:
 			next_point.pt_previous = previous_point
-		else:
-			if previous_point:
-				previous_point.pt_next = null
-			if next_point:
-				next_point.pt_previous = null
 		, [previous_point_ref, next_point_ref], [previous_point_ref, next_point_ref]
 	)
 
@@ -155,7 +170,6 @@ func delete_waypoint(del_point: Waypoint, undo_action_in: UndoRedoAction = null)
 		, [current_point_ref], current_point_ref
 	)
 
-
 	# Queue redraw
 	undo_action.action_method(UndoRedoAction.DoType.Do, func(agent):
 		agent.waypoints.waypoint_lines.queue_redraw()
@@ -163,26 +177,56 @@ func delete_waypoint(del_point: Waypoint, undo_action_in: UndoRedoAction = null)
 	)
 
 	# Redraw the reference agent's waypoints
-	if del_point.vehicle_wp:
+	if del_point.vehicle_wp and undo_ref_wp_agent:
 		undo_action.action_method(UndoRedoAction.DoType.Do, func(ref_agent):
 			ref_agent.waypoints.waypoint_lines.queue_redraw()
 			, [undo_ref_wp_agent], [undo_ref_wp_agent]
 		)
 
-	########
-	# UNDO
-	########
+	# Return the calculated data for UNDO actions
+	return {
+		"current_point_index": current_point_index,
+		"previous_point_index": previous_point_index,
+		"next_point_index": next_point_index,
+		"current_point_ref": current_point_ref,
+		"previous_point_ref": previous_point_ref,
+		"next_point_ref": next_point_ref,
+		"undo_agent_ref": undo_agent_ref,
+		"undo_ref_wp": undo_ref_wp,
+		"undo_ref_wp_agent": undo_ref_wp_agent
+	}
+
+func _add_waypoint_deletion_undo_actions(del_point: Waypoint, undo_action: UndoRedoAction, do_data: Dictionary):
+	# Use the data calculated during DO actions
+	var current_point_index = do_data["current_point_index"]
+	var current_point_ref = do_data["current_point_ref"]
+	var previous_point_ref = do_data["previous_point_ref"]
+	var next_point_ref = do_data["next_point_ref"]
+	var undo_agent_ref = do_data["undo_agent_ref"]
+	var undo_ref_wp = do_data["undo_ref_wp"]
+	var undo_ref_wp_agent = do_data["undo_ref_wp_agent"]
 
 	# Re-insert the point into the array
-	undo_action.action_method(UndoRedoAction.DoType.Undo, func(agent, current_point, current_point_index):
-		agent.waypoints.waypoints.insert(current_point_index, current_point)
+	undo_action.action_method(UndoRedoAction.DoType.Undo, func(agent, current_point, previous_point, next_point):
+		# Recalculate insertion index based on current state
+		var insert_index = 0
+		if previous_point == agent.waypoints.starting_node:
+			insert_index = 0
+		elif previous_point and previous_point in agent.waypoints.waypoints:
+			insert_index = agent.waypoints.waypoints.find(previous_point) + 1
+		elif next_point and next_point in agent.waypoints.waypoints:
+			insert_index = agent.waypoints.waypoints.find(next_point)
+		else:
+			insert_index = agent.waypoints.waypoints.size()
+
+		agent.waypoints.waypoints.insert(insert_index, current_point)
 		agent.waypoints.undo_stored_nodes.remove_child(current_point)
 		agent.waypoints.add_child(current_point)
-		, [undo_agent_ref, current_point_ref, current_point_index], [undo_agent_ref, current_point_ref]
+		, [undo_agent_ref, current_point_ref, previous_point_ref, next_point_ref], [undo_agent_ref, current_point_ref, previous_point_ref, next_point_ref]
 	)
 
 	# Re-setup enter/exit nodes
-	if del_point.vehicle_wp:
+	if del_point.vehicle_wp and undo_ref_wp:
 		undo_action.action_method(UndoRedoAction.DoType.Undo, func(ref_wp, current_point):
 			if current_point.waypoint_type == Waypoint.WaypointType.ENTER:
 				ref_wp.enter_nodes.append(current_point)
@@ -195,14 +239,15 @@ func delete_waypoint(del_point: Waypoint, undo_action_in: UndoRedoAction = null)
 
 	# Re-link the points
 	undo_action.action_method(UndoRedoAction.DoType.Undo, func(previous_point, next_point, current_point):
-		if previous_point and next_point:
+		# Set current point's links
+		current_point.pt_previous = previous_point
+		current_point.pt_next = next_point
+
+		# Update neighboring points to link to current point
+		if previous_point:
 			previous_point.pt_next = current_point
+		if next_point:
 			next_point.pt_previous = current_point
-		else:
-			if previous_point:
-				previous_point.pt_next = current_point
-			if next_point:
-				next_point.pt_previous = current_point
 		, [previous_point_ref, next_point_ref, current_point_ref], [previous_point_ref, next_point_ref, current_point_ref]
 	)
 
@@ -218,9 +263,12 @@ func delete_waypoint(del_point: Waypoint, undo_action_in: UndoRedoAction = null)
 		, [undo_agent_ref], [undo_agent_ref]
 	)
 
-	######
-	# FINALISE
-	######
+	# Redraw the reference agent's waypoints if this is an enter/exit waypoint
+	if del_point.vehicle_wp and undo_ref_wp_agent:
+		undo_action.action_method(UndoRedoAction.DoType.Undo, func(ref_agent):
+			ref_agent.waypoints.waypoint_lines.queue_redraw()
+			, [undo_ref_wp_agent], [undo_ref_wp_agent]
+		)
 
 	# Free the point when the action is deleted
 	undo_action.action_method(UndoRedoAction.DoType.OnRemoval, func(current_point):
@@ -229,14 +277,94 @@ func delete_waypoint(del_point: Waypoint, undo_action_in: UndoRedoAction = null)
 		, [current_point_ref], current_point_ref
 	)
 
-	# If previous node is EXIT node, delete it too
-	if previous_point_index != null and previous_point_index != -1:
-		var previous_point = waypoints[previous_point_index]
+func delete_waypoint(del_point: Waypoint, undo_action_in: UndoRedoAction = null, prevent_paired_deletion: bool = false):
+	# Create undo action
+	var undo_action = undo_action_in
+	var current_point_index = get_waypoint_index(del_point)
 
-		if previous_point.waypoint_type == Waypoint.WaypointType.EXIT:
-			delete_waypoint(previous_point, undo_action)
+	if undo_action == null:
+		undo_action = UndoRedoAction.new()
+		undo_action.action_name = "Delete Waypoint %d" % current_point_index
 
-	# If
+	# DO actions: Main waypoint first, then corresponding waypoint
+	var main_do_data = _add_waypoint_deletion_do_actions(del_point, undo_action)
+
+	# Find corresponding waypoint if needed
+	var corresponding_waypoint = null
+	var corresponding_do_data = null
+	if not prevent_paired_deletion:
+		if del_point.waypoint_type == Waypoint.WaypointType.ENTER:
+			corresponding_waypoint = _find_corresponding_exit_waypoint(current_point_index)
+		elif del_point.waypoint_type == Waypoint.WaypointType.EXIT:
+			corresponding_waypoint = _find_corresponding_enter_waypoint(current_point_index)
+
+		# Update action name if we found a corresponding waypoint
+		if corresponding_waypoint and undo_action_in == null:
+			undo_action.action_name = "Delete Enter/Exit Waypoint Pair"
+
+	if corresponding_waypoint:
+		# Calculate adjusted indices for corresponding waypoint
+		# Since main waypoint will be deleted first, indices after it will shift down by 1
+		var corresponding_index = get_waypoint_index(corresponding_waypoint)
+		var adjusted_corresponding_index = corresponding_index
+		var adjusted_previous_index = corresponding_index - 1 if corresponding_index > 0 else -1
+		var adjusted_next_index = corresponding_index + 1 if corresponding_index < len(waypoints) - 1 else null
+
+		# Handle the different scenarios based on waypoint types
+		var main_waypoint_type = del_point.waypoint_type
+		var corresponding_waypoint_type = corresponding_waypoint.waypoint_type
+
+		if main_waypoint_type == Waypoint.WaypointType.ENTER and corresponding_waypoint_type == Waypoint.WaypointType.EXIT:
+			# ENTER -> EXIT scenario: Delete ENTER first, then EXIT
+			# EXIT waypoint's previous should be ENTER's previous (starting_node)
+			# EXIT waypoint's next should be EXIT's next (AFTER_EXIT)
+			adjusted_corresponding_index = corresponding_index - 1  # EXIT moves down by 1
+			adjusted_previous_index = current_point_index - 1 if current_point_index > 0 else -1  # ENTER's previous
+			adjusted_next_index = corresponding_index + 1 if corresponding_index < len(waypoints) - 1 else null  # EXIT's next
+			if adjusted_next_index != null and adjusted_next_index > current_point_index:
+				adjusted_next_index = adjusted_next_index - 1  # Adjust for ENTER deletion
+		elif main_waypoint_type == Waypoint.WaypointType.EXIT and corresponding_waypoint_type == Waypoint.WaypointType.ENTER:
+			# EXIT -> ENTER scenario: Delete EXIT first, then ENTER
+			# ENTER waypoint's previous should be ENTER's previous (starting_node)
+			# ENTER waypoint's next should be EXIT's next (AFTER_EXIT)
+			adjusted_corresponding_index = corresponding_index  # ENTER stays at same index
+			adjusted_previous_index = corresponding_index - 1 if corresponding_index > 0 else -1  # ENTER's previous
+			adjusted_next_index = current_point_index + 1 if current_point_index < len(waypoints) - 1 else null  # EXIT's next
+		else:
+			# Fallback to original logic for other cases
+			if corresponding_index > current_point_index:
+				adjusted_corresponding_index = corresponding_index - 1
+				if adjusted_previous_index != -1 and adjusted_previous_index > current_point_index:
+					adjusted_previous_index = adjusted_previous_index - 1
+				if adjusted_next_index != null and adjusted_next_index > current_point_index:
+					adjusted_next_index = adjusted_next_index - 1
+			else:
+				if adjusted_next_index != null and adjusted_next_index >= current_point_index:
+					adjusted_next_index = adjusted_next_index - 1
+
+		# Pass the adjusted indices to the function
+		var adjusted_indices = {
+			"current_point_index": adjusted_corresponding_index,
+			"previous_point_index": adjusted_previous_index,
+			"next_point_index": adjusted_next_index
+		}
+		corresponding_do_data = _add_waypoint_deletion_do_actions(corresponding_waypoint, undo_action, adjusted_indices)
+
+		_add_waypoint_deletion_undo_actions(corresponding_waypoint, undo_action, corresponding_do_data)
+
+	_add_waypoint_deletion_undo_actions(del_point, undo_action, main_do_data)
+
+	# Final redraw for reference agent after all deletions are complete
+	if corresponding_waypoint and del_point.vehicle_wp:
+		var final_ref_agent = undo_action.action_store_method(UndoRedoAction.DoType.Do, TreeFuncs.get_agent_with_id, [del_point.vehicle_wp.parent_object.agent_id])
+		undo_action.manual_add_item_to_store(del_point.vehicle_wp.parent_object, final_ref_agent)
+
+		undo_action.action_method(UndoRedoAction.DoType.Do, func(ref_agent):
+			ref_agent.waypoints.waypoint_lines.queue_redraw()
+			, [final_ref_agent], [final_ref_agent]
+		)
+
+	# Finalize undo action only if we created it
 	if undo_action_in == null:
 		UndoSystem.add_action(undo_action)
 
@@ -574,7 +702,7 @@ func _instantiate_waypoint(new_global_point: Vector2, previous_point: Waypoint, 
 	if next_point:
 		next_point.pt_previous = new_waypoint
 		new_waypoint.pt_next = next_point
-		
+
 	if waypoint_type != Waypoint.WaypointType.WAYPOINT:
 		new_waypoint.disabled = true
 		new_waypoint.waypoint_type = waypoint_type
