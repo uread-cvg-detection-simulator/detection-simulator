@@ -158,16 +158,21 @@ def bump(bump_type: BumpType, dry_run: bool = False):
 		else:
 			console.print("[green]✓[/green] Updated changelog")
 
-		# Ask if user wants to edit changelog
+		# Stage changelog changes (version replacement already happened)
 		if log_found:
-			if typer.confirm("Do you want to edit the changelog before committing?"):
-				# Find which changelog file was updated
-				changelog_file = None
-				for log_file in log_files:
-					if os.path.isfile(log_file):
-						changelog_file = log_file
-						break
+			# Find which changelog file was updated
+			changelog_file = None
+			for log_file in log_files:
+				if os.path.isfile(log_file):
+					changelog_file = log_file
+					break
 
+			if changelog_file:
+				subprocess.run(["git", "add", changelog_file])
+				console.print(f"[green]✓[/green] Staged {changelog_file} changes")
+
+			# Ask if user wants to edit changelog
+			if typer.confirm("Do you want to edit the changelog before committing?"):
 				if changelog_file:
 					editor = os.environ.get('EDITOR', 'nano')
 					console.print(f"[blue]📝 Opening {changelog_file} with {editor}...[/blue]")
@@ -175,11 +180,21 @@ def bump(bump_type: BumpType, dry_run: bool = False):
 
 					if typer.confirm("Are you satisfied with the changelog changes?"):
 						subprocess.run(["git", "add", changelog_file])
-						console.print("[green]✓[/green] Changelog changes staged")
+						console.print("[green]✓[/green] Updated changelog changes staged")
 					else:
-						console.print("[yellow]⚠️  Changelog changes not staged. You can manually stage them later.[/yellow]")
+						console.print("[yellow]⚠️  Changelog edits not staged. Original version changes are still staged.[/yellow]")
 
 		# Ask if user wants to commit the changes
+		commit_panel = Panel(
+			f"Ready to commit version bump changes:\n\n"
+			f"• Updated project.godot to v{major}.{minor}.{patch}\n"
+			f"• Updated .zenodo.json with release information\n" +
+			(f"• Updated changelog with version {major}.{minor}.{patch}" if log_found else ""),
+			title="[bold green]📦 Commit Version Bump Changes?[/bold green]",
+			border_style="green"
+		)
+		console.print(commit_panel)
+
 		if typer.confirm("Do you want to commit all the version bump changes?"):
 			with console.status("[bold green]Committing changes...[/bold green]") as status:
 				subprocess.run(["git", "commit", "-m", f"Bump version to {major}.{minor}.{patch}"])
