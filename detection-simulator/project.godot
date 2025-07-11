@@ -24,7 +24,6 @@ TreeFuncs="*res://global/tree_funcs.gd"
 PlayTimer="*res://global/play_timer.gd"
 GroupHelpers="*res://global/group_helpers.gd"
 MousePosition="*res://global/mouse_position.gd"
-TestFuncs="*res://test/editor/test_funcs.gd"
 
 [debug]
 

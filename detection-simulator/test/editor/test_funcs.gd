@@ -1,6 +1,6 @@
-extends GdUnitTestSuite
+extends RefCounted
 
-func spawn_waypoint_from(selected_object, position: Vector2, runner: GdUnitSceneRunner) -> Waypoint:
+static func spawn_waypoint_from(selected_object, position: Vector2, runner: GdUnitSceneRunner) -> Waypoint:
 	var selection = null
 	var agent = null
 
@@ -11,7 +11,7 @@ func spawn_waypoint_from(selected_object, position: Vector2, runner: GdUnitScene
 		selection = selected_object._selection_area
 		agent = selected_object.parent_object
 
-	assert_object(selection).is_not_null()
+	assert(selection != null, "Selection should not be null")
 	selection.selected = true
 
 	var position_mod: Vector2 = metres_to_pixels(position)
@@ -33,11 +33,11 @@ func spawn_waypoint_from(selected_object, position: Vector2, runner: GdUnitScene
 		var selected_index = waypoints.get_waypoint_index(selected_object)
 		new_waypoint = waypoints.get_waypoint(selected_index + 1)
 
-	assert_object(new_waypoint).is_not_null()
+	assert(new_waypoint != null, "New waypoint should not be null")
 
 	return new_waypoint
 
-func spawn_and_get_agent(position: Vector2, runner: GdUnitSceneRunner) -> Agent:
+static func spawn_and_get_agent(position: Vector2, runner: GdUnitSceneRunner) -> Agent:
 	var position_mod: Vector2 = metres_to_pixels(position)
 
 	runner.invoke("spawn_agent", position_mod)
@@ -47,10 +47,10 @@ func spawn_and_get_agent(position: Vector2, runner: GdUnitSceneRunner) -> Agent:
 
 	return agent
 
-func metres_to_pixels(metre_vector: Vector2) -> Vector2:
+static func metres_to_pixels(metre_vector: Vector2) -> Vector2:
 	return Vector2(metre_vector.x * 64.0, metre_vector.y * -64.0)
 
-func find_string_in_context_menu(context_menu: PopupMenu, string: String):
+static func find_string_in_context_menu(context_menu: PopupMenu, string: String):
 	var string_found: bool = false
 
 	for i in range(context_menu.item_count):
@@ -61,23 +61,23 @@ func find_string_in_context_menu(context_menu: PopupMenu, string: String):
 
 	return string_found
 
-func enter_vehicle(wp_individual: Waypoint, wp_enter: Waypoint, runner: GdUnitSceneRunner):
+static func enter_vehicle(wp_individual: Waypoint, wp_enter: Waypoint, runner: GdUnitSceneRunner):
 	wp_individual._selection_area.selected = true
 	runner.simulate_frames(1)
 
 	wp_enter._on_enter_vehicle()
 	runner.simulate_frames(1)
 
-func exit_vehicle(agent: Agent, wp_exit: Waypoint) -> bool:
+static func exit_vehicle(agent: Agent, wp_exit: Waypoint) -> bool:
 	wp_exit._prepare_menu()
 
-	if TestFuncs.find_string_in_context_menu(wp_exit.context_menu, "Exit Vehicle A%d" % agent.agent_id):
+	if find_string_in_context_menu(wp_exit.context_menu, "Exit Vehicle A%d" % agent.agent_id):
 		wp_exit._context_menu_id_pressed(Waypoint.ContextMenuIDs.EXIT_VEHICLE + agent.agent_id)
 		return true
 	else:
 		return false
 
-func get_after_exit_waypoint(wp_before_enter: Waypoint) -> Waypoint:
+static func get_after_exit_waypoint(wp_before_enter: Waypoint) -> Waypoint:
 	# Before Enter -> Enter -> Exit -> After Exit
 
 	if wp_before_enter.pt_next == null:
@@ -94,6 +94,21 @@ func get_after_exit_waypoint(wp_before_enter: Waypoint) -> Waypoint:
 		return null
 
 	return wp_exit.pt_next
+
+static func get_enter_waypoint(wp_before: Waypoint) -> Waypoint:
+	# Returns the Enter waypoint that comes after the specified waypoint
+	if wp_before.pt_next and wp_before.pt_next.waypoint_type == Waypoint.WaypointType.ENTER:
+		return wp_before.pt_next
+	return null
+
+static func get_exit_waypoint(wp_enter: Waypoint) -> Waypoint:
+	# Returns the Exit waypoint that corresponds to the specified Enter waypoint
+	var current_wp = wp_enter.pt_next
+	while current_wp != null:
+		if current_wp.waypoint_type == Waypoint.WaypointType.EXIT and current_wp.vehicle_wp == wp_enter.vehicle_wp:
+			return current_wp
+		current_wp = current_wp.pt_next
+	return null
 
 ## Creates a manual event for testing
 static func create_manual_event_for_agent(agent: Agent, waypoint: Waypoint, description: String = "Test Event", type: String = "Test Type") -> SimulationEventExporterManual:
@@ -114,13 +129,13 @@ static func add_event_to_emitter(event: SimulationEventExporterManual, runner: G
 static func validate_agent_in_events(agent_id: int, runner: GdUnitSceneRunner) -> Array:
 	var event_emitter = runner.get_property("event_emittor")
 	var events_with_agent = []
-	
+
 	for event in event_emitter._manual_events:
 		for waypoint_data in event.waypoints:
 			if waypoint_data[0] == agent_id:
 				events_with_agent.append(event)
 				break
-	
+
 	return events_with_agent
 
 ## Validates that event is properly connected to its waypoints
@@ -128,25 +143,25 @@ static func validate_event_waypoint_connections(event: SimulationEventExporterMa
 	for waypoint_data in event.waypoints:
 		var agent_id = waypoint_data[0]
 		var waypoint_id = waypoint_data[1]
-		
+
 		var agent = TreeFuncs.get_agent_with_id(agent_id)
 		if agent == null:
 			return false
-			
+
 		var waypoint = agent.waypoints.get_waypoint(waypoint_id)
 		if waypoint == null:
 			return false
-			
+
 		if not waypoint._events.has(event):
 			return false
-	
+
 	return true
 
 ## Simulates agent deletion via context menu
 static func simulate_agent_deletion(agent: Agent) -> bool:
 	if agent._current_agent == null:
 		return false
-	
+
 	# Simulate the context menu deletion
 	agent._context_menu(Agent.ContextMenuIDs.DELETE)
 	return true

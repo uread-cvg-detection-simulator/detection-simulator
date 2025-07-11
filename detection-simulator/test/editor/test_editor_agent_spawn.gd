@@ -1,6 +1,8 @@
 class_name TestEditorAgent
 extends GdUnitTestSuite
 
+const TestFuncs = preload("res://test/editor/test_funcs.gd")
+
 var editor_scene = "res://simulation_scenes/editor.tscn"
 var runner = null
 var agent = null

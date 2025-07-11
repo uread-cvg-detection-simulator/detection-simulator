@@ -1,5 +1,7 @@
 extends GdUnitTestSuite
 
+const TestFuncs = preload("res://test/editor/test_funcs.gd")
+
 var editor_scene = "res://simulation_scenes/editor.tscn"
 var runner = null
 var agent_person: Agent = null
@@ -80,23 +82,23 @@ func test_agent_wait_stop():
 
 	runner.invoke("_on_play_button_pressed")
 	var timeout = 10 * 1000
-	
+
 	var state = null
-	
+
 	while true:
 		state = await agent_person.state_machine.transitioned
-		
+
 		print_debug("DEBUG ------ " + state)
-		
+
 		if state == "wait_waypoint_conditions":
 			break
-	
+
 	await await_idle_frame()
-	
+
 	await await_millis(200)
 	runner.invoke("_on_play_button_pressed")
 	await await_millis(200)
-	
+
 	await await_idle_frame()
 
 	state = agent_person.state_machine.state.name
