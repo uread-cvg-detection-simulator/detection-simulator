@@ -120,12 +120,18 @@ jobs:
         name: release-assets
         path: release-assets
 
-    - name: Update Development Pre-release
+    - name: Delete existing dev-latest release
+      run: |
+        gh release delete dev-latest --yes || true
+        git push origin :refs/tags/dev-latest || true
+      env:
+        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Create Development Pre-release
       uses: softprops/action-gh-release@v2
       with:
         tag_name: dev-latest
         name: Development Build
-        target_commitish: ${{ github.sha }}
         files: release-assets/*
         draft: false
         prerelease: true
