@@ -1,6 +1,7 @@
 ## 1.0.2
 
 - Added .zenodo.json file for a better looking zenodo page
+- Changed zenodo publishing method (use github action instead of auto sync)
 - Other development only changes
 
 ## 1.0.1
