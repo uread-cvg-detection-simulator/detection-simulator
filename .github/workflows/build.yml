@@ -71,10 +71,20 @@ jobs:
         path: ${{ steps.export.outputs.build_directory }}
         retention-days: 7
 
-    - name: Copy build artifacts for release
+    - name: Package build artifacts for release
       if: github.ref_type == 'tag' || github.ref_name == 'master'
       run: |
-        cp -r ${{ steps.export.outputs.build_directory }}/* release-assets/
+        # Package Linux build
+        cd "${{ steps.export.outputs.build_directory }}/LinuxX11"
+        zip -r ../../release-assets/detection-simulator-linux-x86_64.zip .
+
+        # Package Windows build
+        cd "../Windows Desktop"
+        zip -r ../../release-assets/detection-simulator-windows-x86_64.zip .
+
+        # Copy macOS zip (already packaged by Godot)
+        cd ../..
+        cp "${{ steps.export.outputs.build_directory }}/macOS/detection-simulator.zip" release-assets/detection-simulator-macos.zip
 
     - name: Upload release assets
       if: github.ref_type == 'tag' || github.ref_name == 'master'
