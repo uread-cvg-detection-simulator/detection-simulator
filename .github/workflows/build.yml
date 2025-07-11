@@ -3,6 +3,8 @@ name: Build
 on:
   push:
     branches: [ master ]
+    tags:
+      - 'v*.*.*'
   pull_request:
     branches: [ master ]
 
@@ -13,6 +15,48 @@ jobs:
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
+
+    - name: Package source code
+      if: github.ref_type == 'tag' || github.ref_name == 'master'
+      run: |
+        mkdir -p release-assets
+        # Create source archive following gitignore patterns
+        if [ "${{ github.ref_type }}" == "tag" ]; then
+          git archive --format=tar.gz --prefix=detection-simulator-${{ github.ref_name }}/ HEAD > release-assets/detection-simulator-source-${{ github.ref_name }}.tar.gz
+        else
+          git archive --format=tar.gz --prefix=detection-simulator-dev/ HEAD > release-assets/detection-simulator-source-dev.tar.gz
+        fi
+
+    - name: Extract changelog
+      if: github.ref_type == 'tag' || github.ref_name == 'master'
+      id: changelog
+      run: |
+        if [ "${{ github.ref_type }}" == "tag" ]; then
+          # Extract changelog section for this version (remove 'v' prefix from tag)
+          VERSION="${{ github.ref_name }}"
+          VERSION_NUMBER="${VERSION#v}"
+
+          # Find the section for this version and extract until the next ## or end of file
+          CHANGELOG_CONTENT=$(awk "/^## $VERSION_NUMBER/,/^## /" CHANGELOG.md | sed '$d' | tail -n +2 | sed '/^$/d')
+
+          # If empty, fallback to a default message
+          if [ -z "$CHANGELOG_CONTENT" ]; then
+            CHANGELOG_CONTENT="Release $VERSION_NUMBER"
+          fi
+        else
+          # Extract unreleased section for master branch
+          CHANGELOG_CONTENT=$(awk "/^## Unreleased/,/^## /" CHANGELOG.md | sed '$d' | tail -n +2 | sed '/^$/d')
+
+          # If empty, fallback to a default message
+          if [ -z "$CHANGELOG_CONTENT" ]; then
+            CHANGELOG_CONTENT="Development build with latest changes"
+          fi
+        fi
+
+        # Save to output
+        echo "content<<EOF" >> $GITHUB_OUTPUT
+        echo "$CHANGELOG_CONTENT" >> $GITHUB_OUTPUT
+        echo "EOF" >> $GITHUB_OUTPUT
 
     - name: Export game
       id: export
@@ -31,3 +75,40 @@ jobs:
         name: detection-simulator-exports
         path: ${{ steps.export.outputs.archive_directory }}
         retention-days: 7
+
+    - name: Copy build artifacts for release
+      if: github.ref_type == 'tag' || github.ref_name == 'master'
+      run: |
+        cp -r ${{ steps.export.outputs.archive_directory }}/* release-assets/
+
+    - name: Create Release
+      if: github.ref_type == 'tag'
+      uses: softprops/action-gh-release@v2
+      with:
+        files: release-assets/*
+        draft: false
+        prerelease: false
+        body: ${{ steps.changelog.outputs.content }}
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Update Development Pre-release
+      if: github.ref_name == 'master'
+      uses: softprops/action-gh-release@v2
+      with:
+        tag_name: dev-latest
+        name: Development Build
+        files: release-assets/*
+        draft: false
+        prerelease: true
+        body: |
+          Automated development build from the latest master branch.
+
+          **⚠️ This is a pre-release build and may be unstable.**
+
+          ## Changes
+          ${{ steps.changelog.outputs.content }}
+
+          Commit: ${{ github.sha }}
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
