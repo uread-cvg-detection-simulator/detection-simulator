@@ -230,10 +230,43 @@ def run_finish_release(major: int, minor: int, patch: int):
 	:param patch: Patch version
 	"""
 
-	# Finish release and push all changes
-	subprocess.run(shlex.split(f"git flow release finish {major}.{minor}.{patch} -m \"Bump version to {major}.{minor}.{patch}\" --pushtag --pushproduction --pushdevelop"))
+	# Check if master branch has unpushed commits
+	try:
+		result = subprocess.run(["git", "rev-list", "--count", "origin/master..master"],
+		                       capture_output=True, text=True)
+		unpushed_commits = int(result.stdout.strip()) if result.returncode == 0 else 0
 
-	print("Release finished")
+		if unpushed_commits > 0:
+			print(f"Warning: Master branch has {unpushed_commits} unpushed commits.")
+			if typer.confirm("Push master branch to origin before finishing release?"):
+				print("Pushing master branch...")
+				subprocess.run(["git", "push", "origin", "master"])
+			else:
+				print("Continuing without pushing master. This may cause the release to fail.")
+	except Exception as e:
+		print(f"Warning: Could not check master branch status: {e}")
+
+	# Finish release and push all changes
+	result = subprocess.run(shlex.split(f"git flow release finish {major}.{minor}.{patch} -m \"Release v{major}.{minor}.{patch}\" --pushtag --pushproduction --pushdevelop"))
+
+	if result.returncode != 0:
+		print("ERROR: Git flow release finish failed!")
+		print("\nPossible causes:")
+		print("- Merge conflicts during merge to stable")
+		print("- Network issues during push")
+		print("- Branch protection rules")
+		print("\nTo recover:")
+		print("1. Check git status for conflicts")
+		print("2. Resolve any merge conflicts")
+		print("3. Complete manually with:")
+		print(f"   git flow release finish {major}.{minor}.{patch} -m \"Release v{major}.{minor}.{patch}\"")
+		print("4. Then push branches and tags:")
+		print("   git push origin master")
+		print("   git push origin stable")
+		print("   git push origin --tags")
+		return 1
+
+	print("Release finished successfully")
 
 
 @app.command()
