@@ -1,3 +1,7 @@
+## 1.0.1
+
+Some fixes to the build environment and version bumper script. No functional changes to the software.
+
 ## 1.0.0
 
 Initial release. Here is a rough summary of the features:
