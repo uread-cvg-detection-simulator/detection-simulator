@@ -2,6 +2,8 @@
 
 The UREAD Detection Simulator is a tool for simulating the detection and tracking of objects in a top-down 2D environment. It exports data into a json format that contains x/y co-ordinates and timestamps of the relevant objects. This data can be used to test and validate algorithms for object detection and tracking.
 
+The simulator was originally developed on the EU Horizon project [EURMARS](https://eurmars-project.eu/).
+
 ## Features
 
 - Configurable Agents:
