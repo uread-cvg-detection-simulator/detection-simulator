@@ -1,4 +1,4 @@
-## 1.0.2
+## Unreleased
 
 - Added .zenodo.json file for a better looking zenodo page
 - Changed zenodo publishing method (use github action instead of auto sync)
