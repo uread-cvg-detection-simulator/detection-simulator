@@ -1,3 +1,5 @@
+## Unreleased
+
 ## 1.0.2
 
 - Added .zenodo.json file for a better looking zenodo page
