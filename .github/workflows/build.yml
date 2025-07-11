@@ -122,7 +122,16 @@ jobs:
         # Create source code archive excluding build artifacts and development files
         git archive --format=zip --prefix=detection-simulator-${{ github.ref_name }}/ \
           ${{ github.ref_name }} \
-          -o detection-simulator-${{ github.ref_name }}-source.zip
+          -o detection-simulator-${{ github.ref_name }}-source.zip \
+          -- \
+          ':!.godot' \
+          ':!.envrc' \
+          ':!.pre-commit-config.yaml' \
+          ':!gdlintrc' \
+          ':!sshot.png' \
+          ':!test_manual.gd' \
+          ':!reports/' \
+          ':!*.log'
 
         echo "archive_path=$(pwd)/detection-simulator-${{ github.ref_name }}-source.zip" >> $GITHUB_OUTPUT
 
