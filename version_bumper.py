@@ -335,7 +335,7 @@ def get_version_changelog(major: int, minor: int, patch: int) -> str:
 
 def update_zenodo_json(major: int, minor: int, patch: int):
 	"""
-	Update .zenodo.json with specific release URL
+	Update .zenodo.json (placeholder function - description now handled by workflow)
 
 	:param major: Major version
 	:param minor: Minor version
@@ -347,78 +347,9 @@ def update_zenodo_json(major: int, minor: int, patch: int):
 		console.print(f"[yellow]⚠️  No {zenodo_file} found. Skipping...[/yellow]")
 		return
 
-	try:
-		# Read current zenodo.json
-		with open(zenodo_file, "r") as f:
-			zenodo_data = json.load(f)
-
-		# Get repository name from git remote
-		try:
-			result = subprocess.run(
-				["git", "config", "--get", "remote.origin.url"],
-				capture_output=True, text=True, check=True
-			)
-			remote_url = result.stdout.strip()
-
-			# Extract repository path from various URL formats
-			# Handle both SSH and HTTPS URLs
-			if remote_url.startswith("git@"):
-				# SSH format: git@github.com:user/repo.git
-				repo_path = remote_url.split(":")[-1].replace(".git", "")
-			else:
-				# HTTPS format: https://github.com/user/repo.git
-				repo_path = "/".join(remote_url.split("/")[-2:]).replace(".git", "")
-
-		except subprocess.CalledProcessError:
-			# Fallback to default if git remote fails
-			repo_path = "jonboland/detection-simulator"
-			console.print(f"[yellow]⚠️  Could not get git remote, using default: {repo_path}[/yellow]")
-
-		# Build version-specific description
-		new_version = f"v{major}.{minor}.{patch}"
-		release_url = f"https://github.com/{repo_path}/releases/tag/{new_version}"
-
-		# Get changelog content for this version
-		changelog_content = get_version_changelog(major, minor, patch)
-
-		# Create new description with version-specific information
-		base_description = """A tool for simulating the detection and tracking of objects in a top-down 2D environment. Exports data into JSON format containing x/y coordinates and timestamps for testing and validating object detection and tracking algorithms.
-
-## Features
-
-- **Configurable Agents**: Speed and acceleration settings with waypoint linking for synchronized movement and timed waiting
-- **Vehicle Interactions**: Person agents can enter and exit vehicle type agents
-- **Dynamic Event System**: Automated events generated when entering/exiting vehicles, plus manual events with configurable conditions
-- **Sensors**: Configurable field of view and range, producing detection data only for agents within sensor coverage
-- **Background Images**: Configurable size and scale support
-- **Export Capabilities**: JSON files for each agent and sensor with coordinate and timestamp data
-- **Cross-Platform**: Available for Windows, Linux, and macOS"""
-
-		# Add version-specific changelog if available
-		if changelog_content:
-			version_section = f"\n\n## Version {major}.{minor}.{patch} Changes\n\n{changelog_content}"
-		else:
-			version_section = f"\n\n## Version {major}.{minor}.{patch}\n\nSee the GitHub release page for detailed changes."
-
-		# Add download section
-		download_section = f"\n\n## Download\n\nPre-compiled binaries for this version are available at: {release_url}\n\nThis Zenodo archive contains the source code for citation and archival purposes."
-
-		# Combine all sections
-		new_description = base_description + version_section + download_section
-		zenodo_data["description"] = new_description
-
-		# Write updated zenodo.json
-		with open(zenodo_file, "w") as f:
-			json.dump(zenodo_data, f, indent=2)
-
-		# Stage the file
-		subprocess.run(["git", "add", zenodo_file])
-		console.print(f"[green]✓[/green] Updated {zenodo_file} with release URL: {release_url}")
-
-	except json.JSONDecodeError as e:
-		console.print(f"[red]❌ ERROR: Invalid JSON in {zenodo_file}: {e}[/red]")
-	except Exception as e:
-		console.print(f"[red]❌ ERROR: Failed to update {zenodo_file}: {e}[/red]")
+	# Note: .zenodo.json description is no longer updated here
+	# The description is now dynamically generated in the GitHub workflow
+	console.print(f"[green]✓[/green] {zenodo_file} exists (description handled by workflow)")
 
 
 def update_changelogs(log_files: List[str], major: int, minor: int, patch: int) -> bool:
