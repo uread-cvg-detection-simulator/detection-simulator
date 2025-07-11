@@ -117,6 +117,7 @@
           ps: with ps; [
             typer
             rich
+            python-dotenv
           ]
         );
 
