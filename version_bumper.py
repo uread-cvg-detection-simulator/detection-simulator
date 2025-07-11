@@ -426,7 +426,7 @@ def run_finish_release(major: int, minor: int, patch: int):
 
 	# Finish release without pushing all tags to avoid conflicts
 	with console.status("[bold blue]Finishing git flow release...[/bold blue]") as status:
-		result = subprocess.run(shlex.split(f"git flow release finish {major}.{minor}.{patch} -m \"Release v{major}.{minor}.{patch}\" --pushproduction"))
+		result = subprocess.run(shlex.split(f"git flow release finish {major}.{minor}.{patch} -m \"Release v{major}.{minor}.{patch}\" --pushproduction --no-edit"))
 
 	# Push only the new release tag
 	if result.returncode == 0:
@@ -455,9 +455,11 @@ def run_finish_release(major: int, minor: int, patch: int):
 			"[bold]To recover:[/bold]\n"
 			"1. Check git status for conflicts\n"
 			"2. Resolve any merge conflicts\n"
-			"3. Complete manually with:\n"
-			f"   [bold cyan]git flow release finish {major}.{minor}.{patch} -m \"Release v{major}.{minor}.{patch}\"[/bold cyan]\n"
-			"4. Then push branches and tags:\n"
+			"3. Retry with the script:\n"
+			f"   [bold cyan]./version_bumper.py release[/bold cyan]\n"
+			"4. Or complete manually with:\n"
+			f"   [bold cyan]git flow release finish {major}.{minor}.{patch} -m \"Release v{major}.{minor}.{patch}\" --no-edit[/bold cyan]\n"
+			"5. Then push branches and tags:\n"
 			"   [bold cyan]git push origin master[/bold cyan]\n"
 			"   [bold cyan]git push origin stable[/bold cyan]\n"
 			"   [bold cyan]git push origin --tags[/bold cyan]",
