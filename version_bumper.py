@@ -247,7 +247,7 @@ def run_finish_release(major: int, minor: int, patch: int):
 		print(f"Warning: Could not check master branch status: {e}")
 
 	# Finish release without pushing all tags to avoid conflicts
-	result = subprocess.run(shlex.split(f"git flow release finish {major}.{minor}.{patch} -m \"Release v{major}.{minor}.{patch}\" --pushproduction --pushdevelop"))
+	result = subprocess.run(shlex.split(f"git flow release finish {major}.{minor}.{patch} -m \"Release v{major}.{minor}.{patch}\" --pushproduction"))
 
 	# Push only the new release tag
 	if result.returncode == 0:
@@ -277,6 +277,37 @@ def run_finish_release(major: int, minor: int, patch: int):
 		return 1
 
 	print("Release finished successfully")
+
+	# Add unreleased section back to changelog for future development
+	log_files = ["CHANGELOG.md", "CHANGES.md", "RELEASE_NOTES.md"]
+	changelog_modified = False
+	modified_file = None
+
+	for log_file in log_files:
+		if os.path.isfile(log_file):
+			with open(log_file, "r") as f:
+				content = f.read()
+
+			# Add unreleased section at the top
+			if not content.startswith("## Unreleased"):
+				with open(log_file, "w") as f:
+					f.write("## Unreleased\n\n")
+					f.write(content)
+				print(f"Added unreleased section to {log_file}")
+				changelog_modified = True
+				modified_file = log_file
+			break
+
+	# Commit and push the changelog changes
+	if changelog_modified:
+		try:
+			subprocess.run(["git", "add", modified_file], check=True)
+			subprocess.run(["git", "commit", "-m", "chore: add unreleased section to changelog for future development"], check=True)
+			subprocess.run(["git", "push", "origin", "master"], check=True)
+			print(f"Committed and pushed changelog changes")
+		except subprocess.CalledProcessError as e:
+			print(f"Warning: Failed to commit/push changelog changes: {e}")
+			print("You may need to commit and push manually:")
 
 
 @app.command()
