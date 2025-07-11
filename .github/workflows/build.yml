@@ -135,6 +135,32 @@ jobs:
 
         echo "archive_path=$(pwd)/detection-simulator-${{ github.ref_name }}-source.zip" >> $GITHUB_OUTPUT
 
+    - name: Create Zenodo description file
+      run: |
+        cat > zenodo_description.md << 'EOF'
+        A tool for simulating the detection and tracking of objects in a top-down 2D environment. Exports data into JSON format containing x/y coordinates and timestamps for testing and validating object detection and tracking algorithms.
+
+        ## Features
+
+        - **Configurable Agents**: Speed and acceleration settings with waypoint linking for synchronized movement and timed waiting
+        - **Vehicle Interactions**: Agents can enter and exit vehicle type agents
+        - **Dynamic Event System**: Automated events generated when entering/exiting vehicles, plus manual events with configurable conditions
+        - **Sensors**: Configurable field of view and range, producing detection data only for agents within sensor coverage
+        - **Background Images**: Configurable size and scale support
+        - **Export To JSON**: JSON files for each agent and sensor with coordinate and timestamp data
+        - **Cross-Platform**: Available for Windows, Linux, and macOS
+
+        ## Version ${{ github.ref_name }}
+
+        See the GitHub release page for detailed changes.
+
+        ## Download
+
+        Pre-compiled binaries for this version are available at: https://github.com/uread-cvg-detection-simulator/detection-simulator/releases/tag/${{ github.ref_name }}
+
+        This Zenodo archive contains the source code for citation and archival purposes.
+        EOF
+
     - name: Release to Zenodo
       uses: rseng/zenodo-release@main
       with:
@@ -151,29 +177,8 @@ jobs:
         # This should be the "all versions" DOI (conceptual DOI)
         doi: "10.5281/zenodo.15866228"
 
-        # Description for this version
-        description: |
-          A tool for simulating the detection and tracking of objects in a top-down 2D environment. Exports data into JSON format containing x/y coordinates and timestamps for testing and validating object detection and tracking algorithms.
-
-          ## Features
-
-          - **Configurable Agents**: Speed and acceleration settings with waypoint linking for synchronized movement and timed waiting
-          - **Vehicle Interactions**: Agents can enter and exit vehicle type agents
-          - **Dynamic Event System**: Automated events generated when entering/exiting vehicles, plus manual events with configurable conditions
-          - **Sensors**: Configurable field of view and range, producing detection data only for agents within sensor coverage
-          - **Background Images**: Configurable size and scale support
-          - **Export To JSON**: JSON files for each agent and sensor with coordinate and timestamp data
-          - **Cross-Platform**: Available for Windows, Linux, and macOS
-
-          ## Version ${{ github.ref_name }}
-
-          See the GitHub release page for detailed changes.
-
-          ## Download
-
-          Pre-compiled binaries for this version are available at: https://github.com/uread-cvg-detection-simulator/detection-simulator/releases/tag/${{ github.ref_name }}
-
-          This Zenodo archive contains the source code for citation and archival purposes.
+        # Description from file (preserves formatting better)
+        description_file: "zenodo_description.md"
 
   dev-release:
     needs: build
