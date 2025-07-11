@@ -293,13 +293,13 @@ func get_agent_events(agent_id: int) -> Dictionary:
 		"original_waypoints": {},       # Original waypoint data for restoration (event_index -> waypoint_data_array)
 		"removed_event_objects": []     # Direct references to removed events for restoration
 	}
-	
+
 	for event_index in range(_manual_events.size()):
 		var event = _manual_events[event_index]
 		var agent_waypoints = []
 		var agent_waypoint_data = []
 		var other_waypoints = []
-		
+
 		# Separate waypoints involving this agent from others
 		for wp_index in range(event.waypoints.size()):
 			var waypoint_data = event.waypoints[wp_index]
@@ -308,7 +308,7 @@ func get_agent_events(agent_id: int) -> Dictionary:
 				agent_waypoint_data.append(waypoint_data.duplicate())
 			else:
 				other_waypoints.append(wp_index)
-		
+
 		if agent_waypoints.size() > 0:
 			if other_waypoints.size() == 0:
 				# Event only involves this agent - mark for complete removal
@@ -319,51 +319,51 @@ func get_agent_events(agent_id: int) -> Dictionary:
 				event_data["events_to_modify"].append(event_index)
 				event_data["removed_waypoints"][event_index] = agent_waypoints
 				event_data["original_waypoints"][event_index] = agent_waypoint_data
-	
+
 	return event_data
 
 ## Actually removes the agent from events and deletes events if necessary
 ## This function only performs the removal, undo is handled separately
 func remove_agent_from_events(agent_id: int, event_data: Dictionary):
 	# IMPORTANT: Process modifications BEFORE deletions to avoid index corruption
-	
+
 	# First, modify events that involve multiple agents
 	for event_index in event_data["events_to_modify"]:
 		var event = _manual_events[event_index]
-		
+
 		# IMPORTANT: Recalculate waypoint indices to remove, don't use stored indices
 		# This is because previous agent deletions may have modified this event already
 		var waypoints_to_remove = []
-		
+
 		# Find waypoints that belong to this agent (by scanning current waypoints)
 		for wp_index in range(event.waypoints.size()):
 			var waypoint_data = event.waypoints[wp_index]
 			if waypoint_data[0] == agent_id:
 				waypoints_to_remove.append(wp_index)
-		
+
 		# Remove waypoints in reverse order to maintain indices
 		waypoints_to_remove.reverse()
-		
+
 		for wp_index in waypoints_to_remove:
 			var waypoint_data = event.waypoints[wp_index]
 			var wp_agent_id = waypoint_data[0]
 			var wp_waypoint_id = waypoint_data[1]
-			
+
 			# Remove from waypoint
 			var agent = TreeFuncs.get_agent_with_id(wp_agent_id)
 			if agent != null:
 				var wp = agent.waypoints.get_waypoint(wp_waypoint_id)
 				if wp != null:
 					wp.remove_event(event, false)
-			
+
 			# Remove from event's waypoint list
 			event.waypoints.remove_at(wp_index)
-	
+
 	# Then, remove events that only involve this agent (in reverse order to maintain indices)
 	var events_to_remove = event_data["events_to_remove"]
 	events_to_remove.sort()
 	events_to_remove.reverse()
-	
+
 	for event_index in events_to_remove:
 		_delete_event_internal(event_index)
 
@@ -375,38 +375,38 @@ func restore_agent_to_events(agent_id: int, event_data: Dictionary):
 			var event = _manual_events[event_index]
 			var waypoint_indices = event_data["removed_waypoints"][event_index]
 			var original_waypoints = event_data["original_waypoints"][event_index]
-			
+
 			# Restore waypoints in original order
 			waypoint_indices.sort()
-			
+
 			# Restore each waypoint that was removed
 			for i in range(waypoint_indices.size()):
 				var wp_index = waypoint_indices[i]
 				var original_waypoint_data = original_waypoints[i]
-				
+
 				# Insert back into event's waypoint list at original position
 				event.waypoints.insert(wp_index, original_waypoint_data)
-				
+
 				# Add back to waypoint using proper agent/waypoint lookup
 				var wp_agent_id = original_waypoint_data[0]
 				var wp_waypoint_id = original_waypoint_data[1]
-				
+
 				var agent = TreeFuncs.get_agent_with_id(wp_agent_id)
 				if agent != null:
 					var wp = agent.waypoints.get_waypoint(wp_waypoint_id)
 					if wp != null:
 						wp.add_event(event)
-	
+
 	# Restore completely removed events (in original order)
 	var events_to_restore = event_data["events_to_remove"]
 	var removed_event_objects = event_data["removed_event_objects"]
-	
+
 	# Create pairs of (index, event) and sort by index
 	var restore_pairs = []
 	for i in range(events_to_restore.size()):
 		restore_pairs.append([events_to_restore[i], removed_event_objects[i]])
 	restore_pairs.sort_custom(func(a, b): return a[0] < b[0])
-	
+
 	# Restore events in original order using direct references
 	for pair in restore_pairs:
 		var event_index = pair[0]
@@ -416,7 +416,7 @@ func restore_agent_to_events(agent_id: int, event_data: Dictionary):
 ## Cleanup method for OnRemoval - removes event objects from stored events when undo action is discarded
 func cleanup_stored_events_for_agent(_agent_id: int, event_data: Dictionary):
 	var removed_event_objects = event_data["removed_event_objects"]
-	
+
 	# Remove the stored event objects from _undo_stored_events
 	# These are the same object references that were added to _undo_stored_events by _delete_event_internal
 	for event_object in removed_event_objects:
@@ -467,3 +467,28 @@ func _create_event(description: String, type: String, position_array: Array, tim
 			event_fileaccess.store_string(",")
 
 		event_fileaccess.store_string(JSON.stringify(event))
+
+## Update waypoint indices in events when waypoints are inserted
+func update_waypoint_indices_after_insertion(agent_id: int, insert_index: int):
+	for event in _manual_events:
+		for waypoint_ref in event.waypoints:
+			# waypoint_ref is [agent_id, waypoint_index]
+			if waypoint_ref[0] == agent_id and waypoint_ref[1] >= insert_index:
+				waypoint_ref[1] += 1
+
+## Update waypoint indices in events when waypoints are deleted
+func update_waypoint_indices_after_deletion(agent_id: int, deleted_index: int):
+	for event in _manual_events:
+		for waypoint_ref in event.waypoints:
+			# waypoint_ref is [agent_id, waypoint_index]
+			if waypoint_ref[0] == agent_id and waypoint_ref[1] > deleted_index:
+				waypoint_ref[1] -= 1
+
+## Update waypoint indices in events when waypoint insertion is undone
+## This differs from deletion because we need to decrement indices >= the insertion position
+func update_waypoint_indices_after_insertion_undo(agent_id: int, insertion_index: int):
+	for event in _manual_events:
+		for waypoint_ref in event.waypoints:
+			# waypoint_ref is [agent_id, waypoint_index]
+			if waypoint_ref[0] == agent_id and waypoint_ref[1] >= insertion_index:
+				waypoint_ref[1] -= 1

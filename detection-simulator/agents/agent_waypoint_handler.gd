@@ -158,9 +158,14 @@ func _add_waypoint_deletion_do_actions(del_point: Waypoint, undo_action: UndoRed
 
 	# Remove from array and scene tree
 	undo_action.action_method(UndoRedoAction.DoType.Do, func(agent, current_point):
+		var del_index = agent.waypoints.get_waypoint_index(current_point)
 		agent.waypoints.waypoints.erase(current_point)
 		agent.waypoints.remove_child(current_point)
 		agent.waypoints.undo_stored_nodes.add_child(current_point)
+
+		# Update event waypoint indices for deletion
+		if agent.waypoints.base_editor and agent.waypoints.base_editor.event_emittor:
+			agent.waypoints.base_editor.event_emittor.update_waypoint_indices_after_deletion(agent.agent_id, del_index)
 		, [undo_agent_ref, current_point_ref], [undo_agent_ref, current_point_ref]
 	)
 
@@ -222,6 +227,10 @@ func _add_waypoint_deletion_undo_actions(del_point: Waypoint, undo_action: UndoR
 		agent.waypoints.waypoints.insert(insert_index, current_point)
 		agent.waypoints.undo_stored_nodes.remove_child(current_point)
 		agent.waypoints.add_child(current_point)
+
+		# Undo event waypoint indices update for deletion (restore by insertion)
+		if agent.waypoints.base_editor and agent.waypoints.base_editor.event_emittor:
+			agent.waypoints.base_editor.event_emittor.update_waypoint_indices_after_insertion(agent.agent_id, insert_index)
 		, [undo_agent_ref, current_point_ref, previous_point_ref, next_point_ref], [undo_agent_ref, current_point_ref, previous_point_ref, next_point_ref]
 	)
 
@@ -555,6 +564,10 @@ func insert_after(current_point: Waypoint, new_global_point: Vector2, waypoint_t
 
 	waypoints.insert(insert_pos, new_waypoint)
 
+	# Update event waypoint indices for insertion
+	if base_editor and base_editor.event_emittor:
+		base_editor.event_emittor.update_waypoint_indices_after_insertion(parent_object.agent_id, insert_pos)
+
 	# Add to the reference waypoint if enter/exit type
 	if reference_waypoint:
 		if waypoint_type == Waypoint.WaypointType.ENTER:
@@ -649,6 +662,14 @@ func insert_after(current_point: Waypoint, new_global_point: Vector2, waypoint_t
 	undo_action.action_method(UndoRedoAction.DoType.Undo, func(pos, agent):
 		agent.waypoints.waypoints.remove_at(pos)
 		, [insert_pos, undo_agent_ref], undo_agent_ref
+	)
+
+	# Undo event waypoint indices update for insertion
+	undo_action.action_method(UndoRedoAction.DoType.Undo, func(agent_id, pos):
+		var agent = TreeFuncs.get_agent_with_id(agent_id)
+		if agent and agent.waypoints.base_editor and agent.waypoints.base_editor.event_emittor:
+			agent.waypoints.base_editor.event_emittor.update_waypoint_indices_after_insertion_undo(agent_id, pos)
+		, [parent_object.agent_id, insert_pos]
 	)
 
 	# Remove from previous point
