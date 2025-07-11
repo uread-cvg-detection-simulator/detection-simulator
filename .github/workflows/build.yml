@@ -124,9 +124,8 @@ jobs:
           ${{ github.ref_name }} \
           -o detection-simulator-${{ github.ref_name }}-source.zip \
           -- \
-          ':!.godot' \
-          ':!.envrc' \
-          ':!.pre-commit-config.yaml' \
+          ':!.*' \
+          ':!**/.*' \
           ':!gdlintrc' \
           ':!sshot.png' \
           ':!test_manual.gd' \
@@ -137,28 +136,27 @@ jobs:
 
     - name: Create Zenodo description file
       run: |
-        cat > zenodo_description.md << 'EOF'
-        A tool for simulating the detection and tracking of objects in a top-down 2D environment. Exports data into JSON format containing x/y coordinates and timestamps for testing and validating object detection and tracking algorithms.
+        cat > zenodo_description.html << 'EOF'
+        <p>A tool for simulating the detection and tracking of objects in a top-down 2D environment. Exports data into JSON format containing x/y coordinates and timestamps for testing and validating object detection and tracking algorithms.</p>
 
-        ## Features
+        <h3>Features</h3>
+        <ul>
+        <li><strong>Configurable Agents</strong>: Speed and acceleration settings with waypoint linking for synchronized movement and timed waiting</li>
+        <li><strong>Vehicle Interactions</strong>: Agents can enter and exit vehicle type agents</li>
+        <li><strong>Dynamic Event System</strong>: Automated events generated when entering/exiting vehicles, plus manual events with configurable conditions</li>
+        <li><strong>Sensors</strong>: Configurable field of view and range, producing detection data only for agents within sensor coverage</li>
+        <li><strong>Background Images</strong>: Configurable size and scale support</li>
+        <li><strong>Export To JSON</strong>: JSON files for each agent and sensor with coordinate and timestamp data</li>
+        <li><strong>Cross-Platform</strong>: Available for Windows, Linux, and macOS</li>
+        </ul>
 
-        - **Configurable Agents**: Speed and acceleration settings with waypoint linking for synchronized movement and timed waiting
-        - **Vehicle Interactions**: Agents can enter and exit vehicle type agents
-        - **Dynamic Event System**: Automated events generated when entering/exiting vehicles, plus manual events with configurable conditions
-        - **Sensors**: Configurable field of view and range, producing detection data only for agents within sensor coverage
-        - **Background Images**: Configurable size and scale support
-        - **Export To JSON**: JSON files for each agent and sensor with coordinate and timestamp data
-        - **Cross-Platform**: Available for Windows, Linux, and macOS
+        <h3>Version ${{ github.ref_name }}</h3>
+        <p>See the GitHub release page for detailed changes.</p>
 
-        ## Version ${{ github.ref_name }}
+        <h3>Download</h3>
+        <p>Pre-compiled binaries for this version are available at: <a href="https://github.com/uread-cvg-detection-simulator/detection-simulator/releases/tag/${{ github.ref_name }}">https://github.com/uread-cvg-detection-simulator/detection-simulator/releases/tag/${{ github.ref_name }}</a></p>
 
-        See the GitHub release page for detailed changes.
-
-        ## Download
-
-        Pre-compiled binaries for this version are available at: https://github.com/uread-cvg-detection-simulator/detection-simulator/releases/tag/${{ github.ref_name }}
-
-        This Zenodo archive contains the source code for citation and archival purposes.
+        <p>This Zenodo archive contains the source code for citation and archival purposes.</p>
         EOF
 
     - name: Release to Zenodo
@@ -178,7 +176,7 @@ jobs:
         doi: "10.5281/zenodo.15866228"
 
         # Description from file (preserves formatting better)
-        description_file: "zenodo_description.md"
+        description_file: "zenodo_description.html"
 
   dev-release:
     needs: build
