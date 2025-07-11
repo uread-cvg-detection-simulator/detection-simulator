@@ -18,16 +18,9 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v4
 
-    - name: Package source code
+    - name: Create release assets directory
       if: github.ref_type == 'tag' || github.ref_name == 'master'
-      run: |
-        mkdir -p release-assets
-        # Create source archive following gitignore patterns
-        if [ "${{ github.ref_type }}" == "tag" ]; then
-          git archive --format=tar.gz --prefix=detection-simulator-${{ github.ref_name }}/ HEAD > release-assets/detection-simulator-source-${{ github.ref_name }}.tar.gz
-        else
-          git archive --format=tar.gz --prefix=detection-simulator-dev/ HEAD > release-assets/detection-simulator-source-dev.tar.gz
-        fi
+      run: mkdir -p release-assets
 
     - name: Extract changelog
       if: github.ref_type == 'tag' || github.ref_name == 'master'
