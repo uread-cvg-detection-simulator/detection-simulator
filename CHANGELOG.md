@@ -1,4 +1,4 @@
-## Unreleased
+## 1.0.0
 
 Initial release. Here is a rough summary of the features:
 
