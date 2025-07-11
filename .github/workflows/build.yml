@@ -64,13 +64,6 @@ jobs:
         cache: true
         presets_to_export: Linux/X11, macOS, Windows Desktop
 
-    - name: Upload artifacts
-      uses: actions/upload-artifact@v4
-      with:
-        name: detection-simulator-exports
-        path: ${{ steps.export.outputs.build_directory }}
-        retention-days: 7
-
     - name: Package build artifacts for release
       if: github.ref_type == 'tag' || github.ref_name == 'master'
       run: |
