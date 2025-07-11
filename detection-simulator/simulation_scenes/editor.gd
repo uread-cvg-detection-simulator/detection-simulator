@@ -127,7 +127,7 @@ func load_save_data(data: Dictionary):
 		sensor.queue_free()
 
 	UndoSystem.clear_history()
-	
+
 	await get_tree().process_frame
 
 	_last_id = 1000
@@ -178,7 +178,7 @@ func load_save_data(data: Dictionary):
 					root_scene.bg_image_buffer = data["bg_image"]
 
 			await get_tree().process_frame
-			
+
 			if data["version"] >= 4:
 				event_emittor.load_save_data(data["events"])
 
@@ -228,6 +228,7 @@ func _process(delta):
 		# Stop playing if all agents are finished and exporting
 		if finished_agents == len(agents):
 			if PlayTimer.exporting:
+				_notifier.notify("Export completed successfully", 2.0)
 				_on_export_finished()
 
 			play_agents_finished.emit()
@@ -617,6 +618,11 @@ func _on_save_button_pressed():
 	fd_reader.visible = false
 
 func _on_export_button_pressed():
+	# Check if we're already exporting - if so, cancel
+	if PlayTimer.exporting:
+		_cancel_export()
+		return
+
 	# Set all the base paths of the sensors
 	var sensors: Array = get_tree().get_nodes_in_group("sensor")
 
@@ -631,11 +637,16 @@ func _on_export_button_pressed():
 		_play_button.disabled = true
 		_save_button.disabled = true
 		_load_button.disabled = true
-		_export_button.text = "Exporting..."
-		_export_button.disabled = true
+		_export_button.text = "Cancel Export"
+		# Keep export button enabled so user can cancel
 		_bg_button.disabled = true
 	else:
 		print_debug("No save path set")
+
+func _cancel_export():
+	# Show notification that export was cancelled
+	_notifier.notify("Export cancelled", 2.0)
+	_on_export_finished()
 
 func _on_export_finished():
 	PlayTimer.exporting = false
@@ -748,12 +759,12 @@ func get_agent_linked_nodes(agent_id: int) -> Dictionary:
 		"waypoints_to_unlink": [],      # This agent's waypoints that have links to other agents
 		"other_waypoints_to_unlink": [] # Other agents' waypoints that link to this agent
 	}
-	
+
 	# Find the agent being deleted
 	var target_agent = TreeFuncs.get_agent_with_id(agent_id)
 	if target_agent == null:
 		return linked_data
-	
+
 	# Check all waypoints of the target agent
 	var current_waypoint = target_agent.waypoints.starting_node
 	while current_waypoint != null:
@@ -767,15 +778,15 @@ func get_agent_linked_nodes(agent_id: int) -> Dictionary:
 				"other_waypoint": linked_waypoint
 			}
 			linked_data["waypoints_to_unlink"].append(link_data)
-		
+
 		current_waypoint = current_waypoint.pt_next
-	
+
 	# Also check if any other agents' waypoints link to this agent's waypoints
 	# This should be covered by the bidirectional nature, but let's be thorough
 	for agent in get_tree().get_nodes_in_group("agent"):
 		if agent.agent_id == agent_id:
 			continue  # Skip the agent being deleted
-			
+
 		var other_current_waypoint = agent.waypoints.starting_node
 		while other_current_waypoint != null:
 			for linked_waypoint in other_current_waypoint.linked_nodes:
@@ -788,9 +799,9 @@ func get_agent_linked_nodes(agent_id: int) -> Dictionary:
 						"this_waypoint": linked_waypoint
 					}
 					linked_data["other_waypoints_to_unlink"].append(link_data)
-			
+
 			other_current_waypoint = other_current_waypoint.pt_next
-	
+
 	return linked_data
 
 ## Actually removes the agent from linked nodes
@@ -800,27 +811,27 @@ func remove_agent_from_linked_nodes(agent_id: int, linked_data: Dictionary):
 	for link_info in linked_data["waypoints_to_unlink"]:
 		var this_waypoint = link_info["this_waypoint"]
 		var other_waypoint = link_info["other_waypoint"]
-		
+
 		# Remove bidirectional links
 		this_waypoint.linked_nodes.erase(other_waypoint)
 		other_waypoint.linked_nodes.erase(this_waypoint)
-	
+
 	# Remove links from other agents' waypoints to this agent
 	for link_info in linked_data["other_waypoints_to_unlink"]:
 		var other_waypoint = link_info["other_waypoint"]
 		var this_waypoint = link_info["this_waypoint"]
-		
+
 		# Remove bidirectional links (may be duplicate of above, but safe)
 		other_waypoint.linked_nodes.erase(this_waypoint)
 		this_waypoint.linked_nodes.erase(other_waypoint)
-	
+
 	# Redraw waypoint lines for affected agents
 	var agents_to_redraw = {}
 	for link_info in linked_data["waypoints_to_unlink"]:
 		agents_to_redraw[link_info["other_agent_id"]] = true
 	for link_info in linked_data["other_waypoints_to_unlink"]:
 		agents_to_redraw[link_info["other_agent_id"]] = true
-	
+
 	for other_agent_id in agents_to_redraw:
 		var other_agent = TreeFuncs.get_agent_with_id(other_agent_id)
 		if other_agent != null:
@@ -832,31 +843,31 @@ func restore_agent_to_linked_nodes(agent_id: int, linked_data: Dictionary):
 	for link_info in linked_data["waypoints_to_unlink"]:
 		var this_waypoint = link_info["this_waypoint"]
 		var other_waypoint = link_info["other_waypoint"]
-		
+
 		# Restore bidirectional links
 		if other_waypoint not in this_waypoint.linked_nodes:
 			this_waypoint.linked_nodes.append(other_waypoint)
 		if this_waypoint not in other_waypoint.linked_nodes:
 			other_waypoint.linked_nodes.append(this_waypoint)
-	
+
 	# Restore links from other agents' waypoints to this agent
 	for link_info in linked_data["other_waypoints_to_unlink"]:
 		var other_waypoint = link_info["other_waypoint"]
 		var this_waypoint = link_info["this_waypoint"]
-		
+
 		# Restore bidirectional links (may be duplicate of above, but safe)
 		if this_waypoint not in other_waypoint.linked_nodes:
 			other_waypoint.linked_nodes.append(this_waypoint)
 		if other_waypoint not in this_waypoint.linked_nodes:
 			this_waypoint.linked_nodes.append(other_waypoint)
-	
+
 	# Redraw waypoint lines for affected agents
 	var agents_to_redraw = {}
 	for link_info in linked_data["waypoints_to_unlink"]:
 		agents_to_redraw[link_info["other_agent_id"]] = true
 	for link_info in linked_data["other_waypoints_to_unlink"]:
 		agents_to_redraw[link_info["other_agent_id"]] = true
-	
+
 	for other_agent_id in agents_to_redraw:
 		var other_agent = TreeFuncs.get_agent_with_id(other_agent_id)
 		if other_agent != null:
