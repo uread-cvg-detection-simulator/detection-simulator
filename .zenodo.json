@@ -1,0 +1,17 @@
+{
+  "title": "UREAD Detection Simulator",
+  "description": "A tool for simulating the detection and tracking of objects in a top-down 2D environment. Exports data into JSON format containing x/y coordinates and timestamps for testing and validating object detection and tracking algorithms.\n\n## Features\n\n- **Configurable Agents**: Speed and acceleration settings with waypoint linking for synchronized movement and timed waiting\n- **Vehicle Interactions**: Person agents can enter and exit vehicle type agents\n- **Dynamic Event System**: Automated events generated when entering/exiting vehicles, plus manual events with configurable conditions\n- **Sensors**: Configurable field of view and range, producing detection data only for agents within sensor coverage\n- **Background Images**: Configurable size and scale support\n- **Export Capabilities**: JSON files for each agent and sensor with coordinate and timestamp data\n- **Cross-Platform**: Available for Windows, Linux, and macOS\n\n## Download\n\nPre-compiled binaries are available on the GitHub releases page: https://github.com/jonboland/detection-simulator/releases",
+  "creators": [
+    {
+      "name": "Boyle, Jonathan",
+      "orcid": "0000-0002-5785-8046",
+      "affiliation": "University of Reading"
+    }
+  ],
+  "license": "CC-BY-SA-4.0",
+  "resource_type": {
+    "type": "software"
+  },
+  "upload_type": "software",
+  "language": "en"
+}
