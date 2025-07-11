@@ -87,8 +87,33 @@ def bump(bump_type: BumpType, dry_run: bool = False):
 
 		print("Starting update...")
 
+		# Check for existing release branches and clean them up
+		try:
+			branches_output = subprocess.check_output(["git", "branch", "--list", "release/*"], universal_newlines=True)
+			if branches_output.strip():
+				print("Found existing release branches:")
+				for line in branches_output.strip().split('\n'):
+					branch_name = line.strip().lstrip('* ').strip()
+					print(f"  - {branch_name}")
+
+				if typer.confirm("Delete existing release branches to proceed?"):
+					for line in branches_output.strip().split('\n'):
+						branch_name = line.strip().lstrip('* ').strip()
+						if branch_name.startswith('release/'):
+							version_part = branch_name.replace('release/', '')
+							subprocess.run(["git", "flow", "release", "delete", version_part, "-f"])
+							print(f"Deleted {branch_name}")
+				else:
+					print("Cannot proceed with existing release branches. Aborting.")
+					return 1
+		except subprocess.CalledProcessError:
+			pass  # No existing release branches
+
 		# Start git flow release
-		subprocess.run(["git", "flow", "release", "start", f"{major}.{minor}.{patch}"])
+		result = subprocess.run(["git", "flow", "release", "start", f"{major}.{minor}.{patch}"])
+		if result.returncode != 0:
+			print("ERROR: Failed to start release branch")
+			return 1
 
 		print("Updating files...")
 
@@ -308,6 +333,20 @@ def run_finish_release(major: int, minor: int, patch: int):
 		except subprocess.CalledProcessError as e:
 			print(f"Warning: Failed to commit/push changelog changes: {e}")
 			print("You may need to commit and push manually:")
+
+	# Final cleanup: ensure no release branches remain
+	try:
+		branches_output = subprocess.check_output(["git", "branch", "--list", "release/*"], universal_newlines=True)
+		if branches_output.strip():
+			print("Cleaning up remaining release branches...")
+			for line in branches_output.strip().split('\n'):
+				branch_name = line.strip().lstrip('* ').strip()
+				if branch_name.startswith('release/'):
+					version_part = branch_name.replace('release/', '')
+					subprocess.run(["git", "flow", "release", "delete", version_part, "-f"], check=False)
+					print(f"Cleaned up {branch_name}")
+	except subprocess.CalledProcessError:
+		pass  # No release branches to clean up
 
 
 @app.command()
