@@ -319,15 +319,15 @@ func _context_menu(id: ContextMenuIDs):
 			######
 			# DO Actions (in order)
 			######
-			
+
 			# 1. Remove agent from events BEFORE disabling the agent
 			if event_data_ref != null:
 				undo_action.action_object_call(UndoRedoAction.DoType.Do, base_editor.event_emittor, "remove_agent_from_events", [agent_id, event_data_ref], [event_data_ref])
-			
+
 			# 2. Remove agent from linked nodes BEFORE disabling the agent
 			if linked_data_ref != null:
 				undo_action.action_object_call(UndoRedoAction.DoType.Do, base_editor, "remove_agent_from_linked_nodes", [agent_id, linked_data_ref], [linked_data_ref])
-			
+
 			# 3. Remove agent from group and disable it
 			undo_action.action_method(UndoRedoAction.DoType.Do, GroupHelpers.remove_node_from_group, [ref, "agent"], ref)
 			undo_action.action_property_ref(UndoRedoAction.DoType.Do, ref, "disabled", true)
@@ -335,22 +335,22 @@ func _context_menu(id: ContextMenuIDs):
 			######
 			# UNDO Actions (in reverse order)
 			######
-			
+
 			# 1. Re-enable agent and add back to group FIRST
 			undo_action.action_property_ref(UndoRedoAction.DoType.Undo, ref, "disabled", false)
 			undo_action.action_method(UndoRedoAction.DoType.Undo, GroupHelpers.add_node_to_group, [ref, "agent"], ref)
-			
+
 			# 2. Restore events AFTER agent is restored
 			if event_data_ref != null:
 				undo_action.action_object_call(UndoRedoAction.DoType.Undo, base_editor.event_emittor, "restore_agent_to_events", [agent_id, event_data_ref], [event_data_ref])
-			
+
 			# 3. Restore linked nodes AFTER agent is restored
 			if linked_data_ref != null:
 				undo_action.action_object_call(UndoRedoAction.DoType.Undo, base_editor, "restore_agent_to_linked_nodes", [agent_id, linked_data_ref], [linked_data_ref])
 
 			# OnRemoval Actions - cleanup when undo action is discarded
 			undo_action.action_object_call_ref(UndoRedoAction.DoType.OnRemoval, ref, "_free_if_not_in_group")
-			
+
 			# Clean up stored events when undo action is discarded
 			if event_data_ref != null:
 				undo_action.action_object_call(UndoRedoAction.DoType.OnRemoval, base_editor.event_emittor, "cleanup_stored_events_for_agent", [agent_id, event_data_ref], [event_data_ref])
