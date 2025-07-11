@@ -246,8 +246,18 @@ def run_finish_release(major: int, minor: int, patch: int):
 	except Exception as e:
 		print(f"Warning: Could not check master branch status: {e}")
 
-	# Finish release and push all changes
-	result = subprocess.run(shlex.split(f"git flow release finish {major}.{minor}.{patch} -m \"Release v{major}.{minor}.{patch}\" --pushtag --pushproduction --pushdevelop"))
+	# Finish release without pushing all tags to avoid conflicts
+	result = subprocess.run(shlex.split(f"git flow release finish {major}.{minor}.{patch} -m \"Release v{major}.{minor}.{patch}\" --pushproduction --pushdevelop"))
+
+	# Push only the new release tag
+	if result.returncode == 0:
+		print(f"Pushing release tag v{major}.{minor}.{patch}...")
+		tag_result = subprocess.run(["git", "push", "origin", f"v{major}.{minor}.{patch}"])
+		if tag_result.returncode != 0:
+			print(f"ERROR: Failed to push tag v{major}.{minor}.{patch}")
+			print("To manually push the tag later:")
+			print(f"   git push origin v{major}.{minor}.{patch}")
+			result = tag_result
 
 	if result.returncode != 0:
 		print("ERROR: Git flow release finish failed!")
