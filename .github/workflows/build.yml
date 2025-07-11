@@ -138,6 +138,10 @@ jobs:
         # Archive to upload
         archive: ${{ steps.create-archive.outputs.archive_path }}
 
+        # Use existing DOI for versioning - links all versions together
+        # This should be the "all versions" DOI (conceptual DOI)
+        doi: "10.5281/zenodo.15866228"
+
         # Description for this version
         description: |
           A tool for simulating the detection and tracking of objects in a top-down 2D environment. Exports data into JSON format containing x/y coordinates and timestamps for testing and validating object detection and tracking algorithms.
