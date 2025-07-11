@@ -73,4 +73,5 @@ func _order_wps():
 func _delete_wp_receiver(_agent_id: int, _waypoint_id: int, index: int):
 	var wp_gui = current_waypoint_list[index]
 
+	current_waypoint_list.remove_at(index)
 	wp_gui.queue_free()
