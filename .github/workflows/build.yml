@@ -125,6 +125,7 @@ jobs:
       with:
         tag_name: dev-latest
         name: Development Build
+        target_commitish: ${{ github.sha }}
         files: release-assets/*
         draft: false
         prerelease: true
