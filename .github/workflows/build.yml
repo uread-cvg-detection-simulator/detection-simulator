@@ -32,7 +32,7 @@ jobs:
           VERSION_NUMBER="${VERSION#v}"
 
           # Find the section for this version and extract until the next ## or end of file
-          CHANGELOG_CONTENT=$(awk "/^## $VERSION_NUMBER/,/^## /" CHANGELOG.md | sed '$d' | tail -n +2 | sed '/^$/d')
+          CHANGELOG_CONTENT=$(awk "/^## $VERSION_NUMBER/{flag=1; next} /^## /{flag=0} flag" CHANGELOG.md | sed '/^$/d')
 
           # If empty, fallback to a default message
           if [ -z "$CHANGELOG_CONTENT" ]; then
@@ -40,7 +40,7 @@ jobs:
           fi
         else
           # Extract unreleased section for master branch
-          CHANGELOG_CONTENT=$(awk "/^## Unreleased/,/^## /" CHANGELOG.md | sed '$d' | tail -n +2 | sed '/^$/d')
+          CHANGELOG_CONTENT=$(awk '/^## Unreleased/{flag=1; next} /^## /{flag=0} flag' CHANGELOG.md | sed '/^$/d')
 
           # If empty, fallback to a default message
           if [ -z "$CHANGELOG_CONTENT" ]; then
