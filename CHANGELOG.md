@@ -1,3 +1,5 @@
+## 1.0.7
+
 ## 1.0.6
 
 - Fix the zenodo doi missing from the build.
