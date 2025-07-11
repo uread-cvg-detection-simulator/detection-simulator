@@ -1,0 +1,20 @@
+# .gitconfig-gitflow
+# Include this file in your global or local .gitconfig for consistent gitflow setup
+# Usage:
+#   git config --local include.path ../.gitconfig-gitflow
+#   or add to your .gitconfig: [include] path = .gitconfig-gitflow
+
+[gitflow "branch"]
+    master = stable
+    develop = master
+
+[gitflow "prefix"]
+    feature = feature/
+    release = release/
+    hotfix = hotfix/
+    support = support/
+    versiontag = v
+
+[gitflow "feature"]
+    # Automatically rebase feature branches on develop
+    rebase = true

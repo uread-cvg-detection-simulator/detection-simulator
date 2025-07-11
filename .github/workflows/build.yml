@@ -3,31 +3,151 @@ name: Build
 on:
   push:
     branches: [ master ]
+    tags:
+      - 'v*.*.*'
   pull_request:
     branches: [ master ]
 
 jobs:
   build:
     runs-on: ubuntu-latest
+    outputs:
+      changelog: ${{ steps.changelog.outputs.content }}
 
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
 
-    - name: Export game
+    - name: Create release assets directory
+      if: github.ref_type == 'tag' || github.ref_name == 'master'
+      run: mkdir -p release-assets
+
+    - name: Extract changelog
+      if: github.ref_type == 'tag' || github.ref_name == 'master'
+      id: changelog
+      run: |
+        if [ "${{ github.ref_type }}" == "tag" ]; then
+          # Extract changelog section for this version (remove 'v' prefix from tag)
+          VERSION="${{ github.ref_name }}"
+          VERSION_NUMBER="${VERSION#v}"
+
+          # Find the section for this version and extract until the next ## or end of file
+          CHANGELOG_CONTENT=$(awk "/^## $VERSION_NUMBER/{flag=1; next} /^## /{flag=0} flag" CHANGELOG.md | sed '/^$/d')
+
+          # If empty, fallback to a default message
+          if [ -z "$CHANGELOG_CONTENT" ]; then
+            CHANGELOG_CONTENT="Release $VERSION_NUMBER"
+          fi
+        else
+          # Extract unreleased section for master branch
+          CHANGELOG_CONTENT=$(awk '/^## Unreleased/{flag=1; next} /^## /{flag=0} flag' CHANGELOG.md | sed '/^$/d')
+
+          # If empty, fallback to a default message
+          if [ -z "$CHANGELOG_CONTENT" ]; then
+            CHANGELOG_CONTENT="Development build with latest changes"
+          fi
+        fi
+
+        # Save to output
+        echo "content<<EOF" >> $GITHUB_OUTPUT
+        echo "$CHANGELOG_CONTENT" >> $GITHUB_OUTPUT
+        echo "EOF" >> $GITHUB_OUTPUT
+
+    - name: Export project
       id: export
       uses: firebelley/godot-export@v6.0.0
       with:
         godot_executable_download_url: https://github.com/godotengine/godot-builds/releases/download/4.4-stable/Godot_v4.4-stable_linux.x86_64.zip
         godot_export_templates_download_url: https://github.com/godotengine/godot/releases/download/4.4-stable/Godot_v4.4-stable_export_templates.tpz
         relative_project_path: ./detection-simulator
-        archive_output: true
+        archive_output: false
         cache: true
         presets_to_export: Linux/X11, macOS, Windows Desktop
 
-    - name: Upload artifacts
+    - name: Package build artifacts for release
+      if: github.ref_type == 'tag' || github.ref_name == 'master'
+      run: |
+        # Package Linux build
+        cd "${{ steps.export.outputs.build_directory }}/LinuxX11"
+        zip -r "$GITHUB_WORKSPACE/release-assets/detection-simulator-linux-x86_64.zip" .
+
+        # Package Windows build
+        cd "${{ steps.export.outputs.build_directory }}/Windows Desktop"
+        zip -r "$GITHUB_WORKSPACE/release-assets/detection-simulator-windows-x86_64.zip" .
+
+        # Copy macOS zip (already packaged by Godot)
+        cp "${{ steps.export.outputs.build_directory }}/macOS/detection-simulator.zip" "$GITHUB_WORKSPACE/release-assets/detection-simulator-macos.zip"
+
+    - name: Upload release assets
+      if: github.ref_type == 'tag' || github.ref_name == 'master'
       uses: actions/upload-artifact@v4
       with:
-        name: detection-simulator-exports
-        path: ${{ steps.export.outputs.archive_directory }}
-        retention-days: 7
+        name: release-assets
+        path: release-assets/
+        retention-days: 1
+
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+    if: github.ref_type == 'tag'
+    permissions:
+      contents: write
+    steps:
+    - name: Download artifacts
+      uses: actions/download-artifact@v4
+      with:
+        name: release-assets
+        path: release-assets
+
+    - name: Create Release
+      uses: softprops/action-gh-release@v2
+      with:
+        files: release-assets/*
+        draft: false
+        prerelease: false
+        body: ${{ needs.build.outputs.changelog }}
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  dev-release:
+    needs: build
+    runs-on: ubuntu-latest
+    if: github.ref_name == 'master'
+    permissions:
+      contents: write
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Download artifacts
+      uses: actions/download-artifact@v4
+      with:
+        name: release-assets
+        path: release-assets
+
+    - name: Delete existing dev-latest release
+      run: |
+        gh release delete dev-latest --yes || true
+        git push origin :refs/tags/dev-latest || true
+      env:
+        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Create Development Pre-release
+      uses: softprops/action-gh-release@v2
+      with:
+        tag_name: dev-latest
+        name: Development Build
+        files: release-assets/*
+        draft: false
+        prerelease: true
+        body: |
+          Automated development build from the latest master branch.
+
+          **⚠️ This is a pre-release build and may be unstable.**
+
+          ## Changes
+          ${{ needs.build.outputs.changelog }}
+
+          Commit: ${{ github.sha }}
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
