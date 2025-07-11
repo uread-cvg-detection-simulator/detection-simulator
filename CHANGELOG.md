@@ -1,3 +1,8 @@
+## Unreleased
+
+- Added .zenodo.json file for a better looking zenodo page
+- Other development only changes
+
 ## 1.0.1
 
 Some fixes to the build environment and version bumper script. No functional changes to the software.
