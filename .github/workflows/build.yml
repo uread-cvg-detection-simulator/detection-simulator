@@ -53,7 +53,7 @@ jobs:
         echo "$CHANGELOG_CONTENT" >> $GITHUB_OUTPUT
         echo "EOF" >> $GITHUB_OUTPUT
 
-    - name: Export game
+    - name: Export project
       id: export
       uses: firebelley/godot-export@v6.0.0
       with:
@@ -76,15 +76,14 @@ jobs:
       run: |
         # Package Linux build
         cd "${{ steps.export.outputs.build_directory }}/LinuxX11"
-        zip -r ../../release-assets/detection-simulator-linux-x86_64.zip .
+        zip -r "$GITHUB_WORKSPACE/release-assets/detection-simulator-linux-x86_64.zip" .
 
         # Package Windows build
-        cd "../Windows Desktop"
-        zip -r ../../release-assets/detection-simulator-windows-x86_64.zip .
+        cd "${{ steps.export.outputs.build_directory }}/Windows Desktop"
+        zip -r "$GITHUB_WORKSPACE/release-assets/detection-simulator-windows-x86_64.zip" .
 
         # Copy macOS zip (already packaged by Godot)
-        cd ../..
-        cp "${{ steps.export.outputs.build_directory }}/macOS/detection-simulator.zip" release-assets/detection-simulator-macos.zip
+        cp "${{ steps.export.outputs.build_directory }}/macOS/detection-simulator.zip" "$GITHUB_WORKSPACE/release-assets/detection-simulator-macos.zip"
 
     - name: Upload release assets
       if: github.ref_type == 'tag' || github.ref_name == 'master'
