@@ -11,6 +11,8 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    outputs:
+      changelog: ${{ steps.changelog.outputs.content }}
 
     steps:
     - name: Checkout code
@@ -76,24 +78,53 @@ jobs:
         path: ${{ steps.export.outputs.archive_directory }}
         retention-days: 7
 
-    - name: Copy build artifacts for release
+    - name: Upload release assets
       if: github.ref_type == 'tag' || github.ref_name == 'master'
-      run: |
-        cp -r ${{ steps.export.outputs.archive_directory }}/* release-assets/
+      uses: actions/upload-artifact@v4
+      with:
+        name: release-assets
+        path: |
+          release-assets/
+          ${{ steps.export.outputs.archive_directory }}/
+        retention-days: 1
+
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+    if: github.ref_type == 'tag'
+    permissions:
+      contents: write
+    steps:
+    - name: Download artifacts
+      uses: actions/download-artifact@v4
+      with:
+        name: release-assets
+        path: release-assets
 
     - name: Create Release
-      if: github.ref_type == 'tag'
       uses: softprops/action-gh-release@v2
       with:
         files: release-assets/*
         draft: false
         prerelease: false
-        body: ${{ steps.changelog.outputs.content }}
+        body: ${{ needs.build.outputs.changelog }}
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
+  dev-release:
+    needs: build
+    runs-on: ubuntu-latest
+    if: github.ref_name == 'master'
+    permissions:
+      contents: write
+    steps:
+    - name: Download artifacts
+      uses: actions/download-artifact@v4
+      with:
+        name: release-assets
+        path: release-assets
+
     - name: Update Development Pre-release
-      if: github.ref_name == 'master'
       uses: softprops/action-gh-release@v2
       with:
         tag_name: dev-latest
@@ -107,7 +138,7 @@ jobs:
           **⚠️ This is a pre-release build and may be unstable.**
 
           ## Changes
-          ${{ steps.changelog.outputs.content }}
+          ${{ needs.build.outputs.changelog }}
 
           Commit: ${{ github.sha }}
       env:
