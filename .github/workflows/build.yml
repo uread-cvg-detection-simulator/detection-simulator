@@ -124,9 +124,8 @@ jobs:
           ${{ github.ref_name }} \
           -o detection-simulator-${{ github.ref_name }}-source.zip \
           -- \
-          ':!.godot' \
-          ':!.envrc' \
-          ':!.pre-commit-config.yaml' \
+          ':!.*' \
+          ':!**/.*' \
           ':!gdlintrc' \
           ':!sshot.png' \
           ':!test_manual.gd' \
