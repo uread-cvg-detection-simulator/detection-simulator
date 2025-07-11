@@ -68,13 +68,13 @@ jobs:
       uses: actions/upload-artifact@v4
       with:
         name: detection-simulator-exports
-        path: ${{ steps.export.outputs.archive_directory }}
+        path: ${{ steps.export.outputs.build_directory }}
         retention-days: 7
 
     - name: Copy build artifacts for release
       if: github.ref_type == 'tag' || github.ref_name == 'master'
       run: |
-        cp -r ${{ steps.export.outputs.archive_directory }}/* release-assets/
+        cp -r ${{ steps.export.outputs.build_directory }}/* release-assets/
 
     - name: Upload release assets
       if: github.ref_type == 'tag' || github.ref_name == 'master'
