@@ -78,14 +78,17 @@ jobs:
         path: ${{ steps.export.outputs.archive_directory }}
         retention-days: 7
 
+    - name: Copy build artifacts for release
+      if: github.ref_type == 'tag' || github.ref_name == 'master'
+      run: |
+        cp -r ${{ steps.export.outputs.archive_directory }}/* release-assets/
+
     - name: Upload release assets
       if: github.ref_type == 'tag' || github.ref_name == 'master'
       uses: actions/upload-artifact@v4
       with:
         name: release-assets
-        path: |
-          release-assets/
-          ${{ steps.export.outputs.archive_directory }}/
+        path: release-assets/
         retention-days: 1
 
   release:
