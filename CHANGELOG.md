@@ -1,3 +1,7 @@
+## 1.0.4
+
+- Another potential fix for zenodo publishing issues.
+
 ## 1.0.3
 
 - Potential fix for zenodo publishing issues.

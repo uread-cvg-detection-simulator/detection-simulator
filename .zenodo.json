@@ -1,6 +1,6 @@
 {
   "title": "UREAD Detection Simulator",
-  "description": "A tool for simulating the detection and tracking of objects in a top-down 2D environment. Exports data into JSON format containing x/y coordinates and timestamps for testing and validating object detection and tracking algorithms.\n\n## Features\n\n- **Configurable Agents**: Speed and acceleration settings with waypoint linking for synchronized movement and timed waiting\n- **Vehicle Interactions**: Person agents can enter and exit vehicle type agents\n- **Dynamic Event System**: Automated events generated when entering/exiting vehicles, plus manual events with configurable conditions\n- **Sensors**: Configurable field of view and range, producing detection data only for agents within sensor coverage\n- **Background Images**: Configurable size and scale support\n- **Export Capabilities**: JSON files for each agent and sensor with coordinate and timestamp data\n- **Cross-Platform**: Available for Windows, Linux, and macOS\n\n## Version 1.0.3\n\nSee the GitHub release page for detailed changes.\n\n## Download\n\nPre-compiled binaries for this version are available at: https://github.com/uread-cvg-detection-simulator/detection-simulator/releases/tag/v1.0.3\n\nThis Zenodo archive contains the source code for citation and archival purposes.",
+  "description": "A tool for simulating the detection and tracking of objects in a top-down 2D environment. Exports data into JSON format containing x/y coordinates and timestamps for testing and validating object detection and tracking algorithms.\n\n## Features\n\n- **Configurable Agents**: Speed and acceleration settings with waypoint linking for synchronized movement and timed waiting\n- **Vehicle Interactions**: Person agents can enter and exit vehicle type agents\n- **Dynamic Event System**: Automated events generated when entering/exiting vehicles, plus manual events with configurable conditions\n- **Sensors**: Configurable field of view and range, producing detection data only for agents within sensor coverage\n- **Background Images**: Configurable size and scale support\n- **Export Capabilities**: JSON files for each agent and sensor with coordinate and timestamp data\n- **Cross-Platform**: Available for Windows, Linux, and macOS\n\n## Version 1.0.4\n\nSee the GitHub release page for detailed changes.\n\n## Download\n\nPre-compiled binaries for this version are available at: https://github.com/uread-cvg-detection-simulator/detection-simulator/releases/tag/v1.0.4\n\nThis Zenodo archive contains the source code for citation and archival purposes.",
   "creators": [
     {
       "name": "Boyle, Jonathan",
@@ -9,9 +9,6 @@
     }
   ],
   "license": "CC-BY-SA-4.0",
-  "resource_type": {
-    "type": "software"
-  },
   "upload_type": "software",
   "language": "en"
 }
