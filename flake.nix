@@ -7,23 +7,27 @@
       url = "github:guibou/nixGL";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+    nix-precommit-hooks.url = "github:cachix/pre-commit-hooks.nix";
   };
 
-  outputs = {
-    nixpkgs,
-    nixpkgs-godot,
-    flake-utils,
-    nixGL,
-    ...
-  }:
+  outputs =
+    {
+      nixpkgs,
+      nixpkgs-godot,
+      nix-precommit-hooks,
+      flake-utils,
+      nixGL,
+      ...
+    }:
     flake-utils.lib.eachDefaultSystem (
-      system: let
+      system:
+      let
         pkgs = import nixpkgs {
           system = system;
           config = {
             allowUnfree = true;
           };
-          overlays = [nixGL.overlay];
+          overlays = [ nixGL.overlay ];
         };
 
         pkgs-godot = import nixpkgs-godot {
@@ -31,12 +35,12 @@
           config = {
             allowUnfree = true;
           };
-          overlays = [nixGL.overlay];
+          overlays = [ nixGL.overlay ];
         };
 
         lib = pkgs.lib;
 
-        dev-package-list = with pkgs-godot; [godot_4] ++ (with pkgs; [gdtoolkit_4]);
+        dev-package-list = with pkgs-godot; [ godot_4 ] ++ (with pkgs; [ gdtoolkit_4 ]);
 
         godot_export_templates = import ./godot_export_templates.nix {
           pkgs = pkgs-godot;
@@ -100,16 +104,25 @@
           godot-run-tests
         ];
 
+        pre-commit-check = nix-precommit-hooks.lib.${system}.run {
+          src = ./.;
+          hooks = {
+            trim-trailing-whitespace.enable = true;
+          };
+        };
+
         project_name = "detection-simulator";
-      in {
+      in
+      {
         devShells = {
           default = pkgs.mkShell {
-            packages = dev-package-list ++ all-scripts ++ [godot_export_templates];
+            packages = dev-package-list ++ all-scripts ++ [ godot_export_templates ];
             GODOT_RAW_BIN = "${pkgs-godot.godot_4}/bin/godot4";
             GODOT_BIN = "${pkgs-godot.godot_4}/bin/godot4";
 
             shellHook = ''
               set -a; source .env; set +a;
+              ${pre-commit-check.shellHook}
 
               # Link export templates if not already done ~/.local/share/godot/export_templates/VERSION.stable (update if symlink is to incorrect location)
               if [ ! -d ~/.local/share/godot/export_templates/${godot_export_templates.version}.stable ]; then
@@ -123,12 +136,13 @@
           };
 
           nonnix = pkgs.mkShell {
-            packages = dev-package-list ++ [pkgs.nixgl.auto.nixGLDefault] ++ all-scripts;
+            packages = dev-package-list ++ [ pkgs.nixgl.auto.nixGLDefault ] ++ all-scripts;
             GODOT_RAW_BIN = "${pkgs-godot.godot_4}/bin/godot4";
             GODOT_BIN = "nixGL ${pkgs-godot.godot_4}/bin/godot4";
 
             shellHook = ''
               set -a; source .env; set +a;
+              ${pre-commit-check.shellHook}
 
               # Link export templates if not already done ~/.local/share/godot/export_templates/VERSION.stable (update if symlink is to incorrect location)
               if [ ! -d ~/.local/share/godot/export_templates/${godot_export_templates.version}.stable ]; then
