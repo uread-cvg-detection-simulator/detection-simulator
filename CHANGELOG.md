@@ -1,3 +1,7 @@
+## 1.0.3
+
+- Potential fix for zenodo publishing issues.
+
 ## 1.0.2
 
 - Added .zenodo.json file for a better looking zenodo page
