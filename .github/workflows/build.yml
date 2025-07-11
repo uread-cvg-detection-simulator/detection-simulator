@@ -97,6 +97,9 @@ jobs:
     permissions:
       contents: write
     steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
     - name: Download artifacts
       uses: actions/download-artifact@v4
       with:
@@ -112,6 +115,31 @@ jobs:
         body: ${{ needs.build.outputs.changelog }}
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Create source code archive
+      id: create-archive
+      run: |
+        # Create source code archive excluding build artifacts and development files
+        git archive --format=zip --prefix=detection-simulator-${{ github.ref_name }}/ \
+          ${{ github.ref_name }} \
+          -o detection-simulator-${{ github.ref_name }}-source.zip
+
+        echo "archive_path=$(pwd)/detection-simulator-${{ github.ref_name }}-source.zip" >> $GITHUB_OUTPUT
+
+    - name: Release to Zenodo
+      uses: rseng/zenodo-release@main
+      with:
+        # Zenodo API token (set this as a GitHub secret)
+        token: ${{ secrets.ZENODO_TOKEN }}
+
+        # Version from the release tag
+        version: ${{ github.ref_name }}
+
+        # Archive to upload
+        archive: ${{ steps.create-archive.outputs.archive_path }}
+
+        # Optional: Path to .zenodo.json metadata file
+        zenodo_json: ".zenodo.json"
 
   dev-release:
     needs: build
